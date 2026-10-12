@@ -23,7 +23,7 @@ const VALID_LEVELS = ["full", "partial", "none", "unknown"];
 
 // Ingestion tools live in their own dataset (src/data/ingestion/, shown in the
 // Ingestion view) and must not appear among the query engines.
-const INGESTION_ONLY_IDS = ["aws-firehose", "kafka-connect"];
+const INGESTION_ONLY_IDS = ["aws-firehose", "kafka-connect", "olake-go"];
 
 interface RawEntry {
   level?: unknown;

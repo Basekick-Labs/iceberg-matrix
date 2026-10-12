@@ -5,7 +5,7 @@ An interactive compatibility matrix for [Apache Iceberg](https://iceberg.apache.
 The site has three views, switched with the buttons at the top right:
 
 - **Engines** (default): query engines and platforms against the full Iceberg feature list.
-- **Ingestion**: tools that *write* Iceberg data from a source (today Apache Iceberg Kafka Connect and Amazon Data Firehose) but are not built for reading it. It uses a smaller, write-oriented feature set: appends, upserts/deletes, schema and table handling, partitioning, catalogs and V3 types. Read features such as read support and time travel are left out. Ratings are about what the tool can **write**.
+- **Ingestion**: tools that *write* Iceberg data from a source (today Apache Iceberg Kafka Connect, Amazon Data Firehose and OLake Go) but are not built for reading it. It uses a smaller, write-oriented feature set: appends, upserts/deletes, schema and table handling, partitioning, catalogs and V3 types. Read features such as read support and time travel are left out. Ratings are about what the tool can **write**.
 - **Catalogs**: Iceberg catalogs scored against an openness rubric.
 
 **Live site →** deployed via GitHub Pages on every push to `main`.
