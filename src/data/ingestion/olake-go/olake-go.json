@@ -3,7 +3,7 @@
     {
       "id": "olake-go",
       "name": "OLake Go (0.12.0)",
-      "vendor": "Datazip",
+      "vendor": "OLake",
       "category": "open-source",
       "group": "3rd Party",
       "docUrl": "https://olake.io/docs/"
