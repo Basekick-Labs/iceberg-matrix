@@ -158,12 +158,17 @@
       ]
     },
     "olake-go:table-maintenance:v2": {
-      "level": "none",
-      "notes": "The ingestion writer does not compact files, expire snapshots or remove orphan files. OLake ships maintenance as a separate product, OLake Fusion, reachable from the OLake UI's Maintenance module (UI v0.4.0+).",
+      "level": "full",
+      "notes": "Through OLake Fusion, OLake's table maintenance service, available from the OLake UI's Maintenance module (UI v0.4.0+). It runs three compaction levels: Lite merges small files and converts equality deletes to positional deletes, Medium merges files up to the target size and applies accumulated position deletes to data files, and Full rewrites all data and delete files to the target size.",
       "caveats": [
-        "Compaction needs OLake Fusion or another engine (Spark, Trino, catalog-side optimisation)"
+        "Runs as OLake Fusion, alongside the ingestion writer rather than inside it",
+        "The docs do not mention snapshot expiration or orphan file removal"
       ],
       "links": [
+        {
+          "label": "OLake Fusion compaction types",
+          "url": "https://olake.io/docs/fusion/compaction/types-of-compaction/"
+        },
         {
           "label": "OLake Fusion (table maintenance) overview",
           "url": "https://olake.io/docs/fusion/getting-started/overview/"
@@ -406,12 +411,18 @@
       ]
     },
     "olake-go:table-maintenance:v3": {
-      "level": "none",
-      "notes": "The ingestion writer does not compact files, expire snapshots or remove orphan files. OLake ships maintenance as a separate product, OLake Fusion, reachable from the OLake UI's Maintenance module (UI v0.4.0+).",
+      "level": "full",
+      "notes": "Through OLake Fusion, OLake's table maintenance service, available from the OLake UI's Maintenance module (UI v0.4.0+). It runs three compaction levels: Lite merges small files and converts equality deletes to positional deletes, Medium merges files up to the target size and applies accumulated position deletes to data files, and Full rewrites all data and delete files to the target size.",
       "caveats": [
-        "Compaction needs OLake Fusion or another engine (Spark, Trino, catalog-side optimisation)"
+        "Runs as OLake Fusion, alongside the ingestion writer rather than inside it",
+        "The docs do not mention snapshot expiration or orphan file removal",
+        "The docs do not say how compaction handles V3 deletion vectors"
       ],
       "links": [
+        {
+          "label": "OLake Fusion compaction types",
+          "url": "https://olake.io/docs/fusion/compaction/types-of-compaction/"
+        },
         {
           "label": "OLake Fusion (table maintenance) overview",
           "url": "https://olake.io/docs/fusion/getting-started/overview/"
