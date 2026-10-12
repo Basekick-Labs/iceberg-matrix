@@ -145,17 +145,15 @@
       ]
     },
     "olake-go:type-promotion:v2": {
-      "level": "partial",
-      "notes": "The writer promotes int to long and float to double (promotionTransitions in iceberg.go). The docs also list date to timestamp and decimal precision widening, but v0.12.0's writer code only applies the two numeric promotions. Incompatible changes, such as string into a numeric column, fail the sync.",
-      "caveats": [],
+      "level": "full",
+      "notes": "Widens a column when incoming values no longer fit: int to long, float to double, date to timestamp or timestamp_ns, and decimal(P, S) to decimal(P', S) with P' > P. Incompatible changes, such as string into a numeric column, fail the sync.",
+      "caveats": [
+        "Narrowing (long to int, double to float) is not a promotion; values are accepted only when they fit the existing column"
+      ],
       "links": [
         {
           "label": "OLake schema evolution docs",
           "url": "https://olake.io/docs/features/schema/"
-        },
-        {
-          "label": "Writer source: iceberg.go",
-          "url": "https://github.com/datazip-inc/olake/blob/v0.12.0/destination/iceberg/iceberg.go"
         }
       ]
     },
@@ -395,17 +393,15 @@
       ]
     },
     "olake-go:type-promotion:v3": {
-      "level": "partial",
-      "notes": "The writer promotes int to long and float to double (promotionTransitions in iceberg.go). The docs also list date to timestamp and decimal precision widening, but v0.12.0's writer code only applies the two numeric promotions. Incompatible changes, such as string into a numeric column, fail the sync.",
-      "caveats": [],
+      "level": "full",
+      "notes": "Widens a column when incoming values no longer fit: int to long, float to double, date to timestamp or timestamp_ns, and decimal(P, S) to decimal(P', S) with P' > P. Incompatible changes, such as string into a numeric column, fail the sync.",
+      "caveats": [
+        "Narrowing (long to int, double to float) is not a promotion; values are accepted only when they fit the existing column"
+      ],
       "links": [
         {
           "label": "OLake schema evolution docs",
           "url": "https://olake.io/docs/features/schema/"
-        },
-        {
-          "label": "Writer source: iceberg.go",
-          "url": "https://github.com/datazip-inc/olake/blob/v0.12.0/destination/iceberg/iceberg.go"
         }
       ]
     },
