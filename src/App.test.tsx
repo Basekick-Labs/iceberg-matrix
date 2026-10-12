@@ -178,9 +178,10 @@ describe('Ingestion view', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Ingestion' }))
     const grid = screen.getByRole('grid')
 
-    // The two ingestion tools replace the engine columns.
+    // The ingestion tools replace the engine columns.
     expect(within(grid).getByText('Data Firehose')).toBeInTheDocument()
     expect(within(grid).getByText('Kafka Connect (1.12.0)')).toBeInTheDocument()
+    expect(within(grid).getByText('OLake Go (0.12.0)')).toBeInTheDocument()
     expect(within(grid).queryByText(/PyIceberg/)).not.toBeInTheDocument()
 
     // Write-path rows are present; read-oriented rows are not.
@@ -205,6 +206,7 @@ describe('Ingestion view', () => {
     const grid = screen.getByRole('grid')
     expect(within(grid).queryByText('Data Firehose')).not.toBeInTheDocument()
     expect(within(grid).queryByText(/Kafka Connect/)).not.toBeInTheDocument()
+    expect(within(grid).queryByText(/OLake Go/)).not.toBeInTheDocument()
   })
 })
 

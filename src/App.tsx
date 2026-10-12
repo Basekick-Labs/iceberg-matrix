@@ -39,7 +39,7 @@ const initialCatalogFilters: FilterState = {
   searchQuery: "",
 };
 
-// Ingestion tools (Kafka Connect, Firehose) have the same v2/v3 spec dimension
+// Ingestion tools (Kafka Connect, Firehose, OLake Go) have the same v2/v3 spec dimension
 // as engines, so the version chips and Compare work the same way; only the
 // platform set and the reduced, write-oriented feature list differ.
 const initialIngestionFilters: FilterState = {

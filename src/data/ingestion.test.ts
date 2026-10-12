@@ -21,7 +21,7 @@ import { describe, it, expect } from "vitest";
 import ingestionFeaturesJson from "./ingestion/features.json";
 
 // The one list to update when a tool is added or removed.
-const EXPECTED_INGESTION_IDS = ["aws-firehose", "kafka-connect"];
+const EXPECTED_INGESTION_IDS = ["aws-firehose", "kafka-connect", "olake-go"];
 
 const VALID_LEVELS = ["full", "partial", "none", "unknown"];
 const VALID_GROUPS = ["AWS", "3rd Party"];

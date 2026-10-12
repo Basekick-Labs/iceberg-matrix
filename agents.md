@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-A React single-page application that displays an interactive compatibility matrix for Apache Iceberg features across cloud platforms and open-source engines. A top-level Engines / Ingestion / Catalogs toggle (in that order) switches between three datasets: the engines matrix (default, one column per engine with V2/V3 version chips, transition cells where versions differ, an AWS S3-mode toggle, and a Compare differences table) an ingestion matrix (tools that write Iceberg data from a source but are not built for reading it: Kafka Connect and Data Firehose, scored on a reduced write-oriented feature set), and a catalogs openness-rubric matrix (10 Iceberg catalogs scored against 6 openness criteria). Built with Vite, TypeScript, React 19.2, and Tailwind CSS. Deployed to GitHub Pages via GitHub Actions.
+A React single-page application that displays an interactive compatibility matrix for Apache Iceberg features across cloud platforms and open-source engines. A top-level Engines / Ingestion / Catalogs toggle (in that order) switches between three datasets: the engines matrix (default, one column per engine with V2/V3 version chips, transition cells where versions differ, an AWS S3-mode toggle, and a Compare differences table) an ingestion matrix (tools that write Iceberg data from a source but are not built for reading it: Kafka Connect, Data Firehose and OLake Go, scored on a reduced write-oriented feature set), and a catalogs openness-rubric matrix (10 Iceberg catalogs scored against 6 openness criteria). Built with Vite, TypeScript, React 19.2, and Tailwind CSS. Deployed to GitHub Pages via GitHub Actions.
 
 ## Project Structure
 
@@ -30,7 +30,7 @@ A React single-page application that displays an interactive compatibility matri
 │   │   ├── ingestion.test.ts         # Structural tests for the ingestion dataset (extension point: EXPECTED_INGESTION_IDS)
 │   │   ├── ingestion/                # Ingestion-tool dataset (write-oriented, reduced feature set)
 │   │   │   ├── features.json         # 17 write-oriented features, versions v2/v3
-│   │   │   └── <tool-id>/<tool-id>.json   # One folder+file per tool (aws-firehose, kafka-connect)
+│   │   │   └── <tool-id>/<tool-id>.json   # One folder+file per tool (aws-firehose, kafka-connect, olake-go)
 │   │   ├── catalogs/                 # Catalogs openness-rubric dataset
 │   │   │   ├── features.json         # 3 spec-support features + 6 rubric criteria
 │   │   │   └── <catalog-id>/<catalog-id>.json   # One folder+file per catalog (10 today)

@@ -1,0 +1,535 @@
+{
+  "platforms": [
+    {
+      "id": "olake-go",
+      "name": "OLake Go (0.12.0)",
+      "vendor": "OLake",
+      "category": "open-source",
+      "group": "3rd Party",
+      "docUrl": "https://olake.io/docs/"
+    }
+  ],
+  "support": {
+    "olake-go:write-insert:v2": {
+      "level": "full",
+      "notes": "Full Refresh syncs write in append mode, and CDC and Incremental syncs can be set to Append, which adds every incoming record without deduplicating. Records are written as Parquet data files and committed per batch.",
+      "caveats": [
+        "Full Refresh always appends; the Append/Upsert choice applies to CDC and Incremental only",
+        "Append mode writes no delete files, so duplicates from the source land as-is"
+      ],
+      "links": [
+        {
+          "label": "OLake terminology: sync modes and delete formats",
+          "url": "https://olake.io/docs/understanding/terminologies/olake/"
+        },
+        {
+          "label": "Writer source: OlakeRowsIngester.java",
+          "url": "https://github.com/datazip-inc/olake/blob/v0.12.0/destination/iceberg/olake-iceberg-java-writer/src/main/java/io/olake/iceberg/rpc/OlakeRowsIngester.java"
+        }
+      ]
+    },
+    "olake-go:write-merge-update-delete:v2": {
+      "level": "full",
+      "notes": "Upsert mode applies source inserts, updates and deletes so only the latest row per key remains. CDC (Full Refresh + CDC or CDC Only) streams changes from database logs; the writer replaces superseded rows by writing delete files.",
+      "caveats": [
+        "Upsert needs at least one dedup key (primary key)",
+        "Incremental syncs do not capture deletes; cursor-based incremental with an auto-increment cursor misses updates too"
+      ],
+      "links": [
+        {
+          "label": "OLake terminology: sync modes and delete formats",
+          "url": "https://olake.io/docs/understanding/terminologies/olake/"
+        },
+        {
+          "label": "Writer source: IcebergTableOperator.java",
+          "url": "https://github.com/datazip-inc/olake/blob/v0.12.0/destination/iceberg/olake-iceberg-java-writer/src/main/java/io/olake/iceberg/tableoperator/IcebergTableOperator.java"
+        }
+      ]
+    },
+    "olake-go:merge-on-read:v2": {
+      "level": "full",
+      "notes": "Upserts never rewrite data files: superseded rows are recorded as equality or positional delete files that readers merge at query time.",
+      "caveats": [
+        "Equality deletes are the default and need the reader to support them"
+      ],
+      "links": [
+        {
+          "label": "OLake terminology: sync modes and delete formats",
+          "url": "https://olake.io/docs/understanding/terminologies/olake/"
+        },
+        {
+          "label": "OLake compatibility to query engines",
+          "url": "https://olake.io/docs/understanding/compatibility-engines/"
+        }
+      ]
+    },
+    "olake-go:equality-deletes:v2": {
+      "level": "full",
+      "notes": "Default delete format. The writer emits equality delete files keyed on the _olake_id identifier field when a row is updated or deleted.",
+      "caveats": [
+        "Tables written for Databricks Unity Catalog have identifier fields disabled (no_identifier_fields)"
+      ],
+      "links": [
+        {
+          "label": "OLake terminology: sync modes and delete formats",
+          "url": "https://olake.io/docs/understanding/terminologies/olake/"
+        },
+        {
+          "label": "Writer source: DeleteMode.java",
+          "url": "https://github.com/datazip-inc/olake/blob/v0.12.0/destination/iceberg/olake-iceberg-java-writer/src/main/java/io/olake/iceberg/tableoperator/DeleteMode.java"
+        },
+        {
+          "label": "Writer source: config.go",
+          "url": "https://github.com/datazip-inc/olake/blob/v0.12.0/destination/iceberg/config.go"
+        }
+      ]
+    },
+    "olake-go:position-deletes:v2": {
+      "level": "full",
+      "notes": "Selectable delete format (update_type=pos). OLake keeps an index from each _olake_id to its data file and row position and writes positional delete files against the prior version of the row.",
+      "caveats": [
+        "Needs persistent index storage",
+        "Requires OLake 0.11.0+, OLake UI 0.6.0+, Helm chart 0.0.28+ and OLake worker 0.3.11+"
+      ],
+      "links": [
+        {
+          "label": "OLake terminology: sync modes and delete formats",
+          "url": "https://olake.io/docs/understanding/terminologies/olake/"
+        },
+        {
+          "label": "Writer source: DeleteMode.java",
+          "url": "https://github.com/datazip-inc/olake/blob/v0.12.0/destination/iceberg/olake-iceberg-java-writer/src/main/java/io/olake/iceberg/tableoperator/DeleteMode.java"
+        },
+        {
+          "label": "Writer source: OlakeRowsIngester.java",
+          "url": "https://github.com/datazip-inc/olake/blob/v0.12.0/destination/iceberg/olake-iceberg-java-writer/src/main/java/io/olake/iceberg/rpc/OlakeRowsIngester.java"
+        }
+      ]
+    },
+    "olake-go:deletion-vectors:v2": {
+      "level": "none",
+      "notes": "V3 feature; not applicable to V2.",
+      "caveats": []
+    },
+    "olake-go:table-creation:v2": {
+      "level": "full",
+      "notes": "Creates the destination table from the stream schema (and the configured partition spec) when it does not exist. Format version follows the delete format: equality and positional deletes create a V2 table.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Writer source: OlakeRowsIngester.java",
+          "url": "https://github.com/datazip-inc/olake/blob/v0.12.0/destination/iceberg/olake-iceberg-java-writer/src/main/java/io/olake/iceberg/rpc/OlakeRowsIngester.java"
+        },
+        {
+          "label": "Writer source: IcebergUtil.java",
+          "url": "https://github.com/datazip-inc/olake/blob/v0.12.0/destination/iceberg/olake-iceberg-java-writer/src/main/java/io/olake/iceberg/IcebergUtil.java"
+        }
+      ]
+    },
+    "olake-go:schema-evolution:v2": {
+      "level": "full",
+      "notes": "New source columns are added to the Iceberg table with new field IDs (unionByNameWith) when 'Sync new columns automatically' is on. Dropped source columns stay in the table; renames add the new name as a new column.",
+      "caveats": [
+        "Renames are not applied as renames (same field ID) yet",
+        "New columns are not backfilled for existing rows unless the destination is cleared"
+      ],
+      "links": [
+        {
+          "label": "OLake schema evolution docs",
+          "url": "https://olake.io/docs/features/schema/"
+        },
+        {
+          "label": "Writer source: IcebergTableOperator.java",
+          "url": "https://github.com/datazip-inc/olake/blob/v0.12.0/destination/iceberg/olake-iceberg-java-writer/src/main/java/io/olake/iceberg/tableoperator/IcebergTableOperator.java"
+        }
+      ]
+    },
+    "olake-go:type-promotion:v2": {
+      "level": "full",
+      "notes": "Widens a column when incoming values no longer fit: int to long, float to double, date to timestamp or timestamp_ns, and decimal(P, S) to decimal(P', S) with P' > P. Incompatible changes, such as string into a numeric column, fail the sync.",
+      "caveats": [
+        "Narrowing (long to int, double to float) is not a promotion; values are accepted only when they fit the existing column"
+      ],
+      "links": [
+        {
+          "label": "OLake schema evolution docs",
+          "url": "https://olake.io/docs/features/schema/"
+        }
+      ]
+    },
+    "olake-go:table-maintenance:v2": {
+      "level": "full",
+      "notes": "Through OLake Fusion, OLake's table maintenance service, available from the OLake UI's Maintenance module (UI v0.4.0+). It runs three compaction levels: Lite merges small files and converts equality deletes to positional deletes, Medium merges files up to the target size and applies accumulated position deletes to data files, and Full rewrites all data and delete files to the target size.",
+      "caveats": [
+        "Runs as OLake Fusion, alongside the ingestion writer rather than inside it",
+        "The docs do not mention snapshot expiration or orphan file removal"
+      ],
+      "links": [
+        {
+          "label": "OLake Fusion compaction types",
+          "url": "https://olake.io/docs/fusion/compaction/types-of-compaction/"
+        },
+        {
+          "label": "OLake Fusion (table maintenance) overview",
+          "url": "https://olake.io/docs/fusion/getting-started/overview/"
+        }
+      ]
+    },
+    "olake-go:branching-tagging:v2": {
+      "level": "none",
+      "notes": "Not supported: the writer always commits to the table's main branch and has no branch or tag setting.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Writer source: config.go",
+          "url": "https://github.com/datazip-inc/olake/blob/v0.12.0/destination/iceberg/config.go"
+        },
+        {
+          "label": "Writer source: IcebergTableOperator.java",
+          "url": "https://github.com/datazip-inc/olake/blob/v0.12.0/destination/iceberg/olake-iceberg-java-writer/src/main/java/io/olake/iceberg/tableoperator/IcebergTableOperator.java"
+        }
+      ]
+    },
+    "olake-go:hidden-partitioning:v2": {
+      "level": "full",
+      "notes": "partition_regex (or the UI Partitioning tab) accepts identity, year, month, day, hour, bucket[N], truncate[N] and void transforms, and multiple levels can be combined. now() partitions on the _olake_timestamp ingestion time.",
+      "caveats": [
+        "The spec is applied when OLake creates the table; existing tables keep their own spec",
+        "Each partition writer can use about 20-50 MB of RAM, so very high partition counts need large workers"
+      ],
+      "links": [
+        {
+          "label": "OLake Iceberg partitioning docs",
+          "url": "https://olake.io/docs/writers/iceberg/partitioning/"
+        },
+        {
+          "label": "Writer source: IcebergUtil.java",
+          "url": "https://github.com/datazip-inc/olake/blob/v0.12.0/destination/iceberg/olake-iceberg-java-writer/src/main/java/io/olake/iceberg/IcebergUtil.java"
+        }
+      ]
+    },
+    "olake-go:catalog-integration:v2": {
+      "level": "full",
+      "notes": "Supports AWS Glue, Hive Metastore, JDBC and REST catalogs, with REST presets for Nessie, Polaris, Unity, Lakekeeper, S3 Tables, BigLake and Snowflake Horizon.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "OLake compatibility to Iceberg catalogs",
+          "url": "https://olake.io/docs/understanding/compatibility-catalogs/"
+        },
+        {
+          "label": "Writer source: config.go",
+          "url": "https://github.com/datazip-inc/olake/blob/v0.12.0/destination/iceberg/config.go"
+        }
+      ]
+    },
+    "olake-go:aws-glue-catalog:v2": {
+      "level": "full",
+      "notes": "Glue is the default catalog_type, with optional overrides for the Glue endpoint, credentials, region and catalog ID.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "OLake Glue catalog docs",
+          "url": "https://olake.io/docs/writers/iceberg/catalog/glue/"
+        },
+        {
+          "label": "Writer source: config.go",
+          "url": "https://github.com/datazip-inc/olake/blob/v0.12.0/destination/iceberg/config.go"
+        }
+      ]
+    },
+    "olake-go:rest-catalog:v2": {
+      "level": "full",
+      "notes": "catalog_type=rest with OAuth2, token or SigV4 authentication; S3 Tables (SigV4 'S3tables' signing), BigLake (Google auth) and Horizon (vended credentials) are configured as REST variants.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "OLake compatibility to Iceberg catalogs",
+          "url": "https://olake.io/docs/understanding/compatibility-catalogs/"
+        },
+        {
+          "label": "Writer source: config.go",
+          "url": "https://github.com/datazip-inc/olake/blob/v0.12.0/destination/iceberg/config.go"
+        }
+      ]
+    },
+    "olake-go:variant-type:v2": {
+      "level": "none",
+      "notes": "V3 feature; not applicable to V2.",
+      "caveats": []
+    },
+    "olake-go:shredded-variant:v2": {
+      "level": "none",
+      "notes": "V3 feature; not applicable to V2.",
+      "caveats": []
+    },
+    "olake-go:write-insert:v3": {
+      "level": "full",
+      "notes": "With the deletion-vector delete format (update_type=dv) OLake creates, or upgrades, the table at format version 3 and writes to it through the same append path.",
+      "caveats": [
+        "V3 writes need update_type=dv; streams on equality or positional deletes are refused on a V3 table",
+        "The upgrade from V2 to V3 is one-way"
+      ],
+      "links": [
+        {
+          "label": "Writer source: OlakeRowsIngester.java",
+          "url": "https://github.com/datazip-inc/olake/blob/v0.12.0/destination/iceberg/olake-iceberg-java-writer/src/main/java/io/olake/iceberg/rpc/OlakeRowsIngester.java"
+        },
+        {
+          "label": "Writer source: DeleteMode.java",
+          "url": "https://github.com/datazip-inc/olake/blob/v0.12.0/destination/iceberg/olake-iceberg-java-writer/src/main/java/io/olake/iceberg/tableoperator/DeleteMode.java"
+        }
+      ]
+    },
+    "olake-go:write-merge-update-delete:v3": {
+      "level": "full",
+      "notes": "Upsert mode on V3 tables replaces superseded rows with deletion vectors (update_type=dv).",
+      "caveats": [
+        "Upsert needs at least one dedup key (primary key)",
+        "Switching a stream between deletion vectors and equality/positional deletes triggers Clear Destination"
+      ],
+      "links": [
+        {
+          "label": "OLake terminology: sync modes and delete formats",
+          "url": "https://olake.io/docs/understanding/terminologies/olake/"
+        },
+        {
+          "label": "Writer source: OlakeRowsIngester.java",
+          "url": "https://github.com/datazip-inc/olake/blob/v0.12.0/destination/iceberg/olake-iceberg-java-writer/src/main/java/io/olake/iceberg/rpc/OlakeRowsIngester.java"
+        }
+      ]
+    },
+    "olake-go:merge-on-read:v3": {
+      "level": "full",
+      "notes": "Upserts on V3 tables write deletion vectors that readers apply at query time; data files are not rewritten.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "OLake terminology: sync modes and delete formats",
+          "url": "https://olake.io/docs/understanding/terminologies/olake/"
+        },
+        {
+          "label": "OLake compatibility to query engines",
+          "url": "https://olake.io/docs/understanding/compatibility-engines/"
+        }
+      ]
+    },
+    "olake-go:equality-deletes:v3": {
+      "level": "none",
+      "notes": "Not supported on V3 tables. The writer refuses update_type=eq when the table is format version 3, because its in-batch dedup can emit a positional delete file, which V3 forbids; supporting it is a TODO in OlakeRowsIngester.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Writer source: OlakeRowsIngester.java",
+          "url": "https://github.com/datazip-inc/olake/blob/v0.12.0/destination/iceberg/olake-iceberg-java-writer/src/main/java/io/olake/iceberg/rpc/OlakeRowsIngester.java"
+        }
+      ]
+    },
+    "olake-go:position-deletes:v3": {
+      "level": "none",
+      "notes": "V3 replaces positional delete files with deletion vectors; the writer refuses update_type=pos on V3 tables.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Writer source: OlakeRowsIngester.java",
+          "url": "https://github.com/datazip-inc/olake/blob/v0.12.0/destination/iceberg/olake-iceberg-java-writer/src/main/java/io/olake/iceberg/rpc/OlakeRowsIngester.java"
+        }
+      ]
+    },
+    "olake-go:deletion-vectors:v3": {
+      "level": "full",
+      "notes": "update_type=dv writes Puffin deletion vectors, one bitmap per data file, using OLake's row-position index. Choosing it creates the table at V3 or upgrades an existing V2 table.",
+      "caveats": [
+        "Needs persistent index storage",
+        "Requires OLake 0.11.0+, OLake UI 0.6.0+, Helm chart 0.0.28+ and OLake worker 0.3.11+"
+      ],
+      "links": [
+        {
+          "label": "OLake terminology: sync modes and delete formats",
+          "url": "https://olake.io/docs/understanding/terminologies/olake/"
+        },
+        {
+          "label": "Writer source: DeleteMode.java",
+          "url": "https://github.com/datazip-inc/olake/blob/v0.12.0/destination/iceberg/olake-iceberg-java-writer/src/main/java/io/olake/iceberg/tableoperator/DeleteMode.java"
+        },
+        {
+          "label": "Writer source: OlakeRowsIngester.java",
+          "url": "https://github.com/datazip-inc/olake/blob/v0.12.0/destination/iceberg/olake-iceberg-java-writer/src/main/java/io/olake/iceberg/rpc/OlakeRowsIngester.java"
+        }
+      ]
+    },
+    "olake-go:table-creation:v3": {
+      "level": "full",
+      "notes": "Creates missing destination tables at format version 3 when the stream uses deletion vectors (minimumFormatVersion in DeleteMode).",
+      "caveats": [
+        "Format version is not set directly; it follows the delete format"
+      ],
+      "links": [
+        {
+          "label": "Writer source: OlakeRowsIngester.java",
+          "url": "https://github.com/datazip-inc/olake/blob/v0.12.0/destination/iceberg/olake-iceberg-java-writer/src/main/java/io/olake/iceberg/rpc/OlakeRowsIngester.java"
+        },
+        {
+          "label": "Writer source: DeleteMode.java",
+          "url": "https://github.com/datazip-inc/olake/blob/v0.12.0/destination/iceberg/olake-iceberg-java-writer/src/main/java/io/olake/iceberg/tableoperator/DeleteMode.java"
+        },
+        {
+          "label": "Writer source: IcebergUtil.java",
+          "url": "https://github.com/datazip-inc/olake/blob/v0.12.0/destination/iceberg/olake-iceberg-java-writer/src/main/java/io/olake/iceberg/IcebergUtil.java"
+        }
+      ]
+    },
+    "olake-go:schema-evolution:v3": {
+      "level": "full",
+      "notes": "New source columns are added to the Iceberg table with new field IDs (unionByNameWith) when 'Sync new columns automatically' is on. Dropped source columns stay in the table; renames add the new name as a new column.",
+      "caveats": [
+        "Renames are not applied as renames (same field ID) yet",
+        "New columns are not backfilled for existing rows unless the destination is cleared"
+      ],
+      "links": [
+        {
+          "label": "OLake schema evolution docs",
+          "url": "https://olake.io/docs/features/schema/"
+        },
+        {
+          "label": "Writer source: IcebergTableOperator.java",
+          "url": "https://github.com/datazip-inc/olake/blob/v0.12.0/destination/iceberg/olake-iceberg-java-writer/src/main/java/io/olake/iceberg/tableoperator/IcebergTableOperator.java"
+        }
+      ]
+    },
+    "olake-go:type-promotion:v3": {
+      "level": "full",
+      "notes": "Widens a column when incoming values no longer fit: int to long, float to double, date to timestamp or timestamp_ns, and decimal(P, S) to decimal(P', S) with P' > P. Incompatible changes, such as string into a numeric column, fail the sync.",
+      "caveats": [
+        "Narrowing (long to int, double to float) is not a promotion; values are accepted only when they fit the existing column"
+      ],
+      "links": [
+        {
+          "label": "OLake schema evolution docs",
+          "url": "https://olake.io/docs/features/schema/"
+        }
+      ]
+    },
+    "olake-go:table-maintenance:v3": {
+      "level": "full",
+      "notes": "Through OLake Fusion, OLake's table maintenance service, available from the OLake UI's Maintenance module (UI v0.4.0+). It runs three compaction levels: Lite merges small files and converts equality deletes to positional deletes, Medium merges files up to the target size and applies accumulated position deletes to data files, and Full rewrites all data and delete files to the target size.",
+      "caveats": [
+        "Runs as OLake Fusion, alongside the ingestion writer rather than inside it",
+        "The docs do not mention snapshot expiration or orphan file removal",
+        "The docs do not say how compaction handles V3 deletion vectors"
+      ],
+      "links": [
+        {
+          "label": "OLake Fusion compaction types",
+          "url": "https://olake.io/docs/fusion/compaction/types-of-compaction/"
+        },
+        {
+          "label": "OLake Fusion (table maintenance) overview",
+          "url": "https://olake.io/docs/fusion/getting-started/overview/"
+        }
+      ]
+    },
+    "olake-go:branching-tagging:v3": {
+      "level": "none",
+      "notes": "Not supported: the writer always commits to the table's main branch and has no branch or tag setting.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Writer source: config.go",
+          "url": "https://github.com/datazip-inc/olake/blob/v0.12.0/destination/iceberg/config.go"
+        },
+        {
+          "label": "Writer source: IcebergTableOperator.java",
+          "url": "https://github.com/datazip-inc/olake/blob/v0.12.0/destination/iceberg/olake-iceberg-java-writer/src/main/java/io/olake/iceberg/tableoperator/IcebergTableOperator.java"
+        }
+      ]
+    },
+    "olake-go:hidden-partitioning:v3": {
+      "level": "full",
+      "notes": "partition_regex (or the UI Partitioning tab) accepts identity, year, month, day, hour, bucket[N], truncate[N] and void transforms, and multiple levels can be combined. now() partitions on the _olake_timestamp ingestion time.",
+      "caveats": [
+        "The spec is applied when OLake creates the table; existing tables keep their own spec",
+        "Each partition writer can use about 20-50 MB of RAM, so very high partition counts need large workers"
+      ],
+      "links": [
+        {
+          "label": "OLake Iceberg partitioning docs",
+          "url": "https://olake.io/docs/writers/iceberg/partitioning/"
+        },
+        {
+          "label": "Writer source: IcebergUtil.java",
+          "url": "https://github.com/datazip-inc/olake/blob/v0.12.0/destination/iceberg/olake-iceberg-java-writer/src/main/java/io/olake/iceberg/IcebergUtil.java"
+        }
+      ]
+    },
+    "olake-go:catalog-integration:v3": {
+      "level": "full",
+      "notes": "Supports AWS Glue, Hive Metastore, JDBC and REST catalogs, with REST presets for Nessie, Polaris, Unity, Lakekeeper, S3 Tables, BigLake and Snowflake Horizon.",
+      "caveats": [
+        "Writing V3 needs a catalog and storage that accept format version 3 tables"
+      ],
+      "links": [
+        {
+          "label": "OLake compatibility to Iceberg catalogs",
+          "url": "https://olake.io/docs/understanding/compatibility-catalogs/"
+        },
+        {
+          "label": "Writer source: config.go",
+          "url": "https://github.com/datazip-inc/olake/blob/v0.12.0/destination/iceberg/config.go"
+        }
+      ]
+    },
+    "olake-go:aws-glue-catalog:v3": {
+      "level": "full",
+      "notes": "Glue is the default catalog_type, with optional overrides for the Glue endpoint, credentials, region and catalog ID.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "OLake Glue catalog docs",
+          "url": "https://olake.io/docs/writers/iceberg/catalog/glue/"
+        },
+        {
+          "label": "Writer source: config.go",
+          "url": "https://github.com/datazip-inc/olake/blob/v0.12.0/destination/iceberg/config.go"
+        }
+      ]
+    },
+    "olake-go:rest-catalog:v3": {
+      "level": "full",
+      "notes": "catalog_type=rest with OAuth2, token or SigV4 authentication; S3 Tables (SigV4 'S3tables' signing), BigLake (Google auth) and Horizon (vended credentials) are configured as REST variants.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "OLake compatibility to Iceberg catalogs",
+          "url": "https://olake.io/docs/understanding/compatibility-catalogs/"
+        },
+        {
+          "label": "Writer source: config.go",
+          "url": "https://github.com/datazip-inc/olake/blob/v0.12.0/destination/iceberg/config.go"
+        }
+      ]
+    },
+    "olake-go:variant-type:v3": {
+      "level": "none",
+      "notes": "Not supported. Object and array source fields are written as string (JSON text) columns; the writer has no variant type mapping.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "OLake source: types/data_types.go",
+          "url": "https://github.com/datazip-inc/olake/blob/v0.12.0/types/data_types.go"
+        }
+      ]
+    },
+    "olake-go:shredded-variant:v3": {
+      "level": "none",
+      "notes": "Not supported: the writer does not write the variant type.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "OLake source: types/data_types.go",
+          "url": "https://github.com/datazip-inc/olake/blob/v0.12.0/types/data_types.go"
+        }
+      ]
+    }
+  }
+}
