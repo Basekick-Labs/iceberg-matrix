@@ -8,6 +8,7 @@ import ingestionFeaturesJson from "./ingestion/features.json";
 import awsFirehose from "./ingestion/aws-firehose/aws-firehose.json";
 import kafkaConnect from "./ingestion/kafka-connect/kafka-connect.json";
 import olakeGo from "./ingestion/olake-go/olake-go.json";
+import pixeltable from "./ingestion/pixeltable/pixeltable.json";
 
 export interface IngestionFile {
   platforms: unknown[];
@@ -17,7 +18,7 @@ export interface IngestionFile {
 // Adding an ingestion tool: import its file above and slot it into the right
 // group here (see the extension recipe in ingestion.test.ts: the tests catch a
 // file that exists on disk but is missing from this list).
-const ingestionFiles: IngestionFile[] = [awsFirehose, kafkaConnect, olakeGo];
+const ingestionFiles: IngestionFile[] = [awsFirehose, kafkaConnect, olakeGo, pixeltable];
 
 // Pure merge, same shape as the other loaders: concatenate platforms in input
 // order and union the support maps.
