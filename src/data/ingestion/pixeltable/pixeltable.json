@@ -82,12 +82,7 @@
       "level": "none",
       "notes": "V3 feature; not applicable to V2.",
       "caveats": [],
-      "links": [
-        {
-          "label": "Pixeltable 0.7.16 export implementation",
-          "url": "https://github.com/pixeltable/pixeltable/blob/v0.7.16/pixeltable/io/iceberg.py"
-        }
-      ]
+      "links": []
     },
     "pixeltable:table-creation:v2": {
       "level": "full",
@@ -164,11 +159,11 @@
     },
     "pixeltable:hidden-partitioning:v2": {
       "level": "partial",
-      "notes": "With if_exists='append', writing to an existing table is delegated to PyIceberg, which uses that table's partition spec. Pixeltable does not expose a partition-spec setting when it creates a table.",
+      "notes": "With if_exists='append', PyIceberg writes each row into the partition that the existing table's spec assigns, for identity, year, month, day, hour, bucket, and truncate transforms. export_iceberg() exposes no partition-spec setting, so the tables it creates are unpartitioned.",
       "caveats": [
-        "Create and configure the partitioned destination with another Iceberg API before appending.",
-        "if_exists='replace' recreates the table with default settings and does not preserve its partition spec.",
-        "Available write transforms depend on the installed PyIceberg version."
+        "Create the partitioned destination with another Iceberg API before appending.",
+        "if_exists='replace' recreates the table without its partition spec.",
+        "Every transform except identity needs the optional pyiceberg-core package: pip install 'pyiceberg[pyiceberg-core]'."
       ],
       "links": [
         {
@@ -176,14 +171,18 @@
           "url": "https://github.com/pixeltable/pixeltable/blob/v0.7.16/pixeltable/io/iceberg.py"
         },
         {
-          "label": "PyIceberg partitioned table creation and writes",
+          "label": "PyIceberg 0.12.0 partition transforms",
+          "url": "https://github.com/apache/iceberg-python/blob/pyiceberg-0.12.0/pyiceberg/transforms.py"
+        },
+        {
+          "label": "PyIceberg partitioned table creation",
           "url": "https://py.iceberg.apache.org/api/#create-a-table"
         }
       ]
     },
     "pixeltable:catalog-integration:v2": {
       "level": "full",
-      "notes": "Accepts a caller-supplied PyIceberg Catalog and uses it to load, create, commit, and rename destination tables. The Pixeltable cookbook demonstrates a local SQL catalog and documents REST, Glue, and Hive catalogs for production.",
+      "notes": "Accepts a caller-supplied PyIceberg Catalog and uses it to load, create, commit, and rename destination tables. The Pixeltable cookbook demonstrates a local SQL catalog and names REST, Glue, and Hive catalogs for production.",
       "caveats": [
         "Catalog configuration, credentials, and access to the warehouse are supplied by the caller.",
         "Creating or replacing a table requires catalog support for table rename; append uses the existing table."
@@ -205,10 +204,11 @@
     },
     "pixeltable:aws-glue-catalog:v2": {
       "level": "full",
-      "notes": "The Pixeltable cookbook documents passing a Glue catalog to export_iceberg(). Catalog operations and Iceberg commits are handled by the caller-supplied PyIceberg GlueCatalog.",
+      "notes": "export_iceberg() accepts any PyIceberg Catalog, and PyIceberg's GlueCatalog implements every catalog operation the exporter uses: create namespaces, and load, create, commit, rename, and drop tables. The Pixeltable cookbook names Glue as a production catalog.",
       "caveats": [
         "Requires the relevant PyIceberg catalog dependencies, AWS credentials, and permissions for the catalog and S3 warehouse.",
-        "This is Glue Data Catalog integration; it does not establish support for the separate S3 Tables service."
+        "This is Glue Data Catalog integration; it does not establish support for the separate S3 Tables service.",
+        "Pixeltable's release tests use a local SQL catalog, not Glue."
       ],
       "links": [
         {
@@ -227,10 +227,11 @@
     },
     "pixeltable:rest-catalog:v2": {
       "level": "full",
-      "notes": "The Pixeltable cookbook documents passing a REST catalog to export_iceberg(). Catalog operations and Iceberg commits are delegated to the caller-supplied PyIceberg RestCatalog.",
+      "notes": "export_iceberg() accepts any PyIceberg Catalog, and PyIceberg's RestCatalog implements every catalog operation the exporter uses: create namespaces, and load, create, commit, rename, and drop tables. The Pixeltable cookbook names REST as a production catalog.",
       "caveats": [
         "The caller configures the REST endpoint, authentication, and warehouse access.",
-        "Creating or replacing a table requires the catalog to support namespace creation, table creation, and table rename."
+        "Creating or replacing a table requires the catalog to support namespace creation, table creation, and table rename.",
+        "Pixeltable's release tests use a local SQL catalog, not REST."
       ],
       "links": [
         {
@@ -251,42 +252,30 @@
       "level": "none",
       "notes": "V3 feature; not applicable to V2.",
       "caveats": [],
-      "links": [
-        {
-          "label": "Pixeltable 0.7.16 export implementation",
-          "url": "https://github.com/pixeltable/pixeltable/blob/v0.7.16/pixeltable/io/iceberg.py"
-        }
-      ]
+      "links": []
     },
     "pixeltable:shredded-variant:v2": {
       "level": "none",
       "notes": "V3 feature; not applicable to V2.",
       "caveats": [],
-      "links": [
-        {
-          "label": "Pixeltable 0.7.16 export implementation",
-          "url": "https://github.com/pixeltable/pixeltable/blob/v0.7.16/pixeltable/io/iceberg.py"
-        }
-      ]
+      "links": []
     },
     "pixeltable:write-insert:v3": {
-      "level": "unknown",
-      "notes": "The public Pixeltable export documentation and release tests do not establish V3 compatibility for this write capability. The API delegates writes to the installed PyIceberg version and exposes no format-version setting.",
-      "caveats": [
-        "Do not infer V3 support from the documented V2 export path or from PyIceberg capabilities that the Pixeltable API does not expose."
-      ],
+      "level": "none",
+      "notes": "export_iceberg() writes through PyIceberg, which cannot write V3 tables. PyIceberg 0.12.0, the latest release, writes manifests for V1 and V2 tables only, so an append to an existing V3 table fails. PyIceberg writes manifests on the client, so this holds for every catalog, REST included.",
+      "caveats": [],
       "links": [
         {
-          "label": "Pixeltable export_iceberg API",
-          "url": "https://docs.pixeltable.com/sdk/latest/io"
+          "label": "PyIceberg issue: Support writing V3 tables",
+          "url": "https://github.com/apache/iceberg-python/issues/1551"
+        },
+        {
+          "label": "PyIceberg 0.12.0 manifest writer (V1 and V2 only)",
+          "url": "https://github.com/apache/iceberg-python/blob/pyiceberg-0.12.0/pyiceberg/manifest.py#L1289-L1302"
         },
         {
           "label": "Pixeltable 0.7.16 export implementation",
           "url": "https://github.com/pixeltable/pixeltable/blob/v0.7.16/pixeltable/io/iceberg.py"
-        },
-        {
-          "label": "Pixeltable 0.7.16 Iceberg export tests",
-          "url": "https://github.com/pixeltable/pixeltable/blob/v0.7.16/tests/io/test_iceberg.py"
         }
       ]
     },
@@ -348,23 +337,17 @@
       ]
     },
     "pixeltable:table-creation:v3": {
-      "level": "unknown",
-      "notes": "The public Pixeltable export documentation and release tests do not establish V3 compatibility for this write capability. The API delegates writes to the installed PyIceberg version and exposes no format-version setting.",
-      "caveats": [
-        "Do not infer V3 support from the documented V2 export path or from PyIceberg capabilities that the Pixeltable API does not expose."
-      ],
+      "level": "none",
+      "notes": "export_iceberg() passes no format version to create_table(), so the tables it creates are V2, PyIceberg's default. PyIceberg 0.12.0 cannot write V3 tables.",
+      "caveats": [],
       "links": [
-        {
-          "label": "Pixeltable export_iceberg API",
-          "url": "https://docs.pixeltable.com/sdk/latest/io"
-        },
         {
           "label": "Pixeltable 0.7.16 export implementation",
           "url": "https://github.com/pixeltable/pixeltable/blob/v0.7.16/pixeltable/io/iceberg.py"
         },
         {
-          "label": "Pixeltable 0.7.16 Iceberg export tests",
-          "url": "https://github.com/pixeltable/pixeltable/blob/v0.7.16/tests/io/test_iceberg.py"
+          "label": "PyIceberg issue: Support writing V3 tables",
+          "url": "https://github.com/apache/iceberg-python/issues/1551"
         }
       ]
     },
@@ -419,92 +402,84 @@
       ]
     },
     "pixeltable:hidden-partitioning:v3": {
-      "level": "unknown",
-      "notes": "The public Pixeltable export documentation and release tests do not establish V3 compatibility for this write capability. The API delegates writes to the installed PyIceberg version and exposes no format-version setting.",
-      "caveats": [
-        "Do not infer V3 support from the documented V2 export path or from PyIceberg capabilities that the Pixeltable API does not expose."
-      ],
+      "level": "none",
+      "notes": "export_iceberg() writes through PyIceberg, which cannot write V3 tables. PyIceberg 0.12.0, the latest release, writes manifests for V1 and V2 tables only, so an append to an existing V3 table fails. PyIceberg writes manifests on the client, so this holds for every catalog, REST included.",
+      "caveats": [],
       "links": [
         {
-          "label": "Pixeltable export_iceberg API",
-          "url": "https://docs.pixeltable.com/sdk/latest/io"
+          "label": "PyIceberg issue: Support writing V3 tables",
+          "url": "https://github.com/apache/iceberg-python/issues/1551"
+        },
+        {
+          "label": "PyIceberg 0.12.0 manifest writer (V1 and V2 only)",
+          "url": "https://github.com/apache/iceberg-python/blob/pyiceberg-0.12.0/pyiceberg/manifest.py#L1289-L1302"
         },
         {
           "label": "Pixeltable 0.7.16 export implementation",
           "url": "https://github.com/pixeltable/pixeltable/blob/v0.7.16/pixeltable/io/iceberg.py"
-        },
-        {
-          "label": "Pixeltable 0.7.16 Iceberg export tests",
-          "url": "https://github.com/pixeltable/pixeltable/blob/v0.7.16/tests/io/test_iceberg.py"
         }
       ]
     },
     "pixeltable:catalog-integration:v3": {
-      "level": "unknown",
-      "notes": "The public Pixeltable export documentation and release tests do not establish V3 compatibility for this write capability. The API delegates writes to the installed PyIceberg version and exposes no format-version setting.",
-      "caveats": [
-        "Do not infer V3 support from the documented V2 export path or from PyIceberg capabilities that the Pixeltable API does not expose."
-      ],
+      "level": "none",
+      "notes": "export_iceberg() writes through PyIceberg, which cannot write V3 tables. PyIceberg 0.12.0, the latest release, writes manifests for V1 and V2 tables only, so an append to an existing V3 table fails. PyIceberg writes manifests on the client, so this holds for every catalog, REST included.",
+      "caveats": [],
       "links": [
         {
-          "label": "Pixeltable export_iceberg API",
-          "url": "https://docs.pixeltable.com/sdk/latest/io"
+          "label": "PyIceberg issue: Support writing V3 tables",
+          "url": "https://github.com/apache/iceberg-python/issues/1551"
+        },
+        {
+          "label": "PyIceberg 0.12.0 manifest writer (V1 and V2 only)",
+          "url": "https://github.com/apache/iceberg-python/blob/pyiceberg-0.12.0/pyiceberg/manifest.py#L1289-L1302"
         },
         {
           "label": "Pixeltable 0.7.16 export implementation",
           "url": "https://github.com/pixeltable/pixeltable/blob/v0.7.16/pixeltable/io/iceberg.py"
-        },
-        {
-          "label": "Pixeltable 0.7.16 Iceberg export tests",
-          "url": "https://github.com/pixeltable/pixeltable/blob/v0.7.16/tests/io/test_iceberg.py"
         }
       ]
     },
     "pixeltable:aws-glue-catalog:v3": {
-      "level": "unknown",
-      "notes": "The public Pixeltable export documentation and release tests do not establish V3 compatibility for this write capability. The API delegates writes to the installed PyIceberg version and exposes no format-version setting.",
-      "caveats": [
-        "Do not infer V3 support from the documented V2 export path or from PyIceberg capabilities that the Pixeltable API does not expose."
-      ],
+      "level": "none",
+      "notes": "export_iceberg() writes through PyIceberg, which cannot write V3 tables. PyIceberg 0.12.0, the latest release, writes manifests for V1 and V2 tables only, so an append to an existing V3 table fails. PyIceberg writes manifests on the client, so this holds for every catalog, REST included.",
+      "caveats": [],
       "links": [
         {
-          "label": "Pixeltable export_iceberg API",
-          "url": "https://docs.pixeltable.com/sdk/latest/io"
+          "label": "PyIceberg issue: Support writing V3 tables",
+          "url": "https://github.com/apache/iceberg-python/issues/1551"
+        },
+        {
+          "label": "PyIceberg 0.12.0 manifest writer (V1 and V2 only)",
+          "url": "https://github.com/apache/iceberg-python/blob/pyiceberg-0.12.0/pyiceberg/manifest.py#L1289-L1302"
         },
         {
           "label": "Pixeltable 0.7.16 export implementation",
           "url": "https://github.com/pixeltable/pixeltable/blob/v0.7.16/pixeltable/io/iceberg.py"
-        },
-        {
-          "label": "Pixeltable 0.7.16 Iceberg export tests",
-          "url": "https://github.com/pixeltable/pixeltable/blob/v0.7.16/tests/io/test_iceberg.py"
         }
       ]
     },
     "pixeltable:rest-catalog:v3": {
-      "level": "unknown",
-      "notes": "The public Pixeltable export documentation and release tests do not establish V3 compatibility for this write capability. The API delegates writes to the installed PyIceberg version and exposes no format-version setting.",
-      "caveats": [
-        "Do not infer V3 support from the documented V2 export path or from PyIceberg capabilities that the Pixeltable API does not expose."
-      ],
+      "level": "none",
+      "notes": "export_iceberg() writes through PyIceberg, which cannot write V3 tables. PyIceberg 0.12.0, the latest release, writes manifests for V1 and V2 tables only, so an append to an existing V3 table fails. PyIceberg writes manifests on the client, so this holds for every catalog, REST included.",
+      "caveats": [],
       "links": [
         {
-          "label": "Pixeltable export_iceberg API",
-          "url": "https://docs.pixeltable.com/sdk/latest/io"
+          "label": "PyIceberg issue: Support writing V3 tables",
+          "url": "https://github.com/apache/iceberg-python/issues/1551"
+        },
+        {
+          "label": "PyIceberg 0.12.0 manifest writer (V1 and V2 only)",
+          "url": "https://github.com/apache/iceberg-python/blob/pyiceberg-0.12.0/pyiceberg/manifest.py#L1289-L1302"
         },
         {
           "label": "Pixeltable 0.7.16 export implementation",
           "url": "https://github.com/pixeltable/pixeltable/blob/v0.7.16/pixeltable/io/iceberg.py"
-        },
-        {
-          "label": "Pixeltable 0.7.16 Iceberg export tests",
-          "url": "https://github.com/pixeltable/pixeltable/blob/v0.7.16/tests/io/test_iceberg.py"
         }
       ]
     },
     "pixeltable:variant-type:v3": {
       "level": "none",
-      "notes": "Pixeltable JSON values are converted to Arrow structs with inferred nested types. The export path does not map them to the Iceberg V3 VARIANT type.",
+      "notes": "Pixeltable JSON values are exported as Arrow structs or lists with inferred types, not as the Iceberg V3 VARIANT type.",
       "caveats": [],
       "links": [
         {
@@ -515,7 +490,7 @@
     },
     "pixeltable:shredded-variant:v3": {
       "level": "none",
-      "notes": "The export path writes JSON as typed structs, with no VARIANT mapping or variant-shredding control.",
+      "notes": "The export path writes JSON as typed structs or lists, with no VARIANT mapping or variant-shredding control.",
       "caveats": [],
       "links": [
         {
