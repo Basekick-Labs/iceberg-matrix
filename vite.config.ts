@@ -27,5 +27,11 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test-setup.ts'],
     css: true,
+    // The App tests render the whole matrix (30+ platforms, ~100 rows) and some
+    // click through it, so a single test uses ~2s on a laptop. The 5s default
+    // left too little headroom for a slower CI runner: the same tests timed out
+    // there. This is only an upper bound, so fast runs are unaffected.
+    testTimeout: 30000,
+
   },
 })
