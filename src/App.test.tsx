@@ -3,6 +3,16 @@ import { describe, it, expect } from 'vitest'
 import fc from 'fast-check'
 import App from './App'
 
+// Catalogs and Ingestion are separate chunks loaded on demand, so opening one
+// shows "Loading…" until its data arrives. Wait for that, then the view is ready.
+// Going back to Engines (bundled) or to an already-opened view is synchronous.
+async function openView(name: 'Catalogs' | 'Ingestion') {
+  fireEvent.click(screen.getByRole('tab', { name }))
+  await waitFor(() => expect(screen.queryByText('Loading…')).not.toBeInTheDocument())
+  expect(screen.getByRole('grid')).toBeInTheDocument()
+}
+
+
 describe('App', () => {
   it('renders the heading', () => {
     render(<App />)
@@ -39,10 +49,10 @@ describe('Engines/Catalogs view toggle', () => {
     expect(screen.getByRole('tab', { name: 'Engines' })).toHaveAttribute('aria-selected', 'true')
   })
 
-  it('switches to the Catalogs view and back', () => {
+  it('switches to the Catalogs view and back', async () => {
     render(<App />)
 
-    fireEvent.click(screen.getByRole('tab', { name: 'Catalogs' }))
+    await openView('Catalogs')
     // Catalog columns replace the engine columns.
     expect(screen.getByText('Apache Polaris')).toBeInTheDocument()
     expect(screen.getByText('Lakekeeper')).toBeInTheDocument()
@@ -55,14 +65,14 @@ describe('Engines/Catalogs view toggle', () => {
     expect(screen.queryByText('Apache Polaris')).not.toBeInTheDocument()
   })
 
-  it('hides the version filter in the Catalogs view and keeps the engines selection', () => {
+  it('hides the version filter in the Catalogs view and keeps the engines selection', async () => {
     render(<App />)
     // Engines view offers the version chips.
     expect(
       screen.getByRole('button', { name: 'Show Iceberg V2 features' })
     ).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('tab', { name: 'Catalogs' }))
+    await openView('Catalogs')
     // The rubric has no v2/v3 dimension, so the version chips are not rendered.
     expect(
       screen.queryByRole('button', { name: 'Show Iceberg V2 features' })
@@ -81,9 +91,9 @@ describe('Engines/Catalogs view toggle', () => {
     ).toHaveAttribute('aria-pressed', 'true')
   })
 
-  it('shows both catalog groups as column group headers', () => {
+  it('shows both catalog groups as column group headers', async () => {
     render(<App />)
-    fireEvent.click(screen.getByRole('tab', { name: 'Catalogs' }))
+    await openView('Catalogs')
 
     // Scoped to the matrix grid: the same group names also appear as filter
     // chips in the panel above it.
@@ -92,9 +102,9 @@ describe('Engines/Catalogs view toggle', () => {
     expect(within(grid).getByText('Open Source')).toBeInTheDocument()
   })
 
-  it('offers the catalog groups and only the rubric category as filters', () => {
+  it('offers the catalog groups and only the rubric category as filters', async () => {
     render(<App />)
-    fireEvent.click(screen.getByRole('tab', { name: 'Catalogs' }))
+    await openView('Catalogs')
 
     const panel = screen.getByRole('search')
     // Group chips are derived from the data, so the catalog groups appear...
@@ -116,7 +126,7 @@ describe('Engines/Catalogs view toggle', () => {
 
   it('opens a cell popover with notes and source link but no version line', async () => {
     render(<App />)
-    fireEvent.click(screen.getByRole('tab', { name: 'Catalogs' }))
+    await openView('Catalogs')
 
     // Snowflake Horizon × Managed Offering; cells carry their notes as title.
     fireEvent.click(screen.getByTitle('Fully managed SaaS with zero catalog operations.'))
@@ -138,12 +148,12 @@ describe('Engines/Catalogs view toggle', () => {
     expect(within(dialog).queryByText(/Since/)).not.toBeInTheDocument()
   })
 
-  it('keeps catalog filters isolated from the engines view', () => {
+  it('keeps catalog filters isolated from the engines view', async () => {
     render(<App />)
     const grid = () => screen.getByRole('grid')
 
     // Narrow the catalogs view to the Open Source group.
-    fireEvent.click(screen.getByRole('tab', { name: 'Catalogs' }))
+    await openView('Catalogs')
     fireEvent.click(
       within(screen.getByRole('search')).getByRole('button', { name: 'Filter by Open Source' })
     )
@@ -157,7 +167,7 @@ describe('Engines/Catalogs view toggle', () => {
     expect(within(grid()).getAllByText(/Athena/).length).toBeGreaterThan(0)
 
     // ...and the catalog filter survives the round trip.
-    fireEvent.click(screen.getByRole('tab', { name: 'Catalogs' }))
+    await openView('Catalogs')
     expect(within(grid()).getByText('Apache Polaris')).toBeInTheDocument()
     expect(within(grid()).queryByText('Snowflake Horizon')).not.toBeInTheDocument()
     expect(
@@ -173,9 +183,9 @@ describe('Ingestion view', () => {
     expect(tabs).toEqual(['Engines', 'Ingestion', 'Catalogs'])
   })
 
-  it('shows the ingestion tools and only their write-oriented features', () => {
+  it('shows the ingestion tools and only their write-oriented features', async () => {
     render(<App />)
-    fireEvent.click(screen.getByRole('tab', { name: 'Ingestion' }))
+    await openView('Ingestion')
     const grid = screen.getByRole('grid')
 
     // The ingestion tools replace the engine columns.
@@ -192,9 +202,9 @@ describe('Ingestion view', () => {
     expect(within(grid).queryByText('Time Travel / Snapshots')).not.toBeInTheDocument()
   })
 
-  it('keeps the version chips, but not the engine-only storage toggles', () => {
+  it('keeps the version chips, but not the engine-only storage toggles', async () => {
     render(<App />)
-    fireEvent.click(screen.getByRole('tab', { name: 'Ingestion' }))
+    await openView('Ingestion')
     expect(
       screen.getByRole('button', { name: 'Show Iceberg V3 features' })
     ).toBeInTheDocument()
@@ -218,7 +228,7 @@ describe('Matrix filters', () => {
     const grid = () => screen.getByRole('grid')
     expect(within(grid()).getByText('Hidden Partitioning')).toBeInTheDocument()
 
-    fireEvent.change(screen.getByRole('textbox', { name: 'Search features by name' }), {
+    fireEvent.change(screen.getByRole('textbox', { name: 'Search features or engines by name' }), {
       target: { value: 'Bloom' },
     })
     // The search box propagates to the shared filter state after a 200ms debounce.
@@ -252,7 +262,7 @@ describe('Matrix filters', () => {
   it('narrows catalogs by level and shows the empty state when nothing matches', async () => {
     render(<App />)
     const grid = () => screen.getByRole('grid')
-    fireEvent.click(screen.getByRole('tab', { name: 'Catalogs' }))
+    await openView('Catalogs')
 
     // The spec-support V3 row keeps unknown cells (several catalogs haven't
     // announced v3), so the unknown filter narrows to it while the fully
@@ -262,7 +272,7 @@ describe('Matrix filters', () => {
     expect(within(grid()).queryByText('Managed Offering')).not.toBeInTheDocument()
 
     // A search that matches no feature name empties the matrix...
-    fireEvent.change(screen.getByRole('textbox', { name: 'Search features by name' }), {
+    fireEvent.change(screen.getByRole('textbox', { name: 'Search features or catalogs by name' }), {
       target: { value: 'zzz-no-such-feature' },
     })
     await waitFor(() =>
@@ -272,7 +282,7 @@ describe('Matrix filters', () => {
     )
 
     // ...and clearing the search restores the narrowed matrix.
-    fireEvent.change(screen.getByRole('textbox', { name: 'Search features by name' }), {
+    fireEvent.change(screen.getByRole('textbox', { name: 'Search features or catalogs by name' }), {
       target: { value: '' },
     })
     await waitFor(() =>
@@ -334,6 +344,69 @@ describe('Matrix filters', () => {
     expect(screen.getByRole('button', { name: 'Compare versions' })).toBeDisabled()
   })
 
+  it('finds an engine by name: keeps that column and every feature row', async () => {
+    render(<App />)
+    const grid = () => screen.getByRole('grid')
+    expect(within(grid()).getAllByText(/Athena/).length).toBeGreaterThan(0)
+
+    fireEvent.change(screen.getByRole('textbox', { name: 'Search features or engines by name' }), {
+      target: { value: 'duckdb' },
+    })
+    // Only the DuckDB column is left...
+    await waitFor(() =>
+      expect(within(grid()).queryByText(/Athena/)).not.toBeInTheDocument()
+    )
+    expect(within(grid()).getByText(/DuckDB/)).toBeInTheDocument()
+    // ...with all the feature rows still shown (it is not also a feature filter).
+    expect(within(grid()).getByText('Position Deletes')).toBeInTheDocument()
+    expect(within(grid()).getByText('Hidden Partitioning')).toBeInTheDocument()
+    // A hint says what matched.
+    expect(screen.getByText(/Showing 1 engine matching “duckdb”/)).toBeInTheDocument()
+  })
+
+  it('matches an engine by vendor and keeps all of its variants', async () => {
+    render(<App />)
+    fireEvent.change(screen.getByRole('textbox', { name: 'Search features or engines by name' }), {
+      target: { value: 'aws' },
+    })
+    await waitFor(() =>
+      expect(screen.getByText(/Showing \d+ engines matching “aws”/)).toBeInTheDocument()
+    )
+    const grid = screen.getByRole('grid')
+    expect(within(grid).getAllByText(/Athena/).length).toBeGreaterThan(0)
+    expect(within(grid).queryByText(/DuckDB/)).not.toBeInTheDocument()
+  })
+
+  it('prefers the engine over a feature with the same word', async () => {
+    render(<App />)
+    // "snowflake" is both an engine and part of the "Snowflake Horizon Catalog"
+    // feature. Typing the engine name should show the engine, not collapse to one
+    // cell, so the row is hidden by neither filter.
+    fireEvent.change(screen.getByRole('textbox', { name: 'Search features or engines by name' }), {
+      target: { value: 'snowflake' },
+    })
+    await waitFor(() =>
+      expect(screen.getByText(/Showing 1 engine matching “snowflake”/)).toBeInTheDocument()
+    )
+    const grid = screen.getByRole('grid')
+    expect(within(grid).getByText('Position Deletes')).toBeInTheDocument()
+    expect(within(grid).getByText('Snowflake Horizon Catalog')).toBeInTheDocument()
+  })
+
+  it('still filters feature rows when the text matches no engine', async () => {
+    render(<App />)
+    fireEvent.change(screen.getByRole('textbox', { name: 'Search features or engines by name' }), {
+      target: { value: 'horizon' },
+    })
+    await waitFor(() =>
+      expect(screen.queryByText('Hidden Partitioning')).not.toBeInTheDocument()
+    )
+    expect(within(screen.getByRole('grid')).getByText('Snowflake Horizon Catalog')).toBeInTheDocument()
+    // No engine matched, so no "Showing N engines" hint and all columns remain.
+    expect(screen.queryByText(/Showing \d+ engine/)).not.toBeInTheDocument()
+    expect(within(screen.getByRole('grid')).getAllByText(/Athena/).length).toBeGreaterThan(0)
+  })
+
   it('clears all filters at once', () => {
     render(<App />)
     const grid = () => screen.getByRole('grid')
@@ -375,9 +448,9 @@ describe('Snowflake storage mode toggle', () => {
     ).toBeInTheDocument()
   })
 
-  it('renders no Snowflake storage toggle in the Catalogs view', () => {
+  it('renders no Snowflake storage toggle in the Catalogs view', async () => {
     render(<App />)
-    fireEvent.click(screen.getByRole('tab', { name: 'Catalogs' }))
+    await openView('Catalogs')
     expect(
       screen.queryByRole('button', { name: /storage$/ }),
     ).not.toBeInTheDocument()

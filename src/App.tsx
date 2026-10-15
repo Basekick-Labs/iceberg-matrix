@@ -1,8 +1,7 @@
 import { useState, useMemo, lazy, Suspense } from "react";
 import type { AwsS3Mode, FilterState, SnowflakeStorageMode, ViewMode } from "./types";
-import { getEngineData } from "./data/load-data";
-import { dataCatalogs } from "./data/load-catalogs";
-import { dataIngestion } from "./data/load-ingestion";
+import { preloadView } from "./data/view-data";
+import { useViewData } from "./hooks/useViewData";
 import { FilterPanel } from "./components/FilterPanel";
 import { ViewToggle } from "./components/ViewToggle";
 import { CompatibilityMatrix } from "./components/CompatibilityMatrix";
@@ -68,11 +67,14 @@ export default function App() {
   const isCatalogsView = viewMode === "catalogs";
   const isIngestionView = viewMode === "ingestion";
   const isEnginesView = viewMode === "engines";
-  const activeData = isCatalogsView
-    ? dataCatalogs
-    : isIngestionView
-      ? dataIngestion
-      : getEngineData(awsS3Mode, snowflakeMode);
+  // The default engines dataset is bundled with the app; Catalogs, Ingestion and
+  // the S3 Tables / Snowflake external variants load on demand. While a variant
+  // loads, the previous table of the same view stays on screen.
+  const { data: activeData, loading: dataLoading, error: dataError, retry } = useViewData(
+    viewMode,
+    awsS3Mode,
+    snowflakeMode,
+  );
   const filters = isCatalogsView
     ? catalogFilters
     : isIngestionView
@@ -85,7 +87,10 @@ export default function App() {
       : setEngineFilters;
 
   const { platforms, features } = useMemo(
-    () => applyFilters(activeData, filters),
+    () =>
+      activeData
+        ? applyFilters(activeData, filters)
+        : { platforms: [], features: [] },
     [activeData, filters],
   );
   // The comparison summary is an explicit opt-in (the Compare toggle), not an
@@ -103,6 +108,10 @@ export default function App() {
               <img
                 src="/iceberg-logo.svg"
                 alt="Apache Iceberg logo"
+                width={36}
+                height={36}
+                // The one image that is always visible on first paint.
+                fetchPriority="high"
                 className="h-9 w-9"
               />
               <div>
@@ -117,7 +126,7 @@ export default function App() {
             <div className="flex items-center gap-3 flex-wrap">
               {/* Version selection moved into the FilterPanel (multi-select
                   chips). The header keeps only the Engines/Catalogs toggle. */}
-              <ViewToggle mode={viewMode} onChange={setViewMode} />
+              <ViewToggle mode={viewMode} onChange={setViewMode} onPreload={preloadView} />
             </div>
           </div>
         </div>
@@ -190,17 +199,41 @@ export default function App() {
           )}
         </div>
 
-        <div className="mb-3">
-          <FilterPanel
-            filters={filters}
-            data={activeData}
-            onFilterChange={setFilters}
-            entityLabel={isCatalogsView ? "Catalogs" : isIngestionView ? "Tools" : "Platforms"}
-          />
+        {activeData && (
+          <div className="mb-3">
+            <FilterPanel
+              filters={filters}
+              data={activeData}
+              onFilterChange={setFilters}
+              entityLabel={isCatalogsView ? "Catalogs" : isIngestionView ? "Tools" : "Platforms"}
+            />
+          </div>
+        )}
         </div>
-        </div>
+        {!activeData && (
+          <div
+            className="mb-3 rounded-lg border border-gray-200 bg-white p-6 text-center text-sm text-gray-500"
+            role="status"
+            aria-live="polite"
+          >
+            {dataError ? (
+              <>
+                <p className="text-red-600">Could not load this view's data.</p>
+                <button
+                  type="button"
+                  onClick={retry}
+                  className="mt-2 rounded-md bg-blue-600 px-3 py-1 text-xs font-semibold text-white hover:bg-blue-700 cursor-pointer"
+                >
+                  Retry
+                </button>
+              </>
+            ) : (
+              "Loading…"
+            )}
+          </div>
+        )}
 
-        {isCompareMode && (
+        {activeData && isCompareMode && (
           <Suspense fallback={null}>
             <ComparisonSummary
               data={activeData}
@@ -211,17 +244,21 @@ export default function App() {
           </Suspense>
         )}
 
-        <CompatibilityMatrix
-          data={activeData}
-          filters={filters}
-          // The per-vendor storage switches (AWS S3 Buckets/Tables, Snowflake
-          // managed/external) are engines-view concerns; without these props
-          // the matrix renders no toggles.
-          awsS3Mode={isEnginesView ? awsS3Mode : undefined}
-          onAwsS3ModeChange={isEnginesView ? setAwsS3Mode : undefined}
-          snowflakeMode={isEnginesView ? snowflakeMode : undefined}
-          onSnowflakeModeChange={isEnginesView ? setSnowflakeMode : undefined}
-        />
+        {activeData && (
+          <div aria-busy={dataLoading} className={dataLoading ? "opacity-70 transition-opacity" : undefined}>
+            <CompatibilityMatrix
+              data={activeData}
+              filters={filters}
+              // The per-vendor storage switches (AWS S3 Buckets/Tables, Snowflake
+              // managed/external) are engines-view concerns; without these props
+              // the matrix renders no toggles.
+              awsS3Mode={isEnginesView ? awsS3Mode : undefined}
+              onAwsS3ModeChange={isEnginesView ? setAwsS3Mode : undefined}
+              snowflakeMode={isEnginesView ? snowflakeMode : undefined}
+              onSnowflakeModeChange={isEnginesView ? setSnowflakeMode : undefined}
+            />
+          </div>
+        )}
       </main>
 
       <footer className="border-t border-gray-200 bg-white px-4 py-3 sm:px-6 mt-6">

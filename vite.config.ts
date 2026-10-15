@@ -16,6 +16,27 @@ export default defineConfig({
         // React runtime into their own long-term-cacheable chunks so the main
         // app chunk stays small and app-code changes don't bust the data cache.
         manualChunks(id) {
+          // Datasets that are fetched on demand each get their own chunk. They
+          // must be matched BEFORE the catch-all 'matrix-data' rule below:
+          // lumping them into it would make the first load download them all.
+          if (id.includes('/src/data/catalogs/') || id.includes('/src/data/load-catalogs')) {
+            return 'data-catalogs';
+          }
+          if (id.includes('/src/data/ingestion/') || id.includes('/src/data/load-ingestion')) {
+            return 'data-ingestion';
+          }
+          if (
+            id.includes('/src/data/engine-variants/aws-s3tables') ||
+            id.includes('/platforms/aws/s3tables/')
+          ) {
+            return 'data-aws-s3tables';
+          }
+          if (
+            id.includes('/src/data/engine-variants/snowflake-external') ||
+            id.includes('/platforms/snowflake/external/')
+          ) {
+            return 'data-snowflake-external';
+          }
           if (id.includes('/src/data/')) return 'matrix-data';
           if (id.includes('node_modules/react')) return 'react-vendor';
         },

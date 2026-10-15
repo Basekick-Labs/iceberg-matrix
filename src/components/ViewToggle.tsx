@@ -3,6 +3,9 @@ import type { ViewMode } from "../types";
 interface ViewToggleProps {
   mode: ViewMode;
   onChange: (mode: ViewMode) => void;
+  /** Called when a tab is hovered or focused, so its data can start loading
+   *  before the click. */
+  onPreload?: (mode: ViewMode) => void;
 }
 
 const OPTIONS: { mode: ViewMode; label: string }[] = [
@@ -16,7 +19,7 @@ const OPTIONS: { mode: ViewMode; label: string }[] = [
  * tools × a reduced write-oriented feature set, or catalogs × the openness rubric. A contained segmented control so it reads as
  * a view change, distinct from the flat filter pills next to it.
  */
-export function ViewToggle({ mode, onChange }: ViewToggleProps) {
+export function ViewToggle({ mode, onChange, onPreload }: ViewToggleProps) {
   return (
     <div
       className="inline-flex items-center rounded-lg bg-gray-100 p-0.5"
@@ -30,6 +33,8 @@ export function ViewToggle({ mode, onChange }: ViewToggleProps) {
           role="tab"
           aria-selected={mode === opt.mode}
           onClick={() => onChange(opt.mode)}
+          onMouseEnter={() => onPreload?.(opt.mode)}
+          onFocus={() => onPreload?.(opt.mode)}
           className={`px-4 py-1.5 rounded-md text-sm font-semibold cursor-pointer transition-colors ${
             mode === opt.mode
               ? "bg-blue-600 text-white shadow-sm"

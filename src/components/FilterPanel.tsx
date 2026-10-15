@@ -7,6 +7,7 @@ import type {
   SupportLevel,
   Version,
 } from "../types";
+import { platformMatchesQuery } from "../utils/filters";
 
 const CATEGORY_LABELS: Record<FeatureCategory, string> = {
   // Ingestion view; listed first so its chip leads, like its table section.
@@ -170,6 +171,22 @@ export function FilterPanel({
 
   const selectedSet = new Set(filters.selectedPlatforms);
 
+  // The search box finds the active view's entities (engines, ingestion tools or
+  // catalogs) as well as features, so the wording follows the view.
+  const entityNoun =
+    entityLabel === "Platforms" ? "engines" : entityLabel.toLowerCase();
+  // How many entities the committed search text matches (honouring any entity
+  // chips already selected, like the matrix does). Drives the hint under the box.
+  const searchText = filters.searchQuery.trim().toLowerCase();
+  const matchedEntities =
+    searchText === ""
+      ? 0
+      : data.platforms.filter(
+          (p) =>
+            (selectedSet.size === 0 || selectedSet.has(p.id)) &&
+            platformMatchesQuery(p, searchText),
+        ).length;
+
   const isGroupFullySelected = (group: PlatformGroup) => {
     const members = groupMap.get(group) ?? [];
     return members.length > 0 && members.every((m) => selectedSet.has(m.id));
@@ -304,10 +321,16 @@ export function FilterPanel({
             type="text"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Filter features…"
+            placeholder={`Filter features or ${entityNoun}…`}
             className="w-full border border-gray-300 rounded-md px-2.5 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
-            aria-label="Search features by name"
+            aria-label={`Search features or ${entityNoun} by name`}
           />
+          {matchedEntities > 0 && (
+            <p className="mt-1 text-[10px] text-blue-700" role="status">
+              Showing {matchedEntities} {matchedEntities === 1 ? entityNoun.replace(/s$/, "") : entityNoun}{" "}
+              matching “{filters.searchQuery.trim()}”
+            </p>
+          )}
           <div className="flex gap-3 mt-1.5">
             <label className="flex items-center gap-1 cursor-pointer text-[10px] text-gray-500 hover:text-gray-700">
               <input
@@ -353,7 +376,7 @@ export function FilterPanel({
                   aria-label={`Filter by ${GROUP_LABELS[group]}`}
                 >
                   {GROUP_LOGOS[group] && (
-                    <img src={GROUP_LOGOS[group]} alt="" className="w-3.5 h-3.5 inline-block mr-1 -mt-px" />
+                    <img src={GROUP_LOGOS[group]} alt="" width={14} height={14} decoding="async" className="w-3.5 h-3.5 inline-block mr-1 -mt-px" />
                   )}
                   {GROUP_LABELS[group]}
                 </button>
@@ -381,7 +404,7 @@ export function FilterPanel({
                       aria-label={`Filter by ${p.name}`}
                     >
                       {PLATFORM_LOGOS[p.id] && (
-                        <img src={PLATFORM_LOGOS[p.id]} alt="" className="w-3 h-3 inline-block mr-0.5 -mt-px" />
+                        <img src={PLATFORM_LOGOS[p.id]} alt="" width={12} height={12} decoding="async" className="w-3 h-3 inline-block mr-0.5 -mt-px" />
                       )}
                       {p.name}
                     </button>

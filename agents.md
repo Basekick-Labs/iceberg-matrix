@@ -23,7 +23,9 @@ A React single-page application that displays an interactive compatibility matri
 │   │   └── ViewToggle.tsx            # Top-level Engines/Ingestion/Catalogs view switcher
 │   ├── data/                 # JSON data files
 │   │   ├── features.json             # Engine feature definitions and categories
-│   │   ├── load-data.ts              # Merges nested per-engine files into CompatibilityData at import time
+│   │   ├── load-data.ts              # Merges nested per-engine files; default dataset is bundled, S3 Tables / Snowflake external variants load on demand
+│   │   ├── view-data.ts              # One entry point per view: peek/load/preload a dataset (Catalogs, Ingestion and variants are lazy)
+│   │   ├── engine-variants/          # Lazy engine variants: aws-s3tables.ts, snowflake-external.ts
 │   │   ├── load-catalogs.ts          # Merges per-catalog files into the catalogs CompatibilityData
 │   │   ├── catalogs.test.ts          # Structural tests for the catalogs dataset (extension point: EXPECTED_CATALOG_IDS)
 │   │   ├── load-ingestion.ts         # Merges per-tool files into the ingestion CompatibilityData
@@ -42,7 +44,7 @@ A React single-page application that displays an interactive compatibility matri
 │   │       │   │   ├── glue/glue.json
 │   │       │   │   ├── managed-flink/managed-flink.json
 │   │       │   │   └── redshift-s3/redshift-s3.json
-│   │       │   └── s3tables/         # AWS in S3-Tables mode (exported as `dataS3Tables`)
+│   │       │   └── s3tables/         # AWS in S3-Tables mode (lazy chunk, loaded on demand)
 │   │       │       ├── athena/athena.json
 │   │       │       ├── emr/emr.json
 │   │       │       ├── glue/glue.json
@@ -59,7 +61,7 @@ A React single-page application that displays an interactive compatibility matri
 │   │                                 # trino/, pyiceberg/, doris/, databend/
 │   ├── utils/                # Pure utility functions
 │   │   ├── comparison.ts             # Comparison logic between platforms
-│   │   ├── filters.ts                # Filter/search logic
+│   │   ├── filters.ts                # Filter + search logic (search matches engines first, else feature rows)
 │   │   └── support.ts                # Support level helpers
 │   ├── types.ts              # TypeScript type definitions
 │   ├── App.tsx               # Root app component
@@ -153,7 +155,17 @@ AWS is split first by S3 mode and then by engine. `aws/s3buckets/` and `aws/s3ta
 - AWS engines first, in the order `athena`, `emr`, `glue`, `managed-flink`, `redshift-s3`.
 - Then the non-AWS vendors in the order `gcp`, `azure`, `databricks`, `snowflake`, `oss`.
 
-It exports four `CompatibilityData` datasets, one per (AWS mode × Snowflake mode) combination: `data` (S3 buckets + Snowflake managed), `dataS3Tables` (S3 Tables + Snowflake managed), `dataSnowflakeExternal` (S3 buckets + Snowflake external) and `dataS3TablesSnowflakeExternal` (S3 Tables + Snowflake external), plus a `getEngineData(awsS3Mode, snowflakeMode)` selector the app uses. `features` and `versions` come unchanged from `features.json`. The fixed import order makes the merged platform order and support map deterministic, independent of filesystem enumeration.
+The **default** dataset (`data`: S3 buckets + Snowflake managed) is built eagerly and ships in the first-load bundle, so the page renders with no loading step. The other three (AWS mode × Snowflake mode) combinations need the S3 Tables files and/or the Snowflake external file, which live in `src/data/engine-variants/` and are fetched on demand through `loadEngineData(awsS3Mode, snowflakeMode)` (cached, so each dataset keeps a stable object identity for React memoization). `peekEngineData` returns an already-loaded dataset synchronously. `features` and `versions` come unchanged from `features.json`. The fixed import order makes the merged platform order and support map deterministic, independent of filesystem enumeration. `src/data/load-data.test.ts` loads all four through `loadEngineData`, so it validates the real lazy path.
+
+### Lazy loading (keep the first load small)
+
+Only the default engines dataset is in the first-load bundle. **Catalogs**, **Ingestion**, the **S3 Tables** engine variant and the **Snowflake external** variant are separate chunks fetched on first use (measured: first-load data 152 kB to 107 kB gzip; see issue #88 for the next step).
+
+- `src/data/view-data.ts` is the single entry point: `peekViewData` (already loaded?), `loadViewData`, `preloadView`, and `lastViewData` (the previous dataset of a view). `src/hooks/useViewData.ts` wraps it for `App.tsx`. While a variant loads, the previous table of that view stays on screen (dimmed, `aria-busy`); a first-time view shows "Loading…", and a failed fetch shows a Retry button. Hovering or focusing a tab calls `preloadView`, so the chunk is usually ready by the click.
+- `vite.config.ts` `manualChunks` gives each lazy dataset its own chunk (`data-catalogs`, `data-ingestion`, `data-aws-s3tables`, `data-snowflake-external`). **Their rules must stay above the catch-all `matrix-data` rule**: a file under `src/data/` that falls through to `matrix-data` is downloaded on first load.
+- **Do not statically import** `load-catalogs`, `load-ingestion`, `engine-variants/*` or the `s3tables` / `snowflake/external` JSON files from app code: a single static import silently moves that data back into the first-load bundle. Tests may import them.
+- Tests that open Catalogs or Ingestion use the `openView` helper in `App.test.tsx`, which waits for the "Loading…" state to clear. Going back to Engines is synchronous.
+- Logos: the header logo is `fetchPriority="high"`; column-header logos are `loading="lazy"` with explicit `width`/`height`.
 
 ### Snowflake dual-storage layout
 
@@ -188,6 +200,8 @@ The catalogs view has its own dataset under `src/data/catalogs/`, independent fr
 
 `App.tsx` holds a `viewMode` state (`"engines" | "ingestion" | "catalogs"`, default engines) switched by `ViewToggle` in the header (the only control in the header now). Each view keeps its own independent `FilterState` (engines and ingestion start at `selectedVersions: ["v2","v3"]`, catalogs at `["current"]`), so filters survive toggling and never leak across views. The catalogs view reuses `CompatibilityMatrix`, `FilterPanel` (with `entityLabel="Catalogs"`), and `DetailPopover`, but renders no AWS S3-mode toggle. The Iceberg version is a **multi-select chip group inside `FilterPanel`** ("VERSION", styled like the Platform/Category/Support chips), not a header switcher. By default **both V2 and V3 are selected** (`initialEngineFilters.selectedVersions: ["v2","v3"]`). The last selected version cannot be deselected, so the grid never loses its version dimension, and the chips are hidden in the catalogs view (whose single synthetic `current` version has no v2/v3 choice). The ingestion view reuses the same matrix, filter panel (entity label "Tools"), version chips, Compare button and detail popover as engines, since it has the same v2/v3 dimension; only the dataset, the reduced feature list and the intro text differ. The AWS S3-mode and Snowflake storage toggles are gated on `isEnginesView`, so they never show in the other views. Because the ingestion view has fewer columns, the matrix caps column width (`ENGINE_COL_MAX_WIDTH` in `matrixLayout.ts`) so it does not stretch each across half the screen; the 21-column engines view and 10-column catalogs view are unaffected.
 
+**Search.** The box under SEARCH finds the active view's entities (engines, ingestion tools or catalogs) as well as features, and its placeholder, label and hint follow the view. If the text matches any entity (name, variant label, vendor or id, case-insensitive) only those columns are kept and every feature row stays; otherwise it filters feature rows by name. Entities win a tie on purpose: `snowflake` is both an engine and part of the `Snowflake Horizon Catalog` row, and intersecting them would leave one cell. A hint ("Showing N engines matching ...") states what matched. The logic is `platformMatchesQuery` / `featureMatchesQuery` in `src/utils/filters.ts`.
+
 **One column per engine (not per version).** The grid renders a single column per platform; the version dimension lives *inside* each cell. `FeatureRow` restricts a cell's versions to `selectedVersions ∩ applicableVersions(feature, allVersions)` (via `src/utils/versions.ts`), then hands that version→entry list to `SupportCell`. `SupportCell` renders a **solid** cell when every version agrees (the common case) and a **transition cell** only when they differ: one segment per version laid out left to right (`V2 ✓ Full → V3 ✗ None`), each tinted with its own status and labelled with its version, with an arrow badge on every boundary and a purple frame. Segments share the cell width equally and use short labels (`Part.`, `Unk.`; full words stay in the aria-label/tooltip) so a transition cell is exactly as wide as a solid one. **All engine columns have the same fixed width**: the table uses `table-layout: fixed` with widths from `src/components/matrixLayout.ts` (`NAME_COL_WIDTH` 176, `ENGINE_COL_WIDTH` 110, the minimum that fits a two-segment cell), so a difference never widens its column. Because of the `applicableVersions` intersection, a V3-only feature (Deletion Vectors, Lineage Tracking, Variant Type) shows a single solid V3 cell even with both versions selected, never a bogus "V2 None / V3 Full" split. The frame, arrow and per-segment labels mean a difference is identifiable without relying on colour, and the row extends to 3+ segments when V4 lands.
 
 Comparison is a **separate opt-in**, decoupled from version selection: a `compareMode` boolean on `FilterState` (default `false`) toggled by a **Compare** button next to the version chips. When on, `ComparisonSummary` renders a **differences-only table** (columns `Feature | Engine | <each selected version> | Change`) listing every (feature, engine) whose support level is not identical across the versions the feature applies to; agreeing pairs and single-version (e.g. V3-only) features are omitted. The rows come from `computeDifferences` in `src/utils/comparison.ts`, which intersects each feature with `applicableVersions`, marks non-applicable version columns `null` (rendered "—"), and classifies the move as Gained / Lost / Changed — a transition touching `unknown` is neutral "Changed", not an over-claimed gain/loss. It renders only when `compareMode && selectedVersions.length > 1`; the Compare button is disabled+greyed below two versions, and `compareMode` is cleared automatically when the selection drops to one. So "both versions selected" shows the single-column grid (with split cells) and no table until Compare is pressed.
@@ -200,7 +214,7 @@ Each feature row also shows a version badge next to its name ("Positional Delete
 
 1. Create the engine subfolder under its vendor folder using the prefix-less name (e.g. platform `google-bigquery` → `src/data/platforms/gcp/bigquery/`). For AWS, create it under both `aws/s3buckets/<engine>/` and `aws/s3tables/<engine>/`.
 2. Add the engine's JSON file named after the subfolder (e.g. `bigquery/bigquery.json`) containing a single platform object under `"platforms"` and a support entry for every feature × version combination under `"support"`.
-3. Wire the new engine into `src/data/load-data.ts`: add an explicit static `import` for the engine JSON file and append it to the correct ordered array — `awsBucketsEngines` and `awsTablesEngines` for an AWS engine (both S3 modes), or `nonAwsEngines` for the other vendors — at the right position in the merge order (AWS engines first in the order athena, emr, glue, managed-flink, redshift-s3; then gcp, azure, databricks, snowflake, oss).
+3. Wire the new engine into `src/data/load-data.ts`: add an explicit static `import` for the engine JSON file and append it to the correct ordered array (`awsBucketsEngines` for the AWS S3 buckets variant; `preSnowflakeEngines`, `alibabaEngines` or `postSnowflakeEngines` for the other vendors) at the right position in the merge order (AWS first, then gcp, azure, databricks, snowflake, alibaba, oss). **Exceptions:** an AWS S3 Tables file goes in `src/data/engine-variants/aws-s3tables.ts`, and a Snowflake external-volume file in `src/data/engine-variants/snowflake-external.ts`; these are lazy chunks, so never import them from `load-data.ts`.
 4. If the platform needs a logo, add an SVG to `public/logos/`.
 5. Run `npm run build` and `npm test` to verify nothing breaks.
 
@@ -251,7 +265,7 @@ Each feature row also shows a version badge next to its name ("Positional Delete
 
 ### Data Integrity
 
-- Data is split into nested per-vendor / per-engine files under `src/data/platforms/` and merged at import time by `src/data/load-data.ts`. The nested structure is the single source of truth that `load-data.ts` reads from; there is no aggregated JSON file to keep in sync.
+- Data is split into nested per-vendor / per-engine files under `src/data/platforms/` and merged at import time by `src/data/load-data.ts`. The nested structure is the single source of truth that `load-data.ts` reads from; there is no aggregated JSON file to keep in sync. The default dataset is bundled; the S3 Tables and Snowflake external variants load on demand (see Lazy loading).
 - Each engine file holds exactly one platform object plus only that platform's support entries. The loader concatenates the engine files in a fixed order, so the merged platform order and support map are deterministic regardless of filesystem enumeration.
 - Firehose and Kafka Connect live in the separate ingestion dataset (`src/data/ingestion/`, merged by `src/data/load-ingestion.ts`) and are not part of the engines data. The ingestion feature list is its own file; keep it write-oriented and separate from `src/data/features.json`.
 - Feature definitions live in `src/data/features.json` (single source of truth for engine features and versions). The catalogs view has its own `src/data/catalogs/features.json`; keep them separate — external tooling counts every feature in the engines file for coverage.

@@ -11,12 +11,7 @@
  */
 import { describe, it, expect } from "vitest";
 import featuresJson from "./features.json";
-import {
-  data,
-  dataS3Tables,
-  dataSnowflakeExternal,
-  dataS3TablesSnowflakeExternal,
-} from "./load-data";
+import { data, loadEngineData, peekEngineData } from "./load-data";
 import type { CompatibilityData } from "../types";
 
 const VALID_LEVELS = ["full", "partial", "none", "unknown"];
@@ -118,6 +113,47 @@ describe("engine files on disk", () => {
       }
     },
   );
+});
+
+// Only the default dataset is bundled; the other three are loaded on demand,
+// exactly as the app loads them, so these tests also exercise the lazy path.
+const dataS3Tables = await loadEngineData("s3-tables", "snowflake");
+const dataSnowflakeExternal = await loadEngineData("s3-buckets", "external");
+const dataS3TablesSnowflakeExternal = await loadEngineData("s3-tables", "external");
+
+describe("lazy engine datasets (loadEngineData)", () => {
+  it("has the default dataset ready without loading anything", () => {
+    // Synchronous: this is what lets the first render skip a loading state.
+    expect(peekEngineData("s3-buckets", "snowflake")).toBe(data);
+  });
+
+  it("returns the same object for repeated loads, so memoization survives toggles", async () => {
+    expect(await loadEngineData("s3-tables", "snowflake")).toBe(dataS3Tables);
+    expect(await loadEngineData("s3-buckets", "snowflake")).toBe(data);
+    expect(peekEngineData("s3-tables", "external")).toBe(dataS3TablesSnowflakeExternal);
+  });
+
+  it("builds each variant from its own files", async () => {
+    // Same platforms in the same order in every mode: only the cell data differs.
+    const order = data.platforms.map((p) => p.id);
+    for (const variant of [dataS3Tables, dataSnowflakeExternal, dataS3TablesSnowflakeExternal]) {
+      expect(variant.platforms.map((p) => p.id)).toEqual(order);
+    }
+    // S3 Tables carries its own AWS cells (the Athena note differs by mode).
+    expect(dataS3Tables.support["aws-athena:position-deletes:v2"]).not.toEqual(
+      data.support["aws-athena:position-deletes:v2"],
+    );
+    // Snowflake external is built from the external file. Its cells may equal the
+    // managed ones today, so compare against the file itself, not against `data`.
+    const { snowflakeExternal } = await import("./engine-variants/snowflake-external");
+    expect(dataSnowflakeExternal.support["snowflake:position-deletes:v2"]).toEqual(
+      (snowflakeExternal.support as Record<string, unknown>)["snowflake:position-deletes:v2"],
+    );
+    // And a combined variant takes S3 Tables AWS cells together with external Snowflake.
+    expect(dataS3TablesSnowflakeExternal.support["aws-athena:position-deletes:v2"]).toEqual(
+      dataS3Tables.support["aws-athena:position-deletes:v2"],
+    );
+  });
 });
 
 describe.each([
