@@ -1,0 +1,914 @@
+{
+  "platforms": [
+    {
+      "id": "alibaba-maxcompute",
+      "name": "MaxCompute",
+      "vendor": "Alibaba Cloud",
+      "category": "cloud",
+      "group": "Alibaba Cloud",
+      "docUrl": "https://help.aliyun.com/zh/maxcompute/maxcompute-managed-iceberg-tables-beta"
+    }
+  ],
+  "support": {
+    "alibaba-maxcompute:position-deletes:v2": {
+      "level": "full",
+      "notes": "Not documented. In testing, DELETE and UPDATE on an Iceberg external table committed position delete files (content=1) and left the original data files unchanged. Tested on a MaxCompute Iceberg external table (Iceberg V2 on OSS, cn-hangzhou, 2026-10-15); result read from the table's Iceberg metadata/manifest files.",
+      "caveats": [
+        "UPDATE not supported on managed Iceberg tables"
+      ],
+      "links": [
+        {
+          "label": "MaxCompute - MaxCompute管理的Iceberg表（beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/maxcompute-managed-iceberg-tables-beta"
+        }
+      ]
+    },
+    "alibaba-maxcompute:position-deletes:v3": {
+      "level": "none",
+      "notes": "Not applicable to new V3 writes, and MaxCompute does not support Iceberg format v3 (managed tables are V2 only; external tables read V2)",
+      "caveats": [],
+      "links": [
+        {
+          "label": "MaxCompute - MaxCompute管理的Iceberg表（beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/maxcompute-managed-iceberg-tables-beta"
+        },
+        {
+          "label": "MaxCompute - Iceberg外部表（Beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/iceberg-external-table"
+        }
+      ]
+    },
+    "alibaba-maxcompute:equality-deletes:v2": {
+      "level": "none",
+      "notes": "Not documented, and external tables explicitly do not support upsert. In testing, no write path (INSERT, DELETE, UPDATE) produced equality delete files. Tested on a MaxCompute Iceberg external table (Iceberg V2 on OSS, cn-hangzhou, 2026-10-15); result read from the table's Iceberg metadata/manifest files.",
+      "caveats": [
+        "Iceberg external tables: upsert not supported"
+      ],
+      "links": [
+        {
+          "label": "MaxCompute - Iceberg外部表（Beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/iceberg-external-table"
+        }
+      ]
+    },
+    "alibaba-maxcompute:equality-deletes:v3": {
+      "level": "none",
+      "notes": "MaxCompute does not support Iceberg format v3: managed Iceberg tables are V2-only with no V3 format features, and Iceberg external tables read V2",
+      "caveats": [
+        "Re-check when MaxCompute updates its built-in Iceberg SDK (currently 1.6.1)"
+      ],
+      "links": [
+        {
+          "label": "MaxCompute - MaxCompute管理的Iceberg表（beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/maxcompute-managed-iceberg-tables-beta"
+        },
+        {
+          "label": "MaxCompute - Iceberg外部表（Beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/iceberg-external-table"
+        }
+      ]
+    },
+    "alibaba-maxcompute:merge-on-read:v2": {
+      "level": "full",
+      "notes": "Not documented. In testing, DELETE and UPDATE wrote only new delete files and kept existing data files, i.e. merge-on-read. Tested on a MaxCompute Iceberg external table (Iceberg V2 on OSS, cn-hangzhou, 2026-10-15); result read from the table's Iceberg metadata/manifest files.",
+      "caveats": [],
+      "links": []
+    },
+    "alibaba-maxcompute:merge-on-read:v3": {
+      "level": "none",
+      "notes": "MaxCompute does not support Iceberg format v3: managed Iceberg tables are V2-only with no V3 format features, and Iceberg external tables read V2",
+      "caveats": [
+        "Re-check when MaxCompute updates its built-in Iceberg SDK (currently 1.6.1)"
+      ],
+      "links": [
+        {
+          "label": "MaxCompute - MaxCompute管理的Iceberg表（beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/maxcompute-managed-iceberg-tables-beta"
+        },
+        {
+          "label": "MaxCompute - Iceberg外部表（Beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/iceberg-external-table"
+        }
+      ]
+    },
+    "alibaba-maxcompute:copy-on-write:v2": {
+      "level": "none",
+      "notes": "Not documented. In testing, setting write.delete.mode / write.update.mode = copy-on-write had no effect: DELETE and UPDATE still produced position delete files. Tested on a MaxCompute Iceberg external table (Iceberg V2 on OSS, cn-hangzhou, 2026-10-15); result read from the table's Iceberg metadata/manifest files.",
+      "caveats": [],
+      "links": []
+    },
+    "alibaba-maxcompute:copy-on-write:v3": {
+      "level": "none",
+      "notes": "MaxCompute does not support Iceberg format v3: managed Iceberg tables are V2-only with no V3 format features, and Iceberg external tables read V2",
+      "caveats": [
+        "Re-check when MaxCompute updates its built-in Iceberg SDK (currently 1.6.1)"
+      ],
+      "links": [
+        {
+          "label": "MaxCompute - MaxCompute管理的Iceberg表（beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/maxcompute-managed-iceberg-tables-beta"
+        },
+        {
+          "label": "MaxCompute - Iceberg外部表（Beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/iceberg-external-table"
+        }
+      ]
+    },
+    "alibaba-maxcompute:schema-evolution:v2": {
+      "level": "partial",
+      "notes": "Managed Iceberg tables support Schema Evolution limited to adding and dropping columns; rename/reorder/type change not supported. Normal Iceberg external tables use a fixed DDL schema that does not follow Iceberg schema evolution (Delegate-mode external tables re-derive schema from Iceberg metadata on each read)",
+      "caveats": [
+        "Managed tables: add/drop column only",
+        "Managed tables: changing column data type not supported",
+        "Normal external tables do not auto-update on Iceberg schema evolution",
+        "MaxCompute Iceberg support is Beta: managed Iceberg tables are invitation-only (Shanghai and Germany regions, released 2026-05-07); Iceberg external tables are Beta and require SET odps.service.mode=off"
+      ],
+      "links": [
+        {
+          "label": "MaxCompute - MaxCompute管理的Iceberg表（beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/maxcompute-managed-iceberg-tables-beta"
+        },
+        {
+          "label": "MaxCompute - Iceberg外部表（Beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/iceberg-external-table"
+        }
+      ]
+    },
+    "alibaba-maxcompute:schema-evolution:v3": {
+      "level": "none",
+      "notes": "MaxCompute does not support Iceberg format v3: managed Iceberg tables are V2-only with no V3 format features, and Iceberg external tables read V2",
+      "caveats": [
+        "Re-check when MaxCompute updates its built-in Iceberg SDK (currently 1.6.1)"
+      ],
+      "links": [
+        {
+          "label": "MaxCompute - MaxCompute管理的Iceberg表（beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/maxcompute-managed-iceberg-tables-beta"
+        },
+        {
+          "label": "MaxCompute - Iceberg外部表（Beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/iceberg-external-table"
+        }
+      ]
+    },
+    "alibaba-maxcompute:type-promotion:v2": {
+      "level": "none",
+      "notes": "Changing a column's data type is explicitly not supported on MaxCompute-managed Iceberg tables",
+      "caveats": [],
+      "links": [
+        {
+          "label": "MaxCompute - MaxCompute管理的Iceberg表（beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/maxcompute-managed-iceberg-tables-beta"
+        }
+      ]
+    },
+    "alibaba-maxcompute:type-promotion:v3": {
+      "level": "none",
+      "notes": "MaxCompute does not support Iceberg format v3: managed Iceberg tables are V2-only with no V3 format features, and Iceberg external tables read V2",
+      "caveats": [
+        "Re-check when MaxCompute updates its built-in Iceberg SDK (currently 1.6.1)"
+      ],
+      "links": [
+        {
+          "label": "MaxCompute - MaxCompute管理的Iceberg表（beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/maxcompute-managed-iceberg-tables-beta"
+        },
+        {
+          "label": "MaxCompute - Iceberg外部表（Beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/iceberg-external-table"
+        }
+      ]
+    },
+    "alibaba-maxcompute:column-default-values:v2": {
+      "level": "none",
+      "notes": "Column Default Values is a V3 feature, not available in format version 2",
+      "caveats": [],
+      "links": []
+    },
+    "alibaba-maxcompute:column-default-values:v3": {
+      "level": "none",
+      "notes": "MaxCompute does not support Iceberg format v3: managed Iceberg tables are V2-only with no V3 format features, and Iceberg external tables read V2",
+      "caveats": [
+        "Re-check when MaxCompute updates its built-in Iceberg SDK (currently 1.6.1)"
+      ],
+      "links": [
+        {
+          "label": "MaxCompute - MaxCompute管理的Iceberg表（beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/maxcompute-managed-iceberg-tables-beta"
+        },
+        {
+          "label": "MaxCompute - Iceberg外部表（Beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/iceberg-external-table"
+        }
+      ]
+    },
+    "alibaba-maxcompute:table-creation:v2": {
+      "level": "full",
+      "notes": "CREATE ICEBERG TABLE ... WITH CONNECTION ... OPTIONS(location='oss://...') creates MaxCompute-managed Iceberg tables on OSS; CREATE EXTERNAL TABLE ... STORED AS ICEBERG LOCATION on an empty OSS directory creates the Iceberg schema on first write",
+      "caveats": [
+        "MaxCompute Iceberg support is Beta: managed Iceberg tables are invitation-only (Shanghai and Germany regions, released 2026-05-07); Iceberg external tables are Beta and require SET odps.service.mode=off",
+        "Managed tables: CREATE OR REPLACE and table rename not supported",
+        "Managed tables require an empty, non-nested OSS path per table"
+      ],
+      "links": [
+        {
+          "label": "MaxCompute - MaxCompute管理的Iceberg表（beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/maxcompute-managed-iceberg-tables-beta"
+        },
+        {
+          "label": "MaxCompute - Iceberg外部表（Beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/iceberg-external-table"
+        }
+      ]
+    },
+    "alibaba-maxcompute:table-creation:v3": {
+      "level": "none",
+      "notes": "MaxCompute does not support Iceberg format v3: managed Iceberg tables are V2-only with no V3 format features, and Iceberg external tables read V2",
+      "caveats": [
+        "Re-check when MaxCompute updates its built-in Iceberg SDK (currently 1.6.1)"
+      ],
+      "links": [
+        {
+          "label": "MaxCompute - MaxCompute管理的Iceberg表（beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/maxcompute-managed-iceberg-tables-beta"
+        },
+        {
+          "label": "MaxCompute - Iceberg外部表（Beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/iceberg-external-table"
+        }
+      ]
+    },
+    "alibaba-maxcompute:hidden-partitioning:v2": {
+      "level": "full",
+      "notes": "Managed Iceberg tables accept Iceberg partition transforms in PARTITIONED BY: identity, BUCKET(n,col), TRUNCATE(w,col), YEAR, MONTH, DAY, HOUR",
+      "caveats": [
+        "Managed Iceberg tables only; normal external tables use Hive-style PARTITIONED BY (col type)",
+        "MaxCompute Iceberg support is Beta: managed Iceberg tables are invitation-only (Shanghai and Germany regions, released 2026-05-07); Iceberg external tables are Beta and require SET odps.service.mode=off"
+      ],
+      "links": [
+        {
+          "label": "MaxCompute - MaxCompute管理的Iceberg表（beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/maxcompute-managed-iceberg-tables-beta"
+        }
+      ]
+    },
+    "alibaba-maxcompute:hidden-partitioning:v3": {
+      "level": "none",
+      "notes": "MaxCompute does not support Iceberg format v3: managed Iceberg tables are V2-only with no V3 format features, and Iceberg external tables read V2",
+      "caveats": [
+        "Re-check when MaxCompute updates its built-in Iceberg SDK (currently 1.6.1)"
+      ],
+      "links": [
+        {
+          "label": "MaxCompute - MaxCompute管理的Iceberg表（beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/maxcompute-managed-iceberg-tables-beta"
+        },
+        {
+          "label": "MaxCompute - Iceberg外部表（Beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/iceberg-external-table"
+        }
+      ]
+    },
+    "alibaba-maxcompute:partition-evolution:v2": {
+      "level": "partial",
+      "notes": "The managed-table feature overview lists Partition Evolution, but no ALTER syntax is documented, and Iceberg external tables do not support changing partition values",
+      "caveats": [
+        "Managed Iceberg tables only (invitation-only Beta)",
+        "No partition-evolution DDL documented"
+      ],
+      "links": [
+        {
+          "label": "MaxCompute - MaxCompute管理的Iceberg表（beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/maxcompute-managed-iceberg-tables-beta"
+        }
+      ]
+    },
+    "alibaba-maxcompute:partition-evolution:v3": {
+      "level": "none",
+      "notes": "MaxCompute does not support Iceberg format v3: managed Iceberg tables are V2-only with no V3 format features, and Iceberg external tables read V2",
+      "caveats": [
+        "Re-check when MaxCompute updates its built-in Iceberg SDK (currently 1.6.1)"
+      ],
+      "links": [
+        {
+          "label": "MaxCompute - MaxCompute管理的Iceberg表（beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/maxcompute-managed-iceberg-tables-beta"
+        },
+        {
+          "label": "MaxCompute - Iceberg外部表（Beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/iceberg-external-table"
+        }
+      ]
+    },
+    "alibaba-maxcompute:multi-arg-transforms:v2": {
+      "level": "none",
+      "notes": "Multi-Argument Transforms is a V3 feature, not available in format version 2",
+      "caveats": [],
+      "links": []
+    },
+    "alibaba-maxcompute:multi-arg-transforms:v3": {
+      "level": "none",
+      "notes": "MaxCompute does not support Iceberg format v3: managed Iceberg tables are V2-only with no V3 format features, and Iceberg external tables read V2",
+      "caveats": [
+        "Re-check when MaxCompute updates its built-in Iceberg SDK (currently 1.6.1)"
+      ],
+      "links": [
+        {
+          "label": "MaxCompute - MaxCompute管理的Iceberg表（beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/maxcompute-managed-iceberg-tables-beta"
+        },
+        {
+          "label": "MaxCompute - Iceberg外部表（Beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/iceberg-external-table"
+        }
+      ]
+    },
+    "alibaba-maxcompute:time-travel:v2": {
+      "level": "partial",
+      "notes": "Managed Iceberg tables list Time Travel as a supported feature. Iceberg external tables explicitly do not support time travel",
+      "caveats": [
+        "Iceberg external tables: time travel not supported",
+        "Managed tables: time-travel query syntax not documented on the Iceberg page",
+        "MaxCompute Iceberg support is Beta: managed Iceberg tables are invitation-only (Shanghai and Germany regions, released 2026-05-07); Iceberg external tables are Beta and require SET odps.service.mode=off"
+      ],
+      "links": [
+        {
+          "label": "MaxCompute - MaxCompute管理的Iceberg表（beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/maxcompute-managed-iceberg-tables-beta"
+        },
+        {
+          "label": "MaxCompute - Iceberg外部表（Beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/iceberg-external-table"
+        }
+      ]
+    },
+    "alibaba-maxcompute:time-travel:v3": {
+      "level": "none",
+      "notes": "MaxCompute does not support Iceberg format v3: managed Iceberg tables are V2-only with no V3 format features, and Iceberg external tables read V2",
+      "caveats": [
+        "Re-check when MaxCompute updates its built-in Iceberg SDK (currently 1.6.1)"
+      ],
+      "links": [
+        {
+          "label": "MaxCompute - MaxCompute管理的Iceberg表（beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/maxcompute-managed-iceberg-tables-beta"
+        },
+        {
+          "label": "MaxCompute - Iceberg外部表（Beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/iceberg-external-table"
+        }
+      ]
+    },
+    "alibaba-maxcompute:table-maintenance:v2": {
+      "level": "partial",
+      "notes": "Managed Iceberg tables get automatic background maintenance (compaction, snapshot expiry, metadata archiving, orphan-file GC). No user-invoked maintenance procedures are documented, and external tables are user-maintained",
+      "caveats": [
+        "Automatic only, managed tables only",
+        "Iceberg external tables: users maintain them themselves"
+      ],
+      "links": [
+        {
+          "label": "MaxCompute - MaxCompute管理的Iceberg表（beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/maxcompute-managed-iceberg-tables-beta"
+        }
+      ]
+    },
+    "alibaba-maxcompute:table-maintenance:v3": {
+      "level": "none",
+      "notes": "MaxCompute does not support Iceberg format v3: managed Iceberg tables are V2-only with no V3 format features, and Iceberg external tables read V2",
+      "caveats": [
+        "Re-check when MaxCompute updates its built-in Iceberg SDK (currently 1.6.1)"
+      ],
+      "links": [
+        {
+          "label": "MaxCompute - MaxCompute管理的Iceberg表（beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/maxcompute-managed-iceberg-tables-beta"
+        },
+        {
+          "label": "MaxCompute - Iceberg外部表（Beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/iceberg-external-table"
+        }
+      ]
+    },
+    "alibaba-maxcompute:branching-tagging:v2": {
+      "level": "none",
+      "notes": "Not documented. In testing, CREATE BRANCH / CREATE TAG and branch-qualified reads are rejected as syntax errors. Tested on a MaxCompute Iceberg external table (Iceberg V2 on OSS, cn-hangzhou, 2026-10-15); result read from the table's Iceberg metadata/manifest files.",
+      "caveats": [],
+      "links": []
+    },
+    "alibaba-maxcompute:branching-tagging:v3": {
+      "level": "none",
+      "notes": "MaxCompute does not support Iceberg format v3: managed Iceberg tables are V2-only with no V3 format features, and Iceberg external tables read V2",
+      "caveats": [
+        "Re-check when MaxCompute updates its built-in Iceberg SDK (currently 1.6.1)"
+      ],
+      "links": [
+        {
+          "label": "MaxCompute - MaxCompute管理的Iceberg表（beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/maxcompute-managed-iceberg-tables-beta"
+        },
+        {
+          "label": "MaxCompute - Iceberg外部表（Beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/iceberg-external-table"
+        }
+      ]
+    },
+    "alibaba-maxcompute:read-support:v2": {
+      "level": "partial",
+      "notes": "MaxCompute SQL reads Iceberg V2 tables through Iceberg external tables on OSS (normal or Delegate mode) and managed Iceberg tables, with partition pruning, using built-in Iceberg SDK 1.6.1. Both are Beta, and handling of existing delete files is not documented",
+      "caveats": [
+        "MaxCompute Iceberg support is Beta: managed Iceberg tables are invitation-only (Shanghai and Germany regions, released 2026-05-07); Iceberg external tables are Beta and require SET odps.service.mode=off",
+        "Built-in Iceberg SDK 1.6.1",
+        "Reading position/equality delete files not documented",
+        "External tables: no time travel"
+      ],
+      "links": [
+        {
+          "label": "MaxCompute - Iceberg外部表（Beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/iceberg-external-table"
+        },
+        {
+          "label": "MaxCompute - MaxCompute管理的Iceberg表（beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/maxcompute-managed-iceberg-tables-beta"
+        }
+      ]
+    },
+    "alibaba-maxcompute:read-support:v3": {
+      "level": "none",
+      "notes": "MaxCompute does not support Iceberg format v3: managed Iceberg tables are V2-only with no V3 format features, and Iceberg external tables read V2",
+      "caveats": [
+        "Re-check when MaxCompute updates its built-in Iceberg SDK (currently 1.6.1)"
+      ],
+      "links": [
+        {
+          "label": "MaxCompute - MaxCompute管理的Iceberg表（beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/maxcompute-managed-iceberg-tables-beta"
+        },
+        {
+          "label": "MaxCompute - Iceberg外部表（Beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/iceberg-external-table"
+        }
+      ]
+    },
+    "alibaba-maxcompute:write-insert:v2": {
+      "level": "full",
+      "notes": "INSERT INTO and INSERT OVERWRITE into Iceberg external tables (Parquet default; ORC/Avro selectable) and INSERT INTO managed Iceberg tables",
+      "caveats": [
+        "MaxCompute Iceberg support is Beta: managed Iceberg tables are invitation-only (Shanghai and Germany regions, released 2026-05-07); Iceberg external tables are Beta and require SET odps.service.mode=off",
+        "Managed tables: TRUNCATE, LOAD/UNLOAD not supported",
+        "Managed tables: external engines must write via MaxCompute Storage Write API"
+      ],
+      "links": [
+        {
+          "label": "MaxCompute - Iceberg外部表（Beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/iceberg-external-table"
+        },
+        {
+          "label": "MaxCompute - MaxCompute管理的Iceberg表（beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/maxcompute-managed-iceberg-tables-beta"
+        }
+      ]
+    },
+    "alibaba-maxcompute:write-insert:v3": {
+      "level": "none",
+      "notes": "MaxCompute does not support Iceberg format v3: managed Iceberg tables are V2-only with no V3 format features, and Iceberg external tables read V2",
+      "caveats": [
+        "Re-check when MaxCompute updates its built-in Iceberg SDK (currently 1.6.1)"
+      ],
+      "links": [
+        {
+          "label": "MaxCompute - MaxCompute管理的Iceberg表（beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/maxcompute-managed-iceberg-tables-beta"
+        },
+        {
+          "label": "MaxCompute - Iceberg外部表（Beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/iceberg-external-table"
+        }
+      ]
+    },
+    "alibaba-maxcompute:write-merge-update-delete:v2": {
+      "level": "partial",
+      "notes": "Docs state UPDATE is unsupported on managed Iceberg tables and upsert is unsupported on external tables. In testing on an external table, DELETE and UPDATE succeeded (writing position deletes) while MERGE INTO failed; managed Iceberg tables (invite-only beta) were not tested. Tested on a MaxCompute Iceberg external table (Iceberg V2 on OSS, cn-hangzhou, 2026-10-15); result read from the table's Iceberg metadata/manifest files.",
+      "caveats": [
+        "DELETE/MERGE not documented; re-verify if MaxCompute adds row-level DML for Iceberg"
+      ],
+      "links": [
+        {
+          "label": "MaxCompute - MaxCompute管理的Iceberg表（beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/maxcompute-managed-iceberg-tables-beta"
+        },
+        {
+          "label": "MaxCompute - Iceberg外部表（Beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/iceberg-external-table"
+        }
+      ]
+    },
+    "alibaba-maxcompute:write-merge-update-delete:v3": {
+      "level": "none",
+      "notes": "MaxCompute does not support Iceberg format v3: managed Iceberg tables are V2-only with no V3 format features, and Iceberg external tables read V2",
+      "caveats": [
+        "Re-check when MaxCompute updates its built-in Iceberg SDK (currently 1.6.1)"
+      ],
+      "links": [
+        {
+          "label": "MaxCompute - MaxCompute管理的Iceberg表（beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/maxcompute-managed-iceberg-tables-beta"
+        },
+        {
+          "label": "MaxCompute - Iceberg外部表（Beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/iceberg-external-table"
+        }
+      ]
+    },
+    "alibaba-maxcompute:catalog-integration:v2": {
+      "level": "partial",
+      "notes": "Managed Iceberg tables keep metadata in the MaxCompute Metastore (MaxMeta) and are exposed through a MaxCompute Iceberg REST Catalog API (read-only, v1alpha). Iceberg external tables are path-based (OSS LOCATION). Reading Iceberg tables from DLF or Hive Metastore catalogs is not documented (MaxCompute's DLF external projects are documented for Paimon)",
+      "caveats": [
+        "No documented DLF or HMS Iceberg catalog access",
+        "REST Catalog API is v1alpha and Shanghai endpoint only"
+      ],
+      "links": [
+        {
+          "label": "MaxCompute - MaxCompute管理的Iceberg表（beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/maxcompute-managed-iceberg-tables-beta"
+        },
+        {
+          "label": "MaxCompute - Apache Iceberg REST Catalog API",
+          "url": "https://help.aliyun.com/zh/maxcompute/rest-catalog-api"
+        },
+        {
+          "label": "MaxCompute - Iceberg外部表（Beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/iceberg-external-table"
+        }
+      ]
+    },
+    "alibaba-maxcompute:catalog-integration:v3": {
+      "level": "none",
+      "notes": "MaxCompute does not support Iceberg format v3: managed Iceberg tables are V2-only with no V3 format features, and Iceberg external tables read V2",
+      "caveats": [
+        "Re-check when MaxCompute updates its built-in Iceberg SDK (currently 1.6.1)"
+      ],
+      "links": [
+        {
+          "label": "MaxCompute - MaxCompute管理的Iceberg表（beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/maxcompute-managed-iceberg-tables-beta"
+        },
+        {
+          "label": "MaxCompute - Iceberg外部表（Beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/iceberg-external-table"
+        }
+      ]
+    },
+    "alibaba-maxcompute:statistics:v2": {
+      "level": "full",
+      "notes": "Not documented. In testing, manifests written by MaxCompute contain per-column lower/upper bounds, null-value counts and value counts. Tested on a MaxCompute Iceberg external table (Iceberg V2 on OSS, cn-hangzhou, 2026-10-15); result read from the table's Iceberg metadata/manifest files.",
+      "caveats": [],
+      "links": []
+    },
+    "alibaba-maxcompute:statistics:v3": {
+      "level": "none",
+      "notes": "MaxCompute does not support Iceberg format v3: managed Iceberg tables are V2-only with no V3 format features, and Iceberg external tables read V2",
+      "caveats": [
+        "Re-check when MaxCompute updates its built-in Iceberg SDK (currently 1.6.1)"
+      ],
+      "links": [
+        {
+          "label": "MaxCompute - MaxCompute管理的Iceberg表（beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/maxcompute-managed-iceberg-tables-beta"
+        },
+        {
+          "label": "MaxCompute - Iceberg外部表（Beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/iceberg-external-table"
+        }
+      ]
+    },
+    "alibaba-maxcompute:bloom-filters:v2": {
+      "level": "none",
+      "notes": "Not documented. In testing, with write.parquet.bloom-filter-enabled.column.* set on the table, new Parquet data files written by MaxCompute contained no bloom filters. Tested on a MaxCompute Iceberg external table (Iceberg V2 on OSS, cn-hangzhou, 2026-10-15); result read from the table's Iceberg metadata/manifest files.",
+      "caveats": [],
+      "links": []
+    },
+    "alibaba-maxcompute:bloom-filters:v3": {
+      "level": "none",
+      "notes": "MaxCompute does not support Iceberg format v3: managed Iceberg tables are V2-only with no V3 format features, and Iceberg external tables read V2",
+      "caveats": [
+        "Re-check when MaxCompute updates its built-in Iceberg SDK (currently 1.6.1)"
+      ],
+      "links": [
+        {
+          "label": "MaxCompute - MaxCompute管理的Iceberg表（beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/maxcompute-managed-iceberg-tables-beta"
+        },
+        {
+          "label": "MaxCompute - Iceberg外部表（Beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/iceberg-external-table"
+        }
+      ]
+    },
+    "alibaba-maxcompute:aws-glue-catalog:v2": {
+      "level": "none",
+      "notes": "MaxCompute's documented external metadata sources are DLF, DLF_legacy, Hive Metastore (EMR), Hologres, and FileSystem Catalog. AWS Glue is not among them",
+      "caveats": [],
+      "links": [
+        {
+          "label": "MaxCompute - 数据湖分析方案实现原理",
+          "url": "https://help.aliyun.com/zh/maxcompute/data-lake-analytics"
+        }
+      ]
+    },
+    "alibaba-maxcompute:aws-glue-catalog:v3": {
+      "level": "none",
+      "notes": "MaxCompute does not support Iceberg format v3: managed Iceberg tables are V2-only with no V3 format features, and Iceberg external tables read V2",
+      "caveats": [
+        "Re-check when MaxCompute updates its built-in Iceberg SDK (currently 1.6.1)"
+      ],
+      "links": [
+        {
+          "label": "MaxCompute - MaxCompute管理的Iceberg表（beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/maxcompute-managed-iceberg-tables-beta"
+        },
+        {
+          "label": "MaxCompute - Iceberg外部表（Beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/iceberg-external-table"
+        }
+      ]
+    },
+    "alibaba-maxcompute:rest-catalog:v2": {
+      "level": "partial",
+      "notes": "MaxCompute acts as an Iceberg REST Catalog server for its managed Iceberg tables. The API is read-only (config, namespaces, tables, credentials), v1alpha, with a Shanghai endpoint only. Consuming third-party REST catalogs from MaxCompute SQL is not documented",
+      "caveats": [
+        "Server-side only; read-only endpoints (no create/commit)",
+        "Only the Shanghai endpoint is available",
+        "Requires invitation-only managed Iceberg tables"
+      ],
+      "links": [
+        {
+          "label": "MaxCompute - Apache Iceberg REST Catalog API",
+          "url": "https://help.aliyun.com/zh/maxcompute/rest-catalog-api"
+        }
+      ]
+    },
+    "alibaba-maxcompute:rest-catalog:v3": {
+      "level": "none",
+      "notes": "MaxCompute does not support Iceberg format v3: managed Iceberg tables are V2-only with no V3 format features, and Iceberg external tables read V2",
+      "caveats": [
+        "Re-check when MaxCompute updates its built-in Iceberg SDK (currently 1.6.1)"
+      ],
+      "links": [
+        {
+          "label": "MaxCompute - MaxCompute管理的Iceberg表（beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/maxcompute-managed-iceberg-tables-beta"
+        },
+        {
+          "label": "MaxCompute - Iceberg外部表（Beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/iceberg-external-table"
+        }
+      ]
+    },
+    "alibaba-maxcompute:unity-catalog:v2": {
+      "level": "none",
+      "notes": "Not among MaxCompute's documented external metadata sources (DLF, DLF_legacy, Hive, Hologres, FileSystem Catalog)",
+      "caveats": [],
+      "links": [
+        {
+          "label": "MaxCompute - 数据湖分析方案实现原理",
+          "url": "https://help.aliyun.com/zh/maxcompute/data-lake-analytics"
+        }
+      ]
+    },
+    "alibaba-maxcompute:unity-catalog:v3": {
+      "level": "none",
+      "notes": "MaxCompute does not support Iceberg format v3: managed Iceberg tables are V2-only with no V3 format features, and Iceberg external tables read V2",
+      "caveats": [
+        "Re-check when MaxCompute updates its built-in Iceberg SDK (currently 1.6.1)"
+      ],
+      "links": [
+        {
+          "label": "MaxCompute - MaxCompute管理的Iceberg表（beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/maxcompute-managed-iceberg-tables-beta"
+        },
+        {
+          "label": "MaxCompute - Iceberg外部表（Beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/iceberg-external-table"
+        }
+      ]
+    },
+    "alibaba-maxcompute:snowflake-horizon-catalog:v2": {
+      "level": "none",
+      "notes": "Not among MaxCompute's documented external metadata sources (DLF, DLF_legacy, Hive, Hologres, FileSystem Catalog)",
+      "caveats": [],
+      "links": [
+        {
+          "label": "MaxCompute - 数据湖分析方案实现原理",
+          "url": "https://help.aliyun.com/zh/maxcompute/data-lake-analytics"
+        }
+      ]
+    },
+    "alibaba-maxcompute:snowflake-horizon-catalog:v3": {
+      "level": "none",
+      "notes": "MaxCompute does not support Iceberg format v3: managed Iceberg tables are V2-only with no V3 format features, and Iceberg external tables read V2",
+      "caveats": [
+        "Re-check when MaxCompute updates its built-in Iceberg SDK (currently 1.6.1)"
+      ],
+      "links": [
+        {
+          "label": "MaxCompute - MaxCompute管理的Iceberg表（beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/maxcompute-managed-iceberg-tables-beta"
+        },
+        {
+          "label": "MaxCompute - Iceberg外部表（Beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/iceberg-external-table"
+        }
+      ]
+    },
+    "alibaba-maxcompute:google-lakehouse:v2": {
+      "level": "none",
+      "notes": "Not among MaxCompute's documented external metadata sources (DLF, DLF_legacy, Hive, Hologres, FileSystem Catalog)",
+      "caveats": [],
+      "links": [
+        {
+          "label": "MaxCompute - 数据湖分析方案实现原理",
+          "url": "https://help.aliyun.com/zh/maxcompute/data-lake-analytics"
+        }
+      ]
+    },
+    "alibaba-maxcompute:google-lakehouse:v3": {
+      "level": "none",
+      "notes": "MaxCompute does not support Iceberg format v3: managed Iceberg tables are V2-only with no V3 format features, and Iceberg external tables read V2",
+      "caveats": [
+        "Re-check when MaxCompute updates its built-in Iceberg SDK (currently 1.6.1)"
+      ],
+      "links": [
+        {
+          "label": "MaxCompute - MaxCompute管理的Iceberg表（beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/maxcompute-managed-iceberg-tables-beta"
+        },
+        {
+          "label": "MaxCompute - Iceberg外部表（Beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/iceberg-external-table"
+        }
+      ]
+    },
+    "alibaba-maxcompute:variant-type:v2": {
+      "level": "none",
+      "notes": "Variant Type is a V3 feature, not available in format version 2",
+      "caveats": [],
+      "links": []
+    },
+    "alibaba-maxcompute:variant-type:v3": {
+      "level": "none",
+      "notes": "MaxCompute does not support Iceberg format v3: managed Iceberg tables are V2-only with no V3 format features, and Iceberg external tables read V2",
+      "caveats": [
+        "Re-check when MaxCompute updates its built-in Iceberg SDK (currently 1.6.1)"
+      ],
+      "links": [
+        {
+          "label": "MaxCompute - MaxCompute管理的Iceberg表（beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/maxcompute-managed-iceberg-tables-beta"
+        },
+        {
+          "label": "MaxCompute - Iceberg外部表（Beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/iceberg-external-table"
+        }
+      ]
+    },
+    "alibaba-maxcompute:shredded-variant:v2": {
+      "level": "none",
+      "notes": "Shredded Variant is a V3 feature, not available in format version 2",
+      "caveats": [],
+      "links": []
+    },
+    "alibaba-maxcompute:shredded-variant:v3": {
+      "level": "none",
+      "notes": "MaxCompute does not support Iceberg format v3: managed Iceberg tables are V2-only with no V3 format features, and Iceberg external tables read V2",
+      "caveats": [
+        "Re-check when MaxCompute updates its built-in Iceberg SDK (currently 1.6.1)"
+      ],
+      "links": [
+        {
+          "label": "MaxCompute - MaxCompute管理的Iceberg表（beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/maxcompute-managed-iceberg-tables-beta"
+        },
+        {
+          "label": "MaxCompute - Iceberg外部表（Beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/iceberg-external-table"
+        }
+      ]
+    },
+    "alibaba-maxcompute:geometry-type:v2": {
+      "level": "none",
+      "notes": "Geometry / Geo Types is a V3 feature, not available in format version 2",
+      "caveats": [],
+      "links": []
+    },
+    "alibaba-maxcompute:geometry-type:v3": {
+      "level": "none",
+      "notes": "MaxCompute does not support Iceberg format v3: managed Iceberg tables are V2-only with no V3 format features, and Iceberg external tables read V2",
+      "caveats": [
+        "Re-check when MaxCompute updates its built-in Iceberg SDK (currently 1.6.1)"
+      ],
+      "links": [
+        {
+          "label": "MaxCompute - MaxCompute管理的Iceberg表（beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/maxcompute-managed-iceberg-tables-beta"
+        },
+        {
+          "label": "MaxCompute - Iceberg外部表（Beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/iceberg-external-table"
+        }
+      ]
+    },
+    "alibaba-maxcompute:nanosecond-timestamps:v2": {
+      "level": "none",
+      "notes": "Nanosecond Timestamps is a V3 feature, not available in format version 2",
+      "caveats": [],
+      "links": []
+    },
+    "alibaba-maxcompute:nanosecond-timestamps:v3": {
+      "level": "none",
+      "notes": "MaxCompute does not support Iceberg format v3: managed Iceberg tables are V2-only with no V3 format features, and Iceberg external tables read V2",
+      "caveats": [
+        "Re-check when MaxCompute updates its built-in Iceberg SDK (currently 1.6.1)"
+      ],
+      "links": [
+        {
+          "label": "MaxCompute - MaxCompute管理的Iceberg表（beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/maxcompute-managed-iceberg-tables-beta"
+        },
+        {
+          "label": "MaxCompute - Iceberg外部表（Beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/iceberg-external-table"
+        }
+      ]
+    },
+    "alibaba-maxcompute:unknown-type:v2": {
+      "level": "none",
+      "notes": "Unknown Type is a V3 feature, not available in format version 2",
+      "caveats": [],
+      "links": []
+    },
+    "alibaba-maxcompute:unknown-type:v3": {
+      "level": "none",
+      "notes": "MaxCompute does not support Iceberg format v3: managed Iceberg tables are V2-only with no V3 format features, and Iceberg external tables read V2",
+      "caveats": [
+        "Re-check when MaxCompute updates its built-in Iceberg SDK (currently 1.6.1)"
+      ],
+      "links": [
+        {
+          "label": "MaxCompute - MaxCompute管理的Iceberg表（beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/maxcompute-managed-iceberg-tables-beta"
+        },
+        {
+          "label": "MaxCompute - Iceberg外部表（Beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/iceberg-external-table"
+        }
+      ]
+    },
+    "alibaba-maxcompute:lineage:v2": {
+      "level": "none",
+      "notes": "Lineage Tracking is a V3 feature, not available in format version 2",
+      "caveats": [],
+      "links": []
+    },
+    "alibaba-maxcompute:lineage:v3": {
+      "level": "none",
+      "notes": "MaxCompute does not support Iceberg format v3: managed Iceberg tables are V2-only with no V3 format features, and Iceberg external tables read V2",
+      "caveats": [
+        "Re-check when MaxCompute updates its built-in Iceberg SDK (currently 1.6.1)"
+      ],
+      "links": [
+        {
+          "label": "MaxCompute - MaxCompute管理的Iceberg表（beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/maxcompute-managed-iceberg-tables-beta"
+        },
+        {
+          "label": "MaxCompute - Iceberg外部表（Beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/iceberg-external-table"
+        }
+      ]
+    },
+    "alibaba-maxcompute:deletion-vectors:v2": {
+      "level": "none",
+      "notes": "Deletion Vectors is a V3 feature, not available in format version 2",
+      "caveats": [],
+      "links": []
+    },
+    "alibaba-maxcompute:deletion-vectors:v3": {
+      "level": "none",
+      "notes": "MaxCompute does not support Iceberg format v3: managed Iceberg tables are V2-only with no V3 format features, and Iceberg external tables read V2",
+      "caveats": [
+        "Re-check when MaxCompute updates its built-in Iceberg SDK (currently 1.6.1)"
+      ],
+      "links": [
+        {
+          "label": "MaxCompute - MaxCompute管理的Iceberg表（beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/maxcompute-managed-iceberg-tables-beta"
+        },
+        {
+          "label": "MaxCompute - Iceberg外部表（Beta）",
+          "url": "https://help.aliyun.com/zh/maxcompute/iceberg-external-table"
+        }
+      ]
+    }
+  }
+}

@@ -36,6 +36,7 @@ const GROUP_ORDER: PlatformGroup[] = [
   "Azure",
   "Snowflake",
   "Databricks",
+  "Alibaba Cloud",
   "3rd Party",
 ];
 
@@ -45,6 +46,7 @@ const GROUP_LABELS: Record<PlatformGroup, string> = {
   Azure: "Azure",
   Snowflake: "Snowflake",
   Databricks: "Databricks",
+  "Alibaba Cloud": "Alibaba Cloud",
   "3rd Party": "OSS/3rd Party",
   // Catalogs view groups.
   Proprietary: "Proprietary",

@@ -1,0 +1,1099 @@
+{
+  "platforms": [
+    {
+      "id": "alibaba-emr-spark",
+      "name": "EMR Spark (EMR-5.21.0)",
+      "vendor": "Alibaba Cloud",
+      "category": "cloud",
+      "group": "Alibaba Cloud",
+      "docUrl": "https://help.aliyun.com/zh/emr/emr-on-ecs/user-guide/iceberg-overview"
+    }
+  ],
+  "support": {
+    "alibaba-emr-spark:position-deletes:v2": {
+      "level": "full",
+      "notes": "Alibaba's Iceberg overview lists MergeOnRead updates (Read and Write) as supported in Alibaba Cloud Iceberg; documented UPDATE/DELETE in Spark SQL. In the upstream Iceberg 1.5.0 Spark runtime, merge-on-read DELETE/UPDATE/MERGE write position delete files. Behaviour of the shipped upstream Apache Iceberg 1.5.0 Spark runtime per Apache Iceberg docs; Alibaba Cloud does not document this specific feature on EMR beyond the MoR row.",
+      "caveats": [
+        "Shipped component on EMR on ECS EMR-5.21.0 (latest 5.x): Spark3 3.5.3 + Iceberg 1.5.0",
+        "The overview comparison table states it reflects the status as of September 2021",
+        "Merge-on-read must be enabled per table (write.delete.mode / write.update.mode / write.merge.mode = merge-on-read); upstream default is copy-on-write"
+      ],
+      "links": [
+        {
+          "label": "EMR on ECS: Iceberg overview (zh)",
+          "url": "https://help.aliyun.com/zh/emr/emr-on-ecs/user-guide/iceberg-overview"
+        },
+        {
+          "label": "EMR on ECS: Use Iceberg (Spark SQL, DLF catalog)",
+          "url": "https://help.aliyun.com/en/emr/emr-on-ecs/user-guide/use-iceberg"
+        },
+        {
+          "label": "Apache Iceberg 1.5.0: Spark writes",
+          "url": "https://iceberg.apache.org/docs/1.5.0/spark-writes/"
+        },
+        {
+          "label": "Apache Iceberg 1.5.0: Configuration",
+          "url": "https://iceberg.apache.org/docs/1.5.0/configuration/"
+        }
+      ]
+    },
+    "alibaba-emr-spark:position-deletes:v3": {
+      "level": "none",
+      "notes": "Not applicable to new V3 writes: V3 writers must use deletion vectors. DLF also states deletion vectors and existing position delete files cannot coexist for one data file and new deletes after upgrade use deletion vectors.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "DLF: Iceberg Table (V2/V3 table format)",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/manage-iceberg-tables"
+        }
+      ]
+    },
+    "alibaba-emr-spark:equality-deletes:v2": {
+      "level": "none",
+      "notes": "Not supported as a write operation from Spark: the Iceberg Spark runtime's DELETE/UPDATE/MERGE produce position delete files (MoR) or rewritten data files (CoW), never equality delete files. Reading equality deletes written by e.g. Flink does not count. Alibaba docs are silent; rating based on upstream Iceberg 1.5.0 Spark behaviour.",
+      "caveats": [
+        "Shipped component on EMR on ECS EMR-5.21.0 (latest 5.x): Spark3 3.5.3 + Iceberg 1.5.0"
+      ],
+      "links": [
+        {
+          "label": "EMR on ECS: Use Iceberg (Spark SQL, DLF catalog)",
+          "url": "https://help.aliyun.com/en/emr/emr-on-ecs/user-guide/use-iceberg"
+        },
+        {
+          "label": "Apache Iceberg 1.5.0: Spark writes",
+          "url": "https://iceberg.apache.org/docs/1.5.0/spark-writes/"
+        }
+      ]
+    },
+    "alibaba-emr-spark:equality-deletes:v3": {
+      "level": "none",
+      "notes": "Not supported with the Iceberg component EMR ships (1.5.0 on EMR-5.21.0), which caps the table format at v2 (SUPPORTED_TABLE_FORMAT_VERSION = 2), so EMR Spark as shipped cannot read or write Iceberg v3 tables.",
+      "caveats": [
+        "DLF documents EMR on ECS Spark reaching v3 tables only by replacing the shipped component with a user-supplied open-source Iceberg >= 1.11.0 runtime (JDK 17, EMR-5.12.0+); that setup behaves like upstream Spark, not an Alibaba-supported EMR feature.",
+        "Re-check when an EMR release upgrades the bundled Iceberg component past 1.8."
+      ],
+      "links": [
+        {
+          "label": "Apache Iceberg 1.5.0 - TableMetadata.java (SUPPORTED_TABLE_FORMAT_VERSION = 2)",
+          "url": "https://github.com/apache/iceberg/blob/apache-iceberg-1.5.0/core/src/main/java/org/apache/iceberg/TableMetadata.java"
+        },
+        {
+          "label": "DLF: Iceberg Table (V2/V3 table format)",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/manage-iceberg-tables"
+        },
+        {
+          "label": "DLF: Access DLF Iceberg tables from EMR on ECS Spark via Iceberg REST",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/access-iceberg-tables-from-emr-on-ecs-spark"
+        }
+      ]
+    },
+    "alibaba-emr-spark:merge-on-read:v2": {
+      "level": "full",
+      "notes": "Alibaba's Iceberg overview comparison table marks 'MergeOnRead更新' Read and Write as supported (√) for Alibaba Cloud Iceberg. Configured via upstream table properties write.delete.mode/write.update.mode/write.merge.mode.",
+      "caveats": [
+        "Shipped component on EMR on ECS EMR-5.21.0 (latest 5.x): Spark3 3.5.3 + Iceberg 1.5.0",
+        "Overview comparison table dated September 2021",
+        "Not the default; set per table"
+      ],
+      "links": [
+        {
+          "label": "EMR on ECS: Iceberg overview (zh)",
+          "url": "https://help.aliyun.com/zh/emr/emr-on-ecs/user-guide/iceberg-overview"
+        },
+        {
+          "label": "Apache Iceberg 1.5.0: Configuration",
+          "url": "https://iceberg.apache.org/docs/1.5.0/configuration/"
+        }
+      ]
+    },
+    "alibaba-emr-spark:merge-on-read:v3": {
+      "level": "none",
+      "notes": "Not supported with the Iceberg component EMR ships (1.5.0 on EMR-5.21.0), which caps the table format at v2 (SUPPORTED_TABLE_FORMAT_VERSION = 2), so EMR Spark as shipped cannot read or write Iceberg v3 tables.",
+      "caveats": [
+        "DLF documents EMR on ECS Spark reaching v3 tables only by replacing the shipped component with a user-supplied open-source Iceberg >= 1.11.0 runtime (JDK 17, EMR-5.12.0+); that setup behaves like upstream Spark, not an Alibaba-supported EMR feature.",
+        "Re-check when an EMR release upgrades the bundled Iceberg component past 1.8."
+      ],
+      "links": [
+        {
+          "label": "Apache Iceberg 1.5.0 - TableMetadata.java (SUPPORTED_TABLE_FORMAT_VERSION = 2)",
+          "url": "https://github.com/apache/iceberg/blob/apache-iceberg-1.5.0/core/src/main/java/org/apache/iceberg/TableMetadata.java"
+        },
+        {
+          "label": "DLF: Iceberg Table (V2/V3 table format)",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/manage-iceberg-tables"
+        },
+        {
+          "label": "DLF: Access DLF Iceberg tables from EMR on ECS Spark via Iceberg REST",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/access-iceberg-tables-from-emr-on-ecs-spark"
+        }
+      ]
+    },
+    "alibaba-emr-spark:copy-on-write:v2": {
+      "level": "full",
+      "notes": "Alibaba's Iceberg overview marks 'CopyOnWrite更新' as supported; copy-on-write is the upstream default for Spark DELETE/UPDATE/MERGE.",
+      "caveats": [
+        "Shipped component on EMR on ECS EMR-5.21.0 (latest 5.x): Spark3 3.5.3 + Iceberg 1.5.0",
+        "Overview comparison table dated September 2021"
+      ],
+      "links": [
+        {
+          "label": "EMR on ECS: Iceberg overview (zh)",
+          "url": "https://help.aliyun.com/zh/emr/emr-on-ecs/user-guide/iceberg-overview"
+        },
+        {
+          "label": "Apache Iceberg 1.5.0: Configuration",
+          "url": "https://iceberg.apache.org/docs/1.5.0/configuration/"
+        }
+      ]
+    },
+    "alibaba-emr-spark:copy-on-write:v3": {
+      "level": "none",
+      "notes": "Not supported with the Iceberg component EMR ships (1.5.0 on EMR-5.21.0), which caps the table format at v2 (SUPPORTED_TABLE_FORMAT_VERSION = 2), so EMR Spark as shipped cannot read or write Iceberg v3 tables.",
+      "caveats": [
+        "DLF documents EMR on ECS Spark reaching v3 tables only by replacing the shipped component with a user-supplied open-source Iceberg >= 1.11.0 runtime (JDK 17, EMR-5.12.0+); that setup behaves like upstream Spark, not an Alibaba-supported EMR feature.",
+        "Re-check when an EMR release upgrades the bundled Iceberg component past 1.8."
+      ],
+      "links": [
+        {
+          "label": "Apache Iceberg 1.5.0 - TableMetadata.java (SUPPORTED_TABLE_FORMAT_VERSION = 2)",
+          "url": "https://github.com/apache/iceberg/blob/apache-iceberg-1.5.0/core/src/main/java/org/apache/iceberg/TableMetadata.java"
+        },
+        {
+          "label": "DLF: Iceberg Table (V2/V3 table format)",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/manage-iceberg-tables"
+        },
+        {
+          "label": "DLF: Access DLF Iceberg tables from EMR on ECS Spark via Iceberg REST",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/access-iceberg-tables-from-emr-on-ecs-spark"
+        }
+      ]
+    },
+    "alibaba-emr-spark:schema-evolution:v2": {
+      "level": "full",
+      "notes": "Alibaba overview: '支持Schema变更' and 'Iceberg支持通过Spark SQL的DDL语句完成表结构变更 ... 历史数据并不需要全部重新按照新的Schema导出'. Upstream Spark DDL supports ADD/DROP/RENAME/reorder columns.",
+      "caveats": [
+        "Shipped component on EMR on ECS EMR-5.21.0 (latest 5.x): Spark3 3.5.3 + Iceberg 1.5.0"
+      ],
+      "links": [
+        {
+          "label": "EMR on ECS: Iceberg overview (zh)",
+          "url": "https://help.aliyun.com/zh/emr/emr-on-ecs/user-guide/iceberg-overview"
+        },
+        {
+          "label": "Apache Iceberg 1.5.0: Spark DDL",
+          "url": "https://iceberg.apache.org/docs/1.5.0/spark-ddl/"
+        }
+      ]
+    },
+    "alibaba-emr-spark:schema-evolution:v3": {
+      "level": "none",
+      "notes": "Not supported with the Iceberg component EMR ships (1.5.0 on EMR-5.21.0), which caps the table format at v2 (SUPPORTED_TABLE_FORMAT_VERSION = 2), so EMR Spark as shipped cannot read or write Iceberg v3 tables.",
+      "caveats": [
+        "DLF documents EMR on ECS Spark reaching v3 tables only by replacing the shipped component with a user-supplied open-source Iceberg >= 1.11.0 runtime (JDK 17, EMR-5.12.0+); that setup behaves like upstream Spark, not an Alibaba-supported EMR feature.",
+        "Re-check when an EMR release upgrades the bundled Iceberg component past 1.8."
+      ],
+      "links": [
+        {
+          "label": "Apache Iceberg 1.5.0 - TableMetadata.java (SUPPORTED_TABLE_FORMAT_VERSION = 2)",
+          "url": "https://github.com/apache/iceberg/blob/apache-iceberg-1.5.0/core/src/main/java/org/apache/iceberg/TableMetadata.java"
+        },
+        {
+          "label": "DLF: Iceberg Table (V2/V3 table format)",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/manage-iceberg-tables"
+        },
+        {
+          "label": "DLF: Access DLF Iceberg tables from EMR on ECS Spark via Iceberg REST",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/access-iceberg-tables-from-emr-on-ecs-spark"
+        }
+      ]
+    },
+    "alibaba-emr-spark:type-promotion:v2": {
+      "level": "full",
+      "notes": "Alibaba documents schema change via Spark SQL DDL; safe widening (int->long, float->double, decimal precision increase) via ALTER TABLE ... ALTER COLUMN ... TYPE is upstream Iceberg 1.5.0 Spark behaviour. Behaviour of the shipped upstream Apache Iceberg 1.5.0 Spark runtime per Apache Iceberg docs; Alibaba Cloud does not document this specific feature on EMR.",
+      "caveats": [
+        "Shipped component on EMR on ECS EMR-5.21.0 (latest 5.x): Spark3 3.5.3 + Iceberg 1.5.0",
+        "Only spec-allowed widenings; no other type changes"
+      ],
+      "links": [
+        {
+          "label": "EMR on ECS: Iceberg overview (zh)",
+          "url": "https://help.aliyun.com/zh/emr/emr-on-ecs/user-guide/iceberg-overview"
+        },
+        {
+          "label": "Apache Iceberg 1.5.0: Spark DDL",
+          "url": "https://iceberg.apache.org/docs/1.5.0/spark-ddl/"
+        }
+      ]
+    },
+    "alibaba-emr-spark:type-promotion:v3": {
+      "level": "none",
+      "notes": "Not supported with the Iceberg component EMR ships (1.5.0 on EMR-5.21.0), which caps the table format at v2 (SUPPORTED_TABLE_FORMAT_VERSION = 2), so EMR Spark as shipped cannot read or write Iceberg v3 tables.",
+      "caveats": [
+        "DLF documents EMR on ECS Spark reaching v3 tables only by replacing the shipped component with a user-supplied open-source Iceberg >= 1.11.0 runtime (JDK 17, EMR-5.12.0+); that setup behaves like upstream Spark, not an Alibaba-supported EMR feature.",
+        "Re-check when an EMR release upgrades the bundled Iceberg component past 1.8."
+      ],
+      "links": [
+        {
+          "label": "Apache Iceberg 1.5.0 - TableMetadata.java (SUPPORTED_TABLE_FORMAT_VERSION = 2)",
+          "url": "https://github.com/apache/iceberg/blob/apache-iceberg-1.5.0/core/src/main/java/org/apache/iceberg/TableMetadata.java"
+        },
+        {
+          "label": "DLF: Iceberg Table (V2/V3 table format)",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/manage-iceberg-tables"
+        },
+        {
+          "label": "DLF: Access DLF Iceberg tables from EMR on ECS Spark via Iceberg REST",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/access-iceberg-tables-from-emr-on-ecs-spark"
+        }
+      ]
+    },
+    "alibaba-emr-spark:column-default-values:v2": {
+      "level": "none",
+      "notes": "Column default values is a V3 feature, not available in format version 2",
+      "caveats": [],
+      "links": []
+    },
+    "alibaba-emr-spark:column-default-values:v3": {
+      "level": "none",
+      "notes": "Not supported with the Iceberg component EMR ships (1.5.0 on EMR-5.21.0), which caps the table format at v2 (SUPPORTED_TABLE_FORMAT_VERSION = 2), so EMR Spark as shipped cannot read or write Iceberg v3 tables.",
+      "caveats": [
+        "DLF documents EMR on ECS Spark reaching v3 tables only by replacing the shipped component with a user-supplied open-source Iceberg >= 1.11.0 runtime (JDK 17, EMR-5.12.0+); that setup behaves like upstream Spark, not an Alibaba-supported EMR feature.",
+        "Re-check when an EMR release upgrades the bundled Iceberg component past 1.8."
+      ],
+      "links": [
+        {
+          "label": "Apache Iceberg 1.5.0 - TableMetadata.java (SUPPORTED_TABLE_FORMAT_VERSION = 2)",
+          "url": "https://github.com/apache/iceberg/blob/apache-iceberg-1.5.0/core/src/main/java/org/apache/iceberg/TableMetadata.java"
+        },
+        {
+          "label": "DLF: Iceberg Table (V2/V3 table format)",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/manage-iceberg-tables"
+        },
+        {
+          "label": "DLF: Access DLF Iceberg tables from EMR on ECS Spark via Iceberg REST",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/access-iceberg-tables-from-emr-on-ecs-spark"
+        }
+      ]
+    },
+    "alibaba-emr-spark:table-creation:v2": {
+      "level": "full",
+      "notes": "Documented Spark SQL CREATE DATABASE / CREATE TABLE ... USING iceberg with COMMENT, PARTITIONED BY, LOCATION and TBLPROPERTIES on EMR V5.3.0+ with the DLF catalog. V2 is the default format version for newly created tables in DLF.",
+      "caveats": [
+        "Shipped component on EMR on ECS EMR-5.21.0 (latest 5.x): Spark3 3.5.3 + Iceberg 1.5.0",
+        "Spark SQL extensions not supported on Spark 2.4 (EMR 3.x); use Spark 3 / EMR-5.x"
+      ],
+      "links": [
+        {
+          "label": "EMR on ECS: Use Iceberg (Spark SQL, DLF catalog)",
+          "url": "https://help.aliyun.com/en/emr/emr-on-ecs/user-guide/use-iceberg"
+        },
+        {
+          "label": "DLF: Iceberg Table (V2/V3 table format)",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/manage-iceberg-tables"
+        }
+      ]
+    },
+    "alibaba-emr-spark:table-creation:v3": {
+      "level": "partial",
+      "notes": "DLF states it supports Iceberg V2 and V3 tables and gives the Spark SQL form CREATE TABLE ... USING iceberg TBLPROPERTIES ('format-version'='3'); a separate DLF doc shows EMR on ECS Spark reaching DLF via Iceberg REST with the open-source Iceberg 1.11.0 runtime. Alibaba does not explicitly document/test V3 table creation on EMR on ECS.",
+      "caveats": [
+        "Not possible with the shipped Iceberg 1.5.0 component; requires a user-supplied open-source iceberg-spark-runtime-3.5_2.12 >= 1.11.0 + iceberg-aws-bundle on EMR-5.12.0+ with JDK 17, using DLF Iceberg REST",
+        "DLF warns: V3 upgrade is one-way; '部分引擎对 V3 特性的支持仍在演进中' (engine support for V3 still evolving)"
+      ],
+      "links": [
+        {
+          "label": "DLF: Iceberg Table (V2/V3 table format)",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/manage-iceberg-tables"
+        },
+        {
+          "label": "DLF: Access DLF Iceberg tables from EMR on ECS Spark via Iceberg REST",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/access-iceberg-tables-from-emr-on-ecs-spark"
+        }
+      ]
+    },
+    "alibaba-emr-spark:hidden-partitioning:v2": {
+      "level": "full",
+      "notes": "Alibaba overview: '支持隐式分区（Hidden Partitioning）'. Partition transforms (years/months/days/hours/bucket/truncate) via Spark DDL PARTITIONED BY.",
+      "caveats": [
+        "Shipped component on EMR on ECS EMR-5.21.0 (latest 5.x): Spark3 3.5.3 + Iceberg 1.5.0"
+      ],
+      "links": [
+        {
+          "label": "EMR on ECS: Iceberg overview (zh)",
+          "url": "https://help.aliyun.com/zh/emr/emr-on-ecs/user-guide/iceberg-overview"
+        },
+        {
+          "label": "Apache Iceberg 1.5.0: Spark DDL",
+          "url": "https://iceberg.apache.org/docs/1.5.0/spark-ddl/"
+        }
+      ]
+    },
+    "alibaba-emr-spark:hidden-partitioning:v3": {
+      "level": "none",
+      "notes": "Not supported with the Iceberg component EMR ships (1.5.0 on EMR-5.21.0), which caps the table format at v2 (SUPPORTED_TABLE_FORMAT_VERSION = 2), so EMR Spark as shipped cannot read or write Iceberg v3 tables.",
+      "caveats": [
+        "DLF documents EMR on ECS Spark reaching v3 tables only by replacing the shipped component with a user-supplied open-source Iceberg >= 1.11.0 runtime (JDK 17, EMR-5.12.0+); that setup behaves like upstream Spark, not an Alibaba-supported EMR feature.",
+        "Re-check when an EMR release upgrades the bundled Iceberg component past 1.8."
+      ],
+      "links": [
+        {
+          "label": "Apache Iceberg 1.5.0 - TableMetadata.java (SUPPORTED_TABLE_FORMAT_VERSION = 2)",
+          "url": "https://github.com/apache/iceberg/blob/apache-iceberg-1.5.0/core/src/main/java/org/apache/iceberg/TableMetadata.java"
+        },
+        {
+          "label": "DLF: Iceberg Table (V2/V3 table format)",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/manage-iceberg-tables"
+        },
+        {
+          "label": "DLF: Access DLF Iceberg tables from EMR on ECS Spark via Iceberg REST",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/access-iceberg-tables-from-emr-on-ecs-spark"
+        }
+      ]
+    },
+    "alibaba-emr-spark:partition-evolution:v2": {
+      "level": "full",
+      "notes": "Alibaba overview: '支持分区布局变更' and comparison table marks Partition Evolution √. Upstream ALTER TABLE ADD/DROP/REPLACE PARTITION FIELD requires the Iceberg SQL extensions (configured in Alibaba's documented catalog setup).",
+      "caveats": [
+        "Shipped component on EMR on ECS EMR-5.21.0 (latest 5.x): Spark3 3.5.3 + Iceberg 1.5.0",
+        "Requires spark.sql.extensions=IcebergSparkSessionExtensions (part of Alibaba's documented configuration)"
+      ],
+      "links": [
+        {
+          "label": "EMR on ECS: Iceberg overview (zh)",
+          "url": "https://help.aliyun.com/zh/emr/emr-on-ecs/user-guide/iceberg-overview"
+        },
+        {
+          "label": "EMR on ECS: Use Iceberg (Spark SQL, DLF catalog)",
+          "url": "https://help.aliyun.com/en/emr/emr-on-ecs/user-guide/use-iceberg"
+        },
+        {
+          "label": "Apache Iceberg 1.5.0: Spark DDL",
+          "url": "https://iceberg.apache.org/docs/1.5.0/spark-ddl/"
+        }
+      ]
+    },
+    "alibaba-emr-spark:partition-evolution:v3": {
+      "level": "none",
+      "notes": "Not supported with the Iceberg component EMR ships (1.5.0 on EMR-5.21.0), which caps the table format at v2 (SUPPORTED_TABLE_FORMAT_VERSION = 2), so EMR Spark as shipped cannot read or write Iceberg v3 tables.",
+      "caveats": [
+        "DLF documents EMR on ECS Spark reaching v3 tables only by replacing the shipped component with a user-supplied open-source Iceberg >= 1.11.0 runtime (JDK 17, EMR-5.12.0+); that setup behaves like upstream Spark, not an Alibaba-supported EMR feature.",
+        "Re-check when an EMR release upgrades the bundled Iceberg component past 1.8."
+      ],
+      "links": [
+        {
+          "label": "Apache Iceberg 1.5.0 - TableMetadata.java (SUPPORTED_TABLE_FORMAT_VERSION = 2)",
+          "url": "https://github.com/apache/iceberg/blob/apache-iceberg-1.5.0/core/src/main/java/org/apache/iceberg/TableMetadata.java"
+        },
+        {
+          "label": "DLF: Iceberg Table (V2/V3 table format)",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/manage-iceberg-tables"
+        },
+        {
+          "label": "DLF: Access DLF Iceberg tables from EMR on ECS Spark via Iceberg REST",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/access-iceberg-tables-from-emr-on-ecs-spark"
+        }
+      ]
+    },
+    "alibaba-emr-spark:multi-arg-transforms:v2": {
+      "level": "none",
+      "notes": "Multi-argument transforms is a V3 feature, not available in format version 2",
+      "caveats": [],
+      "links": []
+    },
+    "alibaba-emr-spark:multi-arg-transforms:v3": {
+      "level": "none",
+      "notes": "Not supported with the Iceberg component EMR ships (1.5.0 on EMR-5.21.0), which caps the table format at v2 (SUPPORTED_TABLE_FORMAT_VERSION = 2), so EMR Spark as shipped cannot read or write Iceberg v3 tables.",
+      "caveats": [
+        "DLF documents EMR on ECS Spark reaching v3 tables only by replacing the shipped component with a user-supplied open-source Iceberg >= 1.11.0 runtime (JDK 17, EMR-5.12.0+); that setup behaves like upstream Spark, not an Alibaba-supported EMR feature.",
+        "Re-check when an EMR release upgrades the bundled Iceberg component past 1.8."
+      ],
+      "links": [
+        {
+          "label": "Apache Iceberg 1.5.0 - TableMetadata.java (SUPPORTED_TABLE_FORMAT_VERSION = 2)",
+          "url": "https://github.com/apache/iceberg/blob/apache-iceberg-1.5.0/core/src/main/java/org/apache/iceberg/TableMetadata.java"
+        },
+        {
+          "label": "DLF: Iceberg Table (V2/V3 table format)",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/manage-iceberg-tables"
+        },
+        {
+          "label": "DLF: Access DLF Iceberg tables from EMR on ECS Spark via Iceberg REST",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/access-iceberg-tables-from-emr-on-ecs-spark"
+        }
+      ]
+    },
+    "alibaba-emr-spark:time-travel:v2": {
+      "level": "full",
+      "notes": "Alibaba overview: '支持历史版本回溯' (history version rollback/time travel) and comparison table marks it √. Upstream Spark 3.3+ supports VERSION AS OF / TIMESTAMP AS OF and snapshot metadata tables.",
+      "caveats": [
+        "Shipped component on EMR on ECS EMR-5.21.0 (latest 5.x): Spark3 3.5.3 + Iceberg 1.5.0"
+      ],
+      "links": [
+        {
+          "label": "EMR on ECS: Iceberg overview (zh)",
+          "url": "https://help.aliyun.com/zh/emr/emr-on-ecs/user-guide/iceberg-overview"
+        },
+        {
+          "label": "Apache Iceberg 1.5.0: Spark queries",
+          "url": "https://iceberg.apache.org/docs/1.5.0/spark-queries/"
+        }
+      ]
+    },
+    "alibaba-emr-spark:time-travel:v3": {
+      "level": "none",
+      "notes": "Not supported with the Iceberg component EMR ships (1.5.0 on EMR-5.21.0), which caps the table format at v2 (SUPPORTED_TABLE_FORMAT_VERSION = 2), so EMR Spark as shipped cannot read or write Iceberg v3 tables.",
+      "caveats": [
+        "DLF documents EMR on ECS Spark reaching v3 tables only by replacing the shipped component with a user-supplied open-source Iceberg >= 1.11.0 runtime (JDK 17, EMR-5.12.0+); that setup behaves like upstream Spark, not an Alibaba-supported EMR feature.",
+        "Re-check when an EMR release upgrades the bundled Iceberg component past 1.8."
+      ],
+      "links": [
+        {
+          "label": "Apache Iceberg 1.5.0 - TableMetadata.java (SUPPORTED_TABLE_FORMAT_VERSION = 2)",
+          "url": "https://github.com/apache/iceberg/blob/apache-iceberg-1.5.0/core/src/main/java/org/apache/iceberg/TableMetadata.java"
+        },
+        {
+          "label": "DLF: Iceberg Table (V2/V3 table format)",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/manage-iceberg-tables"
+        },
+        {
+          "label": "DLF: Access DLF Iceberg tables from EMR on ECS Spark via Iceberg REST",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/access-iceberg-tables-from-emr-on-ecs-spark"
+        }
+      ]
+    },
+    "alibaba-emr-spark:table-maintenance:v2": {
+      "level": "full",
+      "notes": "Alibaba DLF docs document Iceberg Spark CALL procedures rewrite_data_files (compaction), expire_snapshots and remove_orphan_files; the same procedures (plus rewrite_manifests) are part of the upstream Iceberg 1.5.0 Spark SQL extensions shipped on EMR on ECS.",
+      "caveats": [
+        "Shipped component on EMR on ECS EMR-5.21.0 (latest 5.x): Spark3 3.5.3 + Iceberg 1.5.0",
+        "Alibaba's procedure doc targets EMR Serverless Spark (esr-4.9.1+) + DLF; no EMR-on-ECS-specific procedure doc found",
+        "Alibaba overview comparison table (Sept 2021) marks 'Compaction' as not supported in both open-source and Alibaba Iceberg, while also listing '自动合并小文件' (automatic small-file merge) as an Alibaba feature -- stale"
+      ],
+      "links": [
+        {
+          "label": "DLF: Iceberg storage governance with Spark procedures",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/iceberg-table-storage-governance"
+        },
+        {
+          "label": "EMR on ECS: Iceberg overview (zh)",
+          "url": "https://help.aliyun.com/zh/emr/emr-on-ecs/user-guide/iceberg-overview"
+        },
+        {
+          "label": "Apache Iceberg 1.5.0: Spark procedures",
+          "url": "https://iceberg.apache.org/docs/1.5.0/spark-procedures/"
+        }
+      ]
+    },
+    "alibaba-emr-spark:table-maintenance:v3": {
+      "level": "none",
+      "notes": "Not supported with the Iceberg component EMR ships (1.5.0 on EMR-5.21.0), which caps the table format at v2 (SUPPORTED_TABLE_FORMAT_VERSION = 2), so EMR Spark as shipped cannot read or write Iceberg v3 tables.",
+      "caveats": [
+        "DLF documents EMR on ECS Spark reaching v3 tables only by replacing the shipped component with a user-supplied open-source Iceberg >= 1.11.0 runtime (JDK 17, EMR-5.12.0+); that setup behaves like upstream Spark, not an Alibaba-supported EMR feature.",
+        "Re-check when an EMR release upgrades the bundled Iceberg component past 1.8."
+      ],
+      "links": [
+        {
+          "label": "Apache Iceberg 1.5.0 - TableMetadata.java (SUPPORTED_TABLE_FORMAT_VERSION = 2)",
+          "url": "https://github.com/apache/iceberg/blob/apache-iceberg-1.5.0/core/src/main/java/org/apache/iceberg/TableMetadata.java"
+        },
+        {
+          "label": "DLF: Iceberg Table (V2/V3 table format)",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/manage-iceberg-tables"
+        },
+        {
+          "label": "DLF: Access DLF Iceberg tables from EMR on ECS Spark via Iceberg REST",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/access-iceberg-tables-from-emr-on-ecs-spark"
+        }
+      ]
+    },
+    "alibaba-emr-spark:branching-tagging:v2": {
+      "level": "full",
+      "notes": "Branch/tag DDL (ALTER TABLE ... CREATE BRANCH/TAG) and branch reads/writes are supported by the upstream Iceberg 1.5.0 Spark 3.5 runtime shipped in EMR-5.21.0. Behaviour of the shipped upstream Apache Iceberg 1.5.0 Spark runtime per Apache Iceberg docs; Alibaba Cloud does not document this specific feature on EMR.",
+      "caveats": [
+        "Shipped component on EMR on ECS EMR-5.21.0 (latest 5.x): Spark3 3.5.3 + Iceberg 1.5.0",
+        "Requires Iceberg SQL extensions"
+      ],
+      "links": [
+        {
+          "label": "EMR-5.x release notes (EMR-5.21.0: Spark3 3.5.3, Iceberg 1.5.0)",
+          "url": "https://help.aliyun.com/zh/emr/emr-on-ecs/product-overview/release-notes-for-emr-v5-x-series"
+        },
+        {
+          "label": "Apache Iceberg 1.5.0: Spark DDL",
+          "url": "https://iceberg.apache.org/docs/1.5.0/spark-ddl/"
+        },
+        {
+          "label": "Apache Iceberg 1.5.0: Spark writes",
+          "url": "https://iceberg.apache.org/docs/1.5.0/spark-writes/"
+        }
+      ]
+    },
+    "alibaba-emr-spark:branching-tagging:v3": {
+      "level": "none",
+      "notes": "Not supported with the Iceberg component EMR ships (1.5.0 on EMR-5.21.0), which caps the table format at v2 (SUPPORTED_TABLE_FORMAT_VERSION = 2), so EMR Spark as shipped cannot read or write Iceberg v3 tables.",
+      "caveats": [
+        "DLF documents EMR on ECS Spark reaching v3 tables only by replacing the shipped component with a user-supplied open-source Iceberg >= 1.11.0 runtime (JDK 17, EMR-5.12.0+); that setup behaves like upstream Spark, not an Alibaba-supported EMR feature.",
+        "Re-check when an EMR release upgrades the bundled Iceberg component past 1.8."
+      ],
+      "links": [
+        {
+          "label": "Apache Iceberg 1.5.0 - TableMetadata.java (SUPPORTED_TABLE_FORMAT_VERSION = 2)",
+          "url": "https://github.com/apache/iceberg/blob/apache-iceberg-1.5.0/core/src/main/java/org/apache/iceberg/TableMetadata.java"
+        },
+        {
+          "label": "DLF: Iceberg Table (V2/V3 table format)",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/manage-iceberg-tables"
+        },
+        {
+          "label": "DLF: Access DLF Iceberg tables from EMR on ECS Spark via Iceberg REST",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/access-iceberg-tables-from-emr-on-ecs-spark"
+        }
+      ]
+    },
+    "alibaba-emr-spark:read-support:v2": {
+      "level": "full",
+      "notes": "Documented SELECT queries on Iceberg tables via Spark SQL and DataFrame API; overview lists '支持高效的数据过滤' (efficient data filtering) and Spark read √.",
+      "caveats": [
+        "Shipped component on EMR on ECS EMR-5.21.0 (latest 5.x): Spark3 3.5.3 + Iceberg 1.5.0"
+      ],
+      "links": [
+        {
+          "label": "EMR on ECS: Use Iceberg (Spark SQL, DLF catalog)",
+          "url": "https://help.aliyun.com/en/emr/emr-on-ecs/user-guide/use-iceberg"
+        },
+        {
+          "label": "EMR on ECS: Iceberg overview (zh)",
+          "url": "https://help.aliyun.com/zh/emr/emr-on-ecs/user-guide/iceberg-overview"
+        }
+      ]
+    },
+    "alibaba-emr-spark:read-support:v3": {
+      "level": "partial",
+      "notes": "Same basis as V3 table creation: DLF manages V3 tables and EMR on ECS Spark can access DLF through Iceberg REST with the open-source Iceberg 1.11.0 runtime. Not explicitly documented for V3 on EMR on ECS.",
+      "caveats": [
+        "Not possible with the shipped Iceberg 1.5.0 component; requires a user-supplied open-source iceberg-spark-runtime-3.5_2.12 >= 1.11.0 + iceberg-aws-bundle on EMR-5.12.0+ with JDK 17, using DLF Iceberg REST"
+      ],
+      "links": [
+        {
+          "label": "DLF: Iceberg Table (V2/V3 table format)",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/manage-iceberg-tables"
+        },
+        {
+          "label": "DLF: Access DLF Iceberg tables from EMR on ECS Spark via Iceberg REST",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/access-iceberg-tables-from-emr-on-ecs-spark"
+        }
+      ]
+    },
+    "alibaba-emr-spark:write-insert:v2": {
+      "level": "full",
+      "notes": "Documented INSERT INTO via Spark SQL and batch/streaming writes via the DataFrame API.",
+      "caveats": [
+        "Shipped component on EMR on ECS EMR-5.21.0 (latest 5.x): Spark3 3.5.3 + Iceberg 1.5.0"
+      ],
+      "links": [
+        {
+          "label": "EMR on ECS: Use Iceberg (Spark SQL, DLF catalog)",
+          "url": "https://help.aliyun.com/en/emr/emr-on-ecs/user-guide/use-iceberg"
+        },
+        {
+          "label": "EMR on ECS: Iceberg overview (zh)",
+          "url": "https://help.aliyun.com/zh/emr/emr-on-ecs/user-guide/iceberg-overview"
+        }
+      ]
+    },
+    "alibaba-emr-spark:write-insert:v3": {
+      "level": "partial",
+      "notes": "Same basis as V3 table creation (DLF V3 tables + EMR on ECS Spark via DLF Iceberg REST with open-source Iceberg 1.11.0, INSERT INTO shown in the DLF EMR doc). Not explicitly documented for V3 on EMR on ECS.",
+      "caveats": [
+        "Not possible with the shipped Iceberg 1.5.0 component; requires a user-supplied open-source iceberg-spark-runtime-3.5_2.12 >= 1.11.0 + iceberg-aws-bundle on EMR-5.12.0+ with JDK 17, using DLF Iceberg REST"
+      ],
+      "links": [
+        {
+          "label": "DLF: Iceberg Table (V2/V3 table format)",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/manage-iceberg-tables"
+        },
+        {
+          "label": "DLF: Access DLF Iceberg tables from EMR on ECS Spark via Iceberg REST",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/access-iceberg-tables-from-emr-on-ecs-spark"
+        }
+      ]
+    },
+    "alibaba-emr-spark:write-merge-update-delete:v2": {
+      "level": "full",
+      "notes": "Alibaba documents 'INSERT, SELECT, UPDATE, and DELETE operations' with Spark SQL examples (UPDATE ... SET, DELETE FROM). MERGE INTO is provided by the same upstream Iceberg Spark SQL extensions but is not shown in Alibaba's examples.",
+      "caveats": [
+        "Shipped component on EMR on ECS EMR-5.21.0 (latest 5.x): Spark3 3.5.3 + Iceberg 1.5.0",
+        "Requires Spark 3 (EMR V5.3.0+); not supported via Spark SQL on Spark 2.4",
+        "MERGE INTO is not explicitly documented by Alibaba (upstream behaviour)"
+      ],
+      "links": [
+        {
+          "label": "EMR on ECS: Use Iceberg (Spark SQL, DLF catalog)",
+          "url": "https://help.aliyun.com/en/emr/emr-on-ecs/user-guide/use-iceberg"
+        },
+        {
+          "label": "Apache Iceberg 1.5.0: Spark writes",
+          "url": "https://iceberg.apache.org/docs/1.5.0/spark-writes/"
+        }
+      ]
+    },
+    "alibaba-emr-spark:write-merge-update-delete:v3": {
+      "level": "none",
+      "notes": "Not supported with the Iceberg component EMR ships (1.5.0 on EMR-5.21.0), which caps the table format at v2 (SUPPORTED_TABLE_FORMAT_VERSION = 2), so EMR Spark as shipped cannot read or write Iceberg v3 tables.",
+      "caveats": [
+        "DLF documents EMR on ECS Spark reaching v3 tables only by replacing the shipped component with a user-supplied open-source Iceberg >= 1.11.0 runtime (JDK 17, EMR-5.12.0+); that setup behaves like upstream Spark, not an Alibaba-supported EMR feature.",
+        "Re-check when an EMR release upgrades the bundled Iceberg component past 1.8."
+      ],
+      "links": [
+        {
+          "label": "Apache Iceberg 1.5.0 - TableMetadata.java (SUPPORTED_TABLE_FORMAT_VERSION = 2)",
+          "url": "https://github.com/apache/iceberg/blob/apache-iceberg-1.5.0/core/src/main/java/org/apache/iceberg/TableMetadata.java"
+        },
+        {
+          "label": "DLF: Iceberg Table (V2/V3 table format)",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/manage-iceberg-tables"
+        },
+        {
+          "label": "DLF: Access DLF Iceberg tables from EMR on ECS Spark via Iceberg REST",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/access-iceberg-tables-from-emr-on-ecs-spark"
+        }
+      ]
+    },
+    "alibaba-emr-spark:catalog-integration:v2": {
+      "level": "full",
+      "notes": "EMR on ECS ships a DLF catalog (org.apache.iceberg.aliyun.dlf.hive.DlfCatalog, default catalog name 'iceberg' on EMR V5.6.0+). DLF (new) Iceberg REST catalog is documented for EMR on ECS Spark with the open-source runtime. EMR Serverless Spark documents DLF, DLF-Legacy (DLF 1.0) and Hive Metastore catalogs.",
+      "caveats": [
+        "Shipped component on EMR on ECS EMR-5.21.0 (latest 5.x): Spark3 3.5.3 + Iceberg 1.5.0",
+        "DLF REST access on EMR on ECS requires a user-supplied Iceberg >= 1.11.0 runtime and JDK 17",
+        "Hadoop catalog not documented by Alibaba for EMR Spark"
+      ],
+      "links": [
+        {
+          "label": "EMR on ECS: DLF metadata configuration for Iceberg",
+          "url": "https://help.aliyun.com/zh/emr/emr-on-ecs/user-guide/configuration-of-dlf-metadata"
+        },
+        {
+          "label": "EMR on ECS: Use Iceberg (Spark SQL, DLF catalog)",
+          "url": "https://help.aliyun.com/en/emr/emr-on-ecs/user-guide/use-iceberg"
+        },
+        {
+          "label": "DLF: Access DLF Iceberg tables from EMR on ECS Spark via Iceberg REST",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/access-iceberg-tables-from-emr-on-ecs-spark"
+        },
+        {
+          "label": "EMR Serverless Spark: Use Iceberg (catalogs)",
+          "url": "https://help.aliyun.com/zh/emr/emr-serverless-spark/use-cases/use-iceberg"
+        }
+      ]
+    },
+    "alibaba-emr-spark:catalog-integration:v3": {
+      "level": "partial",
+      "notes": "Only path to V3 documented by Alibaba is DLF Iceberg REST (DLF supports V3 tables). Shipped DlfCatalog with Iceberg 1.5.0 predates V3.",
+      "caveats": [
+        "Not possible with the shipped Iceberg 1.5.0 component; requires a user-supplied open-source iceberg-spark-runtime-3.5_2.12 >= 1.11.0 + iceberg-aws-bundle on EMR-5.12.0+ with JDK 17, using DLF Iceberg REST"
+      ],
+      "links": [
+        {
+          "label": "DLF: Iceberg Table (V2/V3 table format)",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/manage-iceberg-tables"
+        },
+        {
+          "label": "DLF: Access DLF Iceberg tables from EMR on ECS Spark via Iceberg REST",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/access-iceberg-tables-from-emr-on-ecs-spark"
+        }
+      ]
+    },
+    "alibaba-emr-spark:statistics:v2": {
+      "level": "full",
+      "notes": "Alibaba overview lists efficient data filtering (高效数据过滤); manifest column metrics (value/null counts, lower/upper bounds) are written by default by the upstream Iceberg 1.5.0 writer and used for file pruning. Behaviour of the shipped upstream Apache Iceberg 1.5.0 Spark runtime per Apache Iceberg docs; Alibaba Cloud does not document this specific feature on EMR.",
+      "caveats": [
+        "Shipped component on EMR on ECS EMR-5.21.0 (latest 5.x): Spark3 3.5.3 + Iceberg 1.5.0",
+        "Metrics mode configurable via write.metadata.metrics.* table properties"
+      ],
+      "links": [
+        {
+          "label": "EMR on ECS: Iceberg overview (zh)",
+          "url": "https://help.aliyun.com/zh/emr/emr-on-ecs/user-guide/iceberg-overview"
+        },
+        {
+          "label": "Apache Iceberg 1.5.0: Configuration",
+          "url": "https://iceberg.apache.org/docs/1.5.0/configuration/"
+        }
+      ]
+    },
+    "alibaba-emr-spark:statistics:v3": {
+      "level": "none",
+      "notes": "Not supported with the Iceberg component EMR ships (1.5.0 on EMR-5.21.0), which caps the table format at v2 (SUPPORTED_TABLE_FORMAT_VERSION = 2), so EMR Spark as shipped cannot read or write Iceberg v3 tables.",
+      "caveats": [
+        "DLF documents EMR on ECS Spark reaching v3 tables only by replacing the shipped component with a user-supplied open-source Iceberg >= 1.11.0 runtime (JDK 17, EMR-5.12.0+); that setup behaves like upstream Spark, not an Alibaba-supported EMR feature.",
+        "Re-check when an EMR release upgrades the bundled Iceberg component past 1.8."
+      ],
+      "links": [
+        {
+          "label": "Apache Iceberg 1.5.0 - TableMetadata.java (SUPPORTED_TABLE_FORMAT_VERSION = 2)",
+          "url": "https://github.com/apache/iceberg/blob/apache-iceberg-1.5.0/core/src/main/java/org/apache/iceberg/TableMetadata.java"
+        },
+        {
+          "label": "DLF: Iceberg Table (V2/V3 table format)",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/manage-iceberg-tables"
+        },
+        {
+          "label": "DLF: Access DLF Iceberg tables from EMR on ECS Spark via Iceberg REST",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/access-iceberg-tables-from-emr-on-ecs-spark"
+        }
+      ]
+    },
+    "alibaba-emr-spark:bloom-filters:v2": {
+      "level": "partial",
+      "notes": "Parquet-level bloom filters can be enabled per column via write.parquet.bloom-filter-enabled.column.<col> in the upstream Iceberg 1.5.0 runtime. Behaviour of the shipped upstream Apache Iceberg 1.5.0 Spark runtime per Apache Iceberg docs; Alibaba Cloud does not document this specific feature on EMR.",
+      "caveats": [
+        "Shipped component on EMR on ECS EMR-5.21.0 (latest 5.x): Spark3 3.5.3 + Iceberg 1.5.0",
+        "Not enabled by default; per-column table property",
+        "Parquet row-group bloom filters only; no Puffin-based bloom filter indexes"
+      ],
+      "links": [
+        {
+          "label": "EMR-5.x release notes (EMR-5.21.0: Spark3 3.5.3, Iceberg 1.5.0)",
+          "url": "https://help.aliyun.com/zh/emr/emr-on-ecs/product-overview/release-notes-for-emr-v5-x-series"
+        },
+        {
+          "label": "Apache Iceberg 1.5.0: Configuration",
+          "url": "https://iceberg.apache.org/docs/1.5.0/configuration/"
+        }
+      ]
+    },
+    "alibaba-emr-spark:bloom-filters:v3": {
+      "level": "none",
+      "notes": "Not supported with the Iceberg component EMR ships (1.5.0 on EMR-5.21.0), which caps the table format at v2 (SUPPORTED_TABLE_FORMAT_VERSION = 2), so EMR Spark as shipped cannot read or write Iceberg v3 tables.",
+      "caveats": [
+        "DLF documents EMR on ECS Spark reaching v3 tables only by replacing the shipped component with a user-supplied open-source Iceberg >= 1.11.0 runtime (JDK 17, EMR-5.12.0+); that setup behaves like upstream Spark, not an Alibaba-supported EMR feature.",
+        "Re-check when an EMR release upgrades the bundled Iceberg component past 1.8."
+      ],
+      "links": [
+        {
+          "label": "Apache Iceberg 1.5.0 - TableMetadata.java (SUPPORTED_TABLE_FORMAT_VERSION = 2)",
+          "url": "https://github.com/apache/iceberg/blob/apache-iceberg-1.5.0/core/src/main/java/org/apache/iceberg/TableMetadata.java"
+        },
+        {
+          "label": "DLF: Iceberg Table (V2/V3 table format)",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/manage-iceberg-tables"
+        },
+        {
+          "label": "DLF: Access DLF Iceberg tables from EMR on ECS Spark via Iceberg REST",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/access-iceberg-tables-from-emr-on-ecs-spark"
+        }
+      ]
+    },
+    "alibaba-emr-spark:aws-glue-catalog:v2": {
+      "level": "partial",
+      "notes": "Live-tested on EMR Serverless Spark esr-4.9.1 (Spark 3.5.2, Iceberg 1.10.1-emr) against AWS Glue in us-west-2 with the open-source GlueCatalog + S3FileIO from iceberg-aws-bundle 1.10.1: listed Glue databases, created a format-version 2 table, inserted 3 rows, ran a merge-on-read DELETE (position-delete Parquet file written), and read back the expected rows; Glue shows table_type ICEBERG.",
+      "caveats": [
+        "Not documented or supported by Alibaba Cloud; works through the open-source Iceberg client only",
+        "Not shipped: EMR Serverless Spark esr-4.9.1 bundles Iceberg 1.10.1-emr without the AWS SDK, so org.apache.iceberg.aws.glue.GlueCatalog fails to load; the user must add the open-source iceberg-aws-bundle via spark.emr.serverless.user.defined.jars (spark.jars at runtime is not enough - class loader mismatch)",
+        "Needs outbound internet from the workspace: a network connection on a vSwitch in a supported zone (cn-hangzhou H/I/J) plus a public NAT gateway with an SNAT entry"
+      ],
+      "links": []
+    },
+    "alibaba-emr-spark:aws-glue-catalog:v3": {
+      "level": "partial",
+      "notes": "Live-tested on EMR Serverless Spark esr-4.9.1 (Spark 3.5.2, Iceberg 1.10.1-emr) against AWS Glue in us-west-2 with the open-source GlueCatalog + S3FileIO from iceberg-aws-bundle 1.10.1: created a format-version 3 table, inserted 3 rows, ran a merge-on-read DELETE (deletion vector written as a Puffin file), and read back the expected rows; Glue shows table_type ICEBERG.",
+      "caveats": [
+        "Not documented or supported by Alibaba Cloud; works through the open-source Iceberg client only",
+        "Not shipped: EMR Serverless Spark esr-4.9.1 bundles Iceberg 1.10.1-emr without the AWS SDK, so org.apache.iceberg.aws.glue.GlueCatalog fails to load; the user must add the open-source iceberg-aws-bundle via spark.emr.serverless.user.defined.jars (spark.jars at runtime is not enough - class loader mismatch)",
+        "Needs outbound internet from the workspace: a network connection on a vSwitch in a supported zone (cn-hangzhou H/I/J) plus a public NAT gateway with an SNAT entry"
+      ],
+      "links": []
+    },
+    "alibaba-emr-spark:rest-catalog:v2": {
+      "level": "partial",
+      "notes": "Alibaba's DLF doc shows EMR on ECS Spark accessing DLF Iceberg tables through org.apache.iceberg.rest.RESTCatalog (DLF Iceberg REST endpoint, SigV4 signing-name DlfNext). EMR Serverless Spark also documents RESTCatalog against DLF (esr-4.7.0+/esr-3.6.0+).",
+      "caveats": [
+        "Requires EMR-5.12.0+ with a user-supplied open-source iceberg-spark-runtime-3.5_2.12 >= 1.11.0 + iceberg-aws-bundle and JDK 17 -- not the shipped Iceberg 1.5.0 component",
+        "Only DLF's Iceberg REST endpoint is documented; generic third-party REST catalogs are not documented"
+      ],
+      "links": [
+        {
+          "label": "DLF: Access DLF Iceberg tables from EMR on ECS Spark via Iceberg REST",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/access-iceberg-tables-from-emr-on-ecs-spark"
+        },
+        {
+          "label": "EMR Serverless Spark: Use Iceberg (catalogs)",
+          "url": "https://help.aliyun.com/zh/emr/emr-serverless-spark/use-cases/use-iceberg"
+        }
+      ]
+    },
+    "alibaba-emr-spark:rest-catalog:v3": {
+      "level": "partial",
+      "notes": "DLF Iceberg REST catalog supports V3 tables and is documented for EMR on ECS Spark with the open-source Iceberg 1.11.0 runtime; V3 on EMR not explicitly documented.",
+      "caveats": [
+        "Not possible with the shipped Iceberg 1.5.0 component; requires a user-supplied open-source iceberg-spark-runtime-3.5_2.12 >= 1.11.0 + iceberg-aws-bundle on EMR-5.12.0+ with JDK 17, using DLF Iceberg REST"
+      ],
+      "links": [
+        {
+          "label": "DLF: Iceberg Table (V2/V3 table format)",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/manage-iceberg-tables"
+        },
+        {
+          "label": "DLF: Access DLF Iceberg tables from EMR on ECS Spark via Iceberg REST",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/access-iceberg-tables-from-emr-on-ecs-spark"
+        }
+      ]
+    },
+    "alibaba-emr-spark:unity-catalog:v2": {
+      "level": "partial",
+      "notes": "Databricks Unity Catalog is not documented by Alibaba Cloud for EMR Spark. It exposes an Iceberg REST catalog endpoint, and EMR Serverless Spark's Iceberg runtime includes the open-source RESTCatalog client (documented by Alibaba for DLF REST), so access through that client is expected to work; not live-tested.",
+      "caveats": [
+        "Not documented or supported by Alibaba Cloud; works through the open-source Iceberg client only",
+        "Needs outbound internet from the workspace: a network connection on a vSwitch in a supported zone (cn-hangzhou H/I/J) plus a public NAT gateway with an SNAT entry",
+        "Not live-tested; rating by analogy with the live-tested AWS Glue path and the documented DLF REST path"
+      ],
+      "links": []
+    },
+    "alibaba-emr-spark:unity-catalog:v3": {
+      "level": "partial",
+      "notes": "Databricks Unity Catalog is not documented by Alibaba Cloud for EMR Spark. It exposes an Iceberg REST catalog endpoint, and EMR Serverless Spark's Iceberg runtime includes the open-source RESTCatalog client (documented by Alibaba for DLF REST), so access through that client is expected to work; not live-tested.",
+      "caveats": [
+        "Not documented or supported by Alibaba Cloud; works through the open-source Iceberg client only",
+        "Needs outbound internet from the workspace: a network connection on a vSwitch in a supported zone (cn-hangzhou H/I/J) plus a public NAT gateway with an SNAT entry",
+        "Not live-tested; rating by analogy with the live-tested AWS Glue path and the documented DLF REST path"
+      ],
+      "links": []
+    },
+    "alibaba-emr-spark:snowflake-horizon-catalog:v2": {
+      "level": "partial",
+      "notes": "Snowflake Horizon Catalog is not documented by Alibaba Cloud for EMR Spark. It exposes an Iceberg REST catalog endpoint, and EMR Serverless Spark's Iceberg runtime includes the open-source RESTCatalog client (documented by Alibaba for DLF REST), so access through that client is expected to work; not live-tested.",
+      "caveats": [
+        "Not documented or supported by Alibaba Cloud; works through the open-source Iceberg client only",
+        "Needs outbound internet from the workspace: a network connection on a vSwitch in a supported zone (cn-hangzhou H/I/J) plus a public NAT gateway with an SNAT entry",
+        "Not live-tested; rating by analogy with the live-tested AWS Glue path and the documented DLF REST path"
+      ],
+      "links": []
+    },
+    "alibaba-emr-spark:snowflake-horizon-catalog:v3": {
+      "level": "partial",
+      "notes": "Snowflake Horizon Catalog is not documented by Alibaba Cloud for EMR Spark. It exposes an Iceberg REST catalog endpoint, and EMR Serverless Spark's Iceberg runtime includes the open-source RESTCatalog client (documented by Alibaba for DLF REST), so access through that client is expected to work; not live-tested.",
+      "caveats": [
+        "Not documented or supported by Alibaba Cloud; works through the open-source Iceberg client only",
+        "Needs outbound internet from the workspace: a network connection on a vSwitch in a supported zone (cn-hangzhou H/I/J) plus a public NAT gateway with an SNAT entry",
+        "Not live-tested; rating by analogy with the live-tested AWS Glue path and the documented DLF REST path"
+      ],
+      "links": []
+    },
+    "alibaba-emr-spark:google-lakehouse:v2": {
+      "level": "partial",
+      "notes": "Google BigLake (Lakehouse) metastore is not documented by Alibaba Cloud for EMR Spark. It exposes an Iceberg REST catalog endpoint, and EMR Serverless Spark's Iceberg runtime includes the open-source RESTCatalog client (documented by Alibaba for DLF REST), so access through that client is expected to work; not live-tested.",
+      "caveats": [
+        "Not documented or supported by Alibaba Cloud; works through the open-source Iceberg client only",
+        "Needs outbound internet from the workspace: a network connection on a vSwitch in a supported zone (cn-hangzhou H/I/J) plus a public NAT gateway with an SNAT entry",
+        "Not live-tested; rating by analogy with the live-tested AWS Glue path and the documented DLF REST path"
+      ],
+      "links": []
+    },
+    "alibaba-emr-spark:google-lakehouse:v3": {
+      "level": "partial",
+      "notes": "Google BigLake (Lakehouse) metastore is not documented by Alibaba Cloud for EMR Spark. It exposes an Iceberg REST catalog endpoint, and EMR Serverless Spark's Iceberg runtime includes the open-source RESTCatalog client (documented by Alibaba for DLF REST), so access through that client is expected to work; not live-tested.",
+      "caveats": [
+        "Not documented or supported by Alibaba Cloud; works through the open-source Iceberg client only",
+        "Needs outbound internet from the workspace: a network connection on a vSwitch in a supported zone (cn-hangzhou H/I/J) plus a public NAT gateway with an SNAT entry",
+        "Not live-tested; rating by analogy with the live-tested AWS Glue path and the documented DLF REST path"
+      ],
+      "links": []
+    },
+    "alibaba-emr-spark:variant-type:v2": {
+      "level": "none",
+      "notes": "Variant type is a V3 feature, not available in format version 2",
+      "caveats": [],
+      "links": []
+    },
+    "alibaba-emr-spark:variant-type:v3": {
+      "level": "none",
+      "notes": "Not supported with the Iceberg component EMR ships (1.5.0 on EMR-5.21.0), which caps the table format at v2 (SUPPORTED_TABLE_FORMAT_VERSION = 2), so EMR Spark as shipped cannot read or write Iceberg v3 tables.",
+      "caveats": [
+        "DLF documents EMR on ECS Spark reaching v3 tables only by replacing the shipped component with a user-supplied open-source Iceberg >= 1.11.0 runtime (JDK 17, EMR-5.12.0+); that setup behaves like upstream Spark, not an Alibaba-supported EMR feature.",
+        "Re-check when an EMR release upgrades the bundled Iceberg component past 1.8."
+      ],
+      "links": [
+        {
+          "label": "Apache Iceberg 1.5.0 - TableMetadata.java (SUPPORTED_TABLE_FORMAT_VERSION = 2)",
+          "url": "https://github.com/apache/iceberg/blob/apache-iceberg-1.5.0/core/src/main/java/org/apache/iceberg/TableMetadata.java"
+        },
+        {
+          "label": "DLF: Iceberg Table (V2/V3 table format)",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/manage-iceberg-tables"
+        },
+        {
+          "label": "DLF: Access DLF Iceberg tables from EMR on ECS Spark via Iceberg REST",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/access-iceberg-tables-from-emr-on-ecs-spark"
+        }
+      ]
+    },
+    "alibaba-emr-spark:shredded-variant:v2": {
+      "level": "none",
+      "notes": "Shredded variant is a V3 feature, not available in format version 2",
+      "caveats": [],
+      "links": []
+    },
+    "alibaba-emr-spark:shredded-variant:v3": {
+      "level": "none",
+      "notes": "Not supported with the Iceberg component EMR ships (1.5.0 on EMR-5.21.0), which caps the table format at v2 (SUPPORTED_TABLE_FORMAT_VERSION = 2), so EMR Spark as shipped cannot read or write Iceberg v3 tables.",
+      "caveats": [
+        "DLF documents EMR on ECS Spark reaching v3 tables only by replacing the shipped component with a user-supplied open-source Iceberg >= 1.11.0 runtime (JDK 17, EMR-5.12.0+); that setup behaves like upstream Spark, not an Alibaba-supported EMR feature.",
+        "Re-check when an EMR release upgrades the bundled Iceberg component past 1.8."
+      ],
+      "links": [
+        {
+          "label": "Apache Iceberg 1.5.0 - TableMetadata.java (SUPPORTED_TABLE_FORMAT_VERSION = 2)",
+          "url": "https://github.com/apache/iceberg/blob/apache-iceberg-1.5.0/core/src/main/java/org/apache/iceberg/TableMetadata.java"
+        },
+        {
+          "label": "DLF: Iceberg Table (V2/V3 table format)",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/manage-iceberg-tables"
+        },
+        {
+          "label": "DLF: Access DLF Iceberg tables from EMR on ECS Spark via Iceberg REST",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/access-iceberg-tables-from-emr-on-ecs-spark"
+        }
+      ]
+    },
+    "alibaba-emr-spark:geometry-type:v2": {
+      "level": "none",
+      "notes": "Geometry type is a V3 feature, not available in format version 2",
+      "caveats": [],
+      "links": []
+    },
+    "alibaba-emr-spark:geometry-type:v3": {
+      "level": "none",
+      "notes": "Not supported with the Iceberg component EMR ships (1.5.0 on EMR-5.21.0), which caps the table format at v2 (SUPPORTED_TABLE_FORMAT_VERSION = 2), so EMR Spark as shipped cannot read or write Iceberg v3 tables.",
+      "caveats": [
+        "DLF documents EMR on ECS Spark reaching v3 tables only by replacing the shipped component with a user-supplied open-source Iceberg >= 1.11.0 runtime (JDK 17, EMR-5.12.0+); that setup behaves like upstream Spark, not an Alibaba-supported EMR feature.",
+        "Re-check when an EMR release upgrades the bundled Iceberg component past 1.8."
+      ],
+      "links": [
+        {
+          "label": "Apache Iceberg 1.5.0 - TableMetadata.java (SUPPORTED_TABLE_FORMAT_VERSION = 2)",
+          "url": "https://github.com/apache/iceberg/blob/apache-iceberg-1.5.0/core/src/main/java/org/apache/iceberg/TableMetadata.java"
+        },
+        {
+          "label": "DLF: Iceberg Table (V2/V3 table format)",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/manage-iceberg-tables"
+        },
+        {
+          "label": "DLF: Access DLF Iceberg tables from EMR on ECS Spark via Iceberg REST",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/access-iceberg-tables-from-emr-on-ecs-spark"
+        }
+      ]
+    },
+    "alibaba-emr-spark:nanosecond-timestamps:v2": {
+      "level": "none",
+      "notes": "Nanosecond timestamps is a V3 feature, not available in format version 2",
+      "caveats": [],
+      "links": []
+    },
+    "alibaba-emr-spark:nanosecond-timestamps:v3": {
+      "level": "none",
+      "notes": "Not supported with the Iceberg component EMR ships (1.5.0 on EMR-5.21.0), which caps the table format at v2 (SUPPORTED_TABLE_FORMAT_VERSION = 2), so EMR Spark as shipped cannot read or write Iceberg v3 tables.",
+      "caveats": [
+        "DLF documents EMR on ECS Spark reaching v3 tables only by replacing the shipped component with a user-supplied open-source Iceberg >= 1.11.0 runtime (JDK 17, EMR-5.12.0+); that setup behaves like upstream Spark, not an Alibaba-supported EMR feature.",
+        "Re-check when an EMR release upgrades the bundled Iceberg component past 1.8."
+      ],
+      "links": [
+        {
+          "label": "Apache Iceberg 1.5.0 - TableMetadata.java (SUPPORTED_TABLE_FORMAT_VERSION = 2)",
+          "url": "https://github.com/apache/iceberg/blob/apache-iceberg-1.5.0/core/src/main/java/org/apache/iceberg/TableMetadata.java"
+        },
+        {
+          "label": "DLF: Iceberg Table (V2/V3 table format)",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/manage-iceberg-tables"
+        },
+        {
+          "label": "DLF: Access DLF Iceberg tables from EMR on ECS Spark via Iceberg REST",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/access-iceberg-tables-from-emr-on-ecs-spark"
+        }
+      ]
+    },
+    "alibaba-emr-spark:unknown-type:v2": {
+      "level": "none",
+      "notes": "Unknown type is a V3 feature, not available in format version 2",
+      "caveats": [],
+      "links": []
+    },
+    "alibaba-emr-spark:unknown-type:v3": {
+      "level": "none",
+      "notes": "Not supported with the Iceberg component EMR ships (1.5.0 on EMR-5.21.0), which caps the table format at v2 (SUPPORTED_TABLE_FORMAT_VERSION = 2), so EMR Spark as shipped cannot read or write Iceberg v3 tables.",
+      "caveats": [
+        "DLF documents EMR on ECS Spark reaching v3 tables only by replacing the shipped component with a user-supplied open-source Iceberg >= 1.11.0 runtime (JDK 17, EMR-5.12.0+); that setup behaves like upstream Spark, not an Alibaba-supported EMR feature.",
+        "Re-check when an EMR release upgrades the bundled Iceberg component past 1.8."
+      ],
+      "links": [
+        {
+          "label": "Apache Iceberg 1.5.0 - TableMetadata.java (SUPPORTED_TABLE_FORMAT_VERSION = 2)",
+          "url": "https://github.com/apache/iceberg/blob/apache-iceberg-1.5.0/core/src/main/java/org/apache/iceberg/TableMetadata.java"
+        },
+        {
+          "label": "DLF: Iceberg Table (V2/V3 table format)",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/manage-iceberg-tables"
+        },
+        {
+          "label": "DLF: Access DLF Iceberg tables from EMR on ECS Spark via Iceberg REST",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/access-iceberg-tables-from-emr-on-ecs-spark"
+        }
+      ]
+    },
+    "alibaba-emr-spark:lineage:v2": {
+      "level": "none",
+      "notes": "Row lineage is a V3 feature, not available in format version 2",
+      "caveats": [],
+      "links": []
+    },
+    "alibaba-emr-spark:lineage:v3": {
+      "level": "none",
+      "notes": "Not supported with the Iceberg component EMR ships (1.5.0 on EMR-5.21.0), which caps the table format at v2 (SUPPORTED_TABLE_FORMAT_VERSION = 2), so EMR Spark as shipped cannot read or write Iceberg v3 tables.",
+      "caveats": [
+        "DLF documents EMR on ECS Spark reaching v3 tables only by replacing the shipped component with a user-supplied open-source Iceberg >= 1.11.0 runtime (JDK 17, EMR-5.12.0+); that setup behaves like upstream Spark, not an Alibaba-supported EMR feature.",
+        "Re-check when an EMR release upgrades the bundled Iceberg component past 1.8."
+      ],
+      "links": [
+        {
+          "label": "Apache Iceberg 1.5.0 - TableMetadata.java (SUPPORTED_TABLE_FORMAT_VERSION = 2)",
+          "url": "https://github.com/apache/iceberg/blob/apache-iceberg-1.5.0/core/src/main/java/org/apache/iceberg/TableMetadata.java"
+        },
+        {
+          "label": "DLF: Iceberg Table (V2/V3 table format)",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/manage-iceberg-tables"
+        },
+        {
+          "label": "DLF: Access DLF Iceberg tables from EMR on ECS Spark via Iceberg REST",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/access-iceberg-tables-from-emr-on-ecs-spark"
+        }
+      ]
+    },
+    "alibaba-emr-spark:deletion-vectors:v2": {
+      "level": "none",
+      "notes": "Deletion vectors is a V3 feature, not available in format version 2",
+      "caveats": [],
+      "links": []
+    },
+    "alibaba-emr-spark:deletion-vectors:v3": {
+      "level": "none",
+      "notes": "Not supported with the Iceberg component EMR ships (1.5.0 on EMR-5.21.0), which caps the table format at v2 (SUPPORTED_TABLE_FORMAT_VERSION = 2), so EMR Spark as shipped cannot read or write Iceberg v3 tables.",
+      "caveats": [
+        "DLF documents EMR on ECS Spark reaching v3 tables only by replacing the shipped component with a user-supplied open-source Iceberg >= 1.11.0 runtime (JDK 17, EMR-5.12.0+); that setup behaves like upstream Spark, not an Alibaba-supported EMR feature.",
+        "Re-check when an EMR release upgrades the bundled Iceberg component past 1.8."
+      ],
+      "links": [
+        {
+          "label": "Apache Iceberg 1.5.0 - TableMetadata.java (SUPPORTED_TABLE_FORMAT_VERSION = 2)",
+          "url": "https://github.com/apache/iceberg/blob/apache-iceberg-1.5.0/core/src/main/java/org/apache/iceberg/TableMetadata.java"
+        },
+        {
+          "label": "DLF: Iceberg Table (V2/V3 table format)",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/manage-iceberg-tables"
+        },
+        {
+          "label": "DLF: Access DLF Iceberg tables from EMR on ECS Spark via Iceberg REST",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/access-iceberg-tables-from-emr-on-ecs-spark"
+        }
+      ]
+    }
+  }
+}

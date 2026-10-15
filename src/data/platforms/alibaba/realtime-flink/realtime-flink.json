@@ -1,0 +1,963 @@
+{
+  "platforms": [
+    {
+      "id": "alibaba-realtime-flink",
+      "name": "Realtime Compute Flink (VVR 11.x)",
+      "vendor": "Alibaba Cloud",
+      "category": "cloud",
+      "group": "Alibaba Cloud",
+      "docUrl": "https://www.alibabacloud.com/help/en/flink/developer-reference/apache-iceberg-connector"
+    }
+  ],
+  "support": {
+    "alibaba-realtime-flink:aws-glue-catalog:v2": {
+      "level": "none",
+      "notes": "Not supported as documented: Alibaba states that Iceberg catalogs in Realtime Compute for Apache Flink support only DLF catalogs, so AWS Glue Data Catalog is not a documented option.",
+      "caveats": [
+        "Iceberg catalogs in Realtime Compute for Apache Flink support DLF only (VVR 11.1+), and the connector must be used with a DLF catalog"
+      ],
+      "links": [
+        {
+          "label": "Manage Iceberg catalogs",
+          "url": "https://help.aliyun.com/en/flink/realtime-flink/user-guide/manage-apache-iceberg-catalogs"
+        },
+        {
+          "label": "Iceberg connector (ZH)",
+          "url": "https://help.aliyun.com/zh/flink/developer-reference/apache-iceberg-connector"
+        },
+        {
+          "label": "Iceberg connector (EN)",
+          "url": "https://www.alibabacloud.com/help/en/flink/developer-reference/apache-iceberg-connector"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:aws-glue-catalog:v3": {
+      "level": "none",
+      "notes": "Not supported as documented: Alibaba states that Iceberg catalogs in Realtime Compute for Apache Flink support only DLF catalogs, so AWS Glue Data Catalog is not a documented option.",
+      "caveats": [
+        "Iceberg catalogs in Realtime Compute for Apache Flink support DLF only (VVR 11.1+), and the connector must be used with a DLF catalog"
+      ],
+      "links": [
+        {
+          "label": "Manage Iceberg catalogs",
+          "url": "https://help.aliyun.com/en/flink/realtime-flink/user-guide/manage-apache-iceberg-catalogs"
+        },
+        {
+          "label": "Iceberg connector (ZH)",
+          "url": "https://help.aliyun.com/zh/flink/developer-reference/apache-iceberg-connector"
+        },
+        {
+          "label": "Iceberg connector (EN)",
+          "url": "https://www.alibabacloud.com/help/en/flink/developer-reference/apache-iceberg-connector"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:bloom-filters:v2": {
+      "level": "full",
+      "notes": "Not documented for the connector. In testing, with write.parquet.bloom-filter-enabled.column.* set, Parquet files written by Flink contained bloom filters for the configured columns; files from a table without the property had none. Tested with Realtime Compute for Apache Flink (VVR 11.9, Flink 1.20) and the built-in Iceberg connector against a DLF Iceberg REST catalog (cn-hangzhou, 2026-10-15); result read from the table's Iceberg metadata and data files.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Iceberg connector (ZH)",
+          "url": "https://help.aliyun.com/zh/flink/developer-reference/apache-iceberg-connector"
+        },
+        {
+          "label": "Iceberg connector (EN)",
+          "url": "https://www.alibabacloud.com/help/en/flink/developer-reference/apache-iceberg-connector"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:bloom-filters:v3": {
+      "level": "full",
+      "notes": "The connector page lists Iceberg v1/v2 only, but in testing the connector created, read and wrote format-version 3 tables. In testing: With write.parquet.bloom-filter-enabled.column.* set on a V3 table, the Parquet data file written by Flink contained bloom filters for both configured columns; files of a V3 table without the property had none. Tested with Realtime Compute for Apache Flink (VVR 11.9, Flink 1.20) and the built-in Iceberg connector against a DLF Iceberg REST catalog (cn-hangzhou, 2026-10-15) on format-version 3 tables; results read back with Spark 3.5 / Iceberg 1.10.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Realtime Compute for Apache Flink - Iceberg connector (supports Iceberg v1 and v2 table formats)",
+          "url": "https://help.aliyun.com/zh/flink/realtime-flink/developer-reference/apache-iceberg-connector"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:branching-tagging:v2": {
+      "level": "partial",
+      "notes": "Flink cannot create or manage branches/tags (no SQL syntax). It reads and writes existing refs via SQL hints: in testing, OPTIONS('branch'='b1') and OPTIONS('tag'='t1') returned the ref's rows rather than main's, and an INSERT with OPTIONS('branch'='b1') committed a snapshot to branch b1 only, leaving main unchanged. Tested with Realtime Compute for Apache Flink (VVR 11.9, Flink 1.20) and the built-in Iceberg connector against a DLF Iceberg REST catalog (cn-hangzhou, 2026-10-15); the evolved/branched state was created beforehand with open-source Spark 3.5 + Iceberg 1.10.1 via DLF's documented public-network plugin, and results were verified from the table's Iceberg metadata.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Iceberg connector (ZH)",
+          "url": "https://help.aliyun.com/zh/flink/developer-reference/apache-iceberg-connector"
+        },
+        {
+          "label": "Iceberg connector (EN)",
+          "url": "https://www.alibabacloud.com/help/en/flink/developer-reference/apache-iceberg-connector"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:branching-tagging:v3": {
+      "level": "partial",
+      "notes": "The connector page lists Iceberg v1/v2 only, but in testing the connector created, read and wrote format-version 3 tables. In testing: OPTIONS('branch'=...) and OPTIONS('tag'=...) read the ref's rows and an INSERT with OPTIONS('branch'='b1') committed only to b1 on a V3 table; Flink cannot create or manage branches/tags. Tested with Realtime Compute for Apache Flink (VVR 11.9, Flink 1.20) and the built-in Iceberg connector against a DLF Iceberg REST catalog (cn-hangzhou, 2026-10-15) on format-version 3 tables; results read back with Spark 3.5 / Iceberg 1.10.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Realtime Compute for Apache Flink - Iceberg connector (supports Iceberg v1 and v2 table formats)",
+          "url": "https://help.aliyun.com/zh/flink/realtime-flink/developer-reference/apache-iceberg-connector"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:catalog-integration:v2": {
+      "level": "partial",
+      "notes": "Two DLF paths. (1) The legacy connector uses catalog-impl=org.apache.iceberg.aliyun.dlf.DlfCatalog against DLF-Legacy. (2) From VVR 11.2.0, CREATE CATALOG with type=iceberg, catalog-type=rest, token.provider=dlf and io-impl=org.apache.iceberg.rest.DlfFileIO against DLF's Iceberg REST endpoint. Only DLF catalogs are supported.",
+      "caveats": [
+        "Iceberg catalogs in Realtime Compute for Apache Flink support DLF only (VVR 11.1+), and the connector must be used with a DLF catalog",
+        "Iceberg REST to DLF requires VVR 11.2.0+; built-in catalog reuse in CDC YAML jobs requires VVR 11.5+"
+      ],
+      "links": [
+        {
+          "label": "Manage Iceberg catalogs",
+          "url": "https://help.aliyun.com/en/flink/realtime-flink/user-guide/manage-apache-iceberg-catalogs"
+        },
+        {
+          "label": "Iceberg connector (ZH)",
+          "url": "https://help.aliyun.com/zh/flink/developer-reference/apache-iceberg-connector"
+        },
+        {
+          "label": "Iceberg connector (EN)",
+          "url": "https://www.alibabacloud.com/help/en/flink/developer-reference/apache-iceberg-connector"
+        },
+        {
+          "label": "DLF: Flink SQL via Iceberg REST",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/access-iceberg-catalogs-in-dlf-from-flink"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:catalog-integration:v3": {
+      "level": "partial",
+      "notes": "Same DLF-only catalog paths as V2. Catalog connectivity does not depend on format version, but V3 table read/write is not documented by the Flink connector.",
+      "caveats": [
+        "Iceberg catalogs in Realtime Compute for Apache Flink support DLF only (VVR 11.1+), and the connector must be used with a DLF catalog",
+        "Contradictory docs: the Flink connector page says only Iceberg v1/v2 table formats are supported, while DLF's Iceberg-table page shows a Flink SQL CREATE TABLE ... WITH ('format-version'='3') example"
+      ],
+      "links": [
+        {
+          "label": "Manage Iceberg catalogs",
+          "url": "https://help.aliyun.com/en/flink/realtime-flink/user-guide/manage-apache-iceberg-catalogs"
+        },
+        {
+          "label": "DLF: Flink SQL via Iceberg REST",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/access-iceberg-catalogs-in-dlf-from-flink"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:column-default-values:v2": {
+      "level": "none",
+      "notes": "Column default values is a V3 feature, not available in format version 2",
+      "caveats": [],
+      "links": []
+    },
+    "alibaba-realtime-flink:column-default-values:v3": {
+      "level": "none",
+      "notes": "Not supported in testing: Reading a V3 table with an initial-default 7 column returned NULL instead of 7, and CREATE TABLE with a DEFAULT clause does not parse. Tested with Realtime Compute for Apache Flink (VVR 11.9, Flink 1.20) and the built-in Iceberg connector against a DLF Iceberg REST catalog (cn-hangzhou, 2026-10-15) on format-version 3 tables; results read back with Spark 3.5 / Iceberg 1.10.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Realtime Compute for Apache Flink - Iceberg connector (supports Iceberg v1 and v2 table formats)",
+          "url": "https://help.aliyun.com/zh/flink/realtime-flink/developer-reference/apache-iceberg-connector"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:copy-on-write:v2": {
+      "level": "none",
+      "notes": "Not documented. In testing, write.*.mode = copy-on-write was ignored, and SQL UPDATE / DELETE statements are rejected in batch mode, so no copy-on-write rewrite path exists. Tested with Realtime Compute for Apache Flink (VVR 11.9, Flink 1.20) and the built-in Iceberg connector against a DLF Iceberg REST catalog (cn-hangzhou, 2026-10-15); result read from the table's Iceberg metadata and data files.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Iceberg connector (ZH)",
+          "url": "https://help.aliyun.com/zh/flink/developer-reference/apache-iceberg-connector"
+        },
+        {
+          "label": "Iceberg connector (EN)",
+          "url": "https://www.alibabacloud.com/help/en/flink/developer-reference/apache-iceberg-connector"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:copy-on-write:v3": {
+      "level": "none",
+      "notes": "Not supported in testing: With write.delete/update/merge.mode=copy-on-write set on a V3 table, upserts still committed delete files (merge-on-read) and INSERT OVERWRITE failed. Tested with Realtime Compute for Apache Flink (VVR 11.9, Flink 1.20) and the built-in Iceberg connector against a DLF Iceberg REST catalog (cn-hangzhou, 2026-10-15) on format-version 3 tables; results read back with Spark 3.5 / Iceberg 1.10.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Realtime Compute for Apache Flink - Iceberg connector (supports Iceberg v1 and v2 table formats)",
+          "url": "https://help.aliyun.com/zh/flink/realtime-flink/developer-reference/apache-iceberg-connector"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:deletion-vectors:v2": {
+      "level": "none",
+      "notes": "Deletion vectors is a V3 feature, not available in format version 2",
+      "caveats": [],
+      "links": []
+    },
+    "alibaba-realtime-flink:deletion-vectors:v3": {
+      "level": "partial",
+      "notes": "The connector page lists Iceberg v1/v2 only, but in testing the connector created, read and wrote format-version 3 tables. In testing: Read-only. A Spark-written V3 table with a deletion vector was read correctly (deleted row not returned), but Flink writes equality deletes rather than deletion vectors. Tested with Realtime Compute for Apache Flink (VVR 11.9, Flink 1.20) and the built-in Iceberg connector against a DLF Iceberg REST catalog (cn-hangzhou, 2026-10-15) on format-version 3 tables; results read back with Spark 3.5 / Iceberg 1.10.",
+      "caveats": [
+        "Flink does not write deletion vectors"
+      ],
+      "links": [
+        {
+          "label": "Realtime Compute for Apache Flink - Iceberg connector (supports Iceberg v1 and v2 table formats)",
+          "url": "https://help.aliyun.com/zh/flink/realtime-flink/developer-reference/apache-iceberg-connector"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:equality-deletes:v2": {
+      "level": "partial",
+      "notes": "The sink's write.operation defaults to upsert ('upsert（默认）：数据更新'), tables declare PRIMARY KEY ... NOT ENFORCED, and the connector page answers 'yes' to updating/deleting sink data. Alibaba's docs never name the delete-file type; in upstream Apache Iceberg the Flink upsert path writes equality deletes, so this is rated partial for the documentation gap.",
+      "caveats": [
+        "v2 table format (needed for row-level deletes) requires VVR 8.0.7 or later",
+        "Delete-file type not stated by Alibaba; equality-delete mechanism inferred from the upstream Iceberg Flink sink"
+      ],
+      "links": [
+        {
+          "label": "Iceberg connector (ZH)",
+          "url": "https://help.aliyun.com/zh/flink/developer-reference/apache-iceberg-connector"
+        },
+        {
+          "label": "Iceberg connector (EN)",
+          "url": "https://www.alibabacloud.com/help/en/flink/developer-reference/apache-iceberg-connector"
+        },
+        {
+          "label": "Manage Iceberg catalogs",
+          "url": "https://help.aliyun.com/en/flink/realtime-flink/user-guide/manage-apache-iceberg-catalogs"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:equality-deletes:v3": {
+      "level": "partial",
+      "notes": "The connector page lists Iceberg v1/v2 only, but in testing the connector created, read and wrote format-version 3 tables. In testing: Primary-key upsert writes to a V3 table committed equality delete files (no deletion vectors) and readers reconciled them correctly. Tested with Realtime Compute for Apache Flink (VVR 11.9, Flink 1.20) and the built-in Iceberg connector against a DLF Iceberg REST catalog (cn-hangzhou, 2026-10-15) on format-version 3 tables; results read back with Spark 3.5 / Iceberg 1.10.",
+      "caveats": [
+        "Upsert path only"
+      ],
+      "links": [
+        {
+          "label": "Realtime Compute for Apache Flink - Iceberg connector (supports Iceberg v1 and v2 table formats)",
+          "url": "https://help.aliyun.com/zh/flink/realtime-flink/developer-reference/apache-iceberg-connector"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:geometry-type:v2": {
+      "level": "none",
+      "notes": "Geometry type is a V3 feature, not available in format version 2",
+      "caveats": [],
+      "links": []
+    },
+    "alibaba-realtime-flink:geometry-type:v3": {
+      "level": "none",
+      "notes": "Not supported in testing: Reading a V3 table with geometry/geography columns fails at job start, even when only non-geo columns are selected. Tested with Realtime Compute for Apache Flink (VVR 11.9, Flink 1.20) and the built-in Iceberg connector against a DLF Iceberg REST catalog (cn-hangzhou, 2026-10-15) on format-version 3 tables; results read back with Spark 3.5 / Iceberg 1.10.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Realtime Compute for Apache Flink - Iceberg connector (supports Iceberg v1 and v2 table formats)",
+          "url": "https://help.aliyun.com/zh/flink/realtime-flink/developer-reference/apache-iceberg-connector"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:google-lakehouse:v2": {
+      "level": "none",
+      "notes": "Not supported as documented: Alibaba states that Iceberg catalogs in Realtime Compute for Apache Flink support only DLF catalogs, so Google Lakehouse runtime catalog is not a documented option.",
+      "caveats": [
+        "Iceberg catalogs in Realtime Compute for Apache Flink support DLF only (VVR 11.1+), and the connector must be used with a DLF catalog"
+      ],
+      "links": [
+        {
+          "label": "Manage Iceberg catalogs",
+          "url": "https://help.aliyun.com/en/flink/realtime-flink/user-guide/manage-apache-iceberg-catalogs"
+        },
+        {
+          "label": "Iceberg connector (ZH)",
+          "url": "https://help.aliyun.com/zh/flink/developer-reference/apache-iceberg-connector"
+        },
+        {
+          "label": "Iceberg connector (EN)",
+          "url": "https://www.alibabacloud.com/help/en/flink/developer-reference/apache-iceberg-connector"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:google-lakehouse:v3": {
+      "level": "none",
+      "notes": "Not supported as documented: Alibaba states that Iceberg catalogs in Realtime Compute for Apache Flink support only DLF catalogs, so Google Lakehouse runtime catalog is not a documented option.",
+      "caveats": [
+        "Iceberg catalogs in Realtime Compute for Apache Flink support DLF only (VVR 11.1+), and the connector must be used with a DLF catalog"
+      ],
+      "links": [
+        {
+          "label": "Manage Iceberg catalogs",
+          "url": "https://help.aliyun.com/en/flink/realtime-flink/user-guide/manage-apache-iceberg-catalogs"
+        },
+        {
+          "label": "Iceberg connector (ZH)",
+          "url": "https://help.aliyun.com/zh/flink/developer-reference/apache-iceberg-connector"
+        },
+        {
+          "label": "Iceberg connector (EN)",
+          "url": "https://www.alibabacloud.com/help/en/flink/developer-reference/apache-iceberg-connector"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:hidden-partitioning:v2": {
+      "level": "partial",
+      "notes": "CDC YAML ingestion sinks accept transform partition keys via partition.key: truncate[N](col), hour/day/month/year(col), bucket[N](col). Flink SQL DDL examples use only plain-column PARTITIONED BY.",
+      "caveats": [
+        "Transform partitioning documented only for data ingestion (YAML) jobs"
+      ],
+      "links": [
+        {
+          "label": "Iceberg connector (ZH)",
+          "url": "https://help.aliyun.com/zh/flink/developer-reference/apache-iceberg-connector"
+        },
+        {
+          "label": "Iceberg connector (EN)",
+          "url": "https://www.alibabacloud.com/help/en/flink/developer-reference/apache-iceberg-connector"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:hidden-partitioning:v3": {
+      "level": "partial",
+      "notes": "The connector page lists Iceberg v1/v2 only, but in testing the connector created, read and wrote format-version 3 tables. In testing: Reads of a Spark-created days()-partitioned V3 table with a timestamp filter returned the right rows and writes landed in the right partition; Flink DDL can only declare identity partitions. Tested with Realtime Compute for Apache Flink (VVR 11.9, Flink 1.20) and the built-in Iceberg connector against a DLF Iceberg REST catalog (cn-hangzhou, 2026-10-15) on format-version 3 tables; results read back with Spark 3.5 / Iceberg 1.10.",
+      "caveats": [
+        "Create: identity PARTITIONED BY only"
+      ],
+      "links": [
+        {
+          "label": "Realtime Compute for Apache Flink - Iceberg connector (supports Iceberg v1 and v2 table formats)",
+          "url": "https://help.aliyun.com/zh/flink/realtime-flink/developer-reference/apache-iceberg-connector"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:lineage:v2": {
+      "level": "none",
+      "notes": "Row lineage is a V3 feature, not available in format version 2",
+      "caveats": [],
+      "links": []
+    },
+    "alibaba-realtime-flink:lineage:v3": {
+      "level": "partial",
+      "notes": "The connector page lists Iceberg v1/v2 only, but in testing the connector created, read and wrote format-version 3 tables. In testing: Rows inserted by Flink into V3 tables got _row_id and _last_updated_sequence_number, but an upsert assigns the updated row a new _row_id instead of keeping the original. Tested with Realtime Compute for Apache Flink (VVR 11.9, Flink 1.20) and the built-in Iceberg connector against a DLF Iceberg REST catalog (cn-hangzhou, 2026-10-15) on format-version 3 tables; results read back with Spark 3.5 / Iceberg 1.10.",
+      "caveats": [
+        "Row ids are not preserved across upserts"
+      ],
+      "links": [
+        {
+          "label": "Realtime Compute for Apache Flink - Iceberg connector (supports Iceberg v1 and v2 table formats)",
+          "url": "https://help.aliyun.com/zh/flink/realtime-flink/developer-reference/apache-iceberg-connector"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:merge-on-read:v2": {
+      "level": "partial",
+      "notes": "Upsert writes (default write.operation=upsert, or the upsert-enabled hint on Iceberg-catalog tables) record changes that readers reconcile at scan time. The docs describe upsert but not the merge-on-read mechanics.",
+      "caveats": [
+        "v2 table format requires VVR 8.0.7 or later",
+        "Mechanism inferred from upstream Iceberg Flink upsert, not stated by Alibaba"
+      ],
+      "links": [
+        {
+          "label": "Iceberg connector (ZH)",
+          "url": "https://help.aliyun.com/zh/flink/developer-reference/apache-iceberg-connector"
+        },
+        {
+          "label": "Iceberg connector (EN)",
+          "url": "https://www.alibabacloud.com/help/en/flink/developer-reference/apache-iceberg-connector"
+        },
+        {
+          "label": "Manage Iceberg catalogs",
+          "url": "https://help.aliyun.com/en/flink/realtime-flink/user-guide/manage-apache-iceberg-catalogs"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:merge-on-read:v3": {
+      "level": "partial",
+      "notes": "The connector page lists Iceberg v1/v2 only, but in testing the connector created, read and wrote format-version 3 tables. In testing: Upsert writes to a V3 table record changes as equality deletes that Spark reconciled correctly at read time. Tested with Realtime Compute for Apache Flink (VVR 11.9, Flink 1.20) and the built-in Iceberg connector against a DLF Iceberg REST catalog (cn-hangzhou, 2026-10-15) on format-version 3 tables; results read back with Spark 3.5 / Iceberg 1.10.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Realtime Compute for Apache Flink - Iceberg connector (supports Iceberg v1 and v2 table formats)",
+          "url": "https://help.aliyun.com/zh/flink/realtime-flink/developer-reference/apache-iceberg-connector"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:multi-arg-transforms:v2": {
+      "level": "none",
+      "notes": "Multi-argument transforms is a V3 feature, not available in format version 2",
+      "caveats": [],
+      "links": []
+    },
+    "alibaba-realtime-flink:multi-arg-transforms:v3": {
+      "level": "none",
+      "notes": "Not supported: Alibaba's Iceberg connector documentation states it supports Apache Iceberg v1 and v2 table formats only (v2 from VVR 8.0.7); v3 is not a supported table format for the connector.",
+      "caveats": [
+        "Checked against VVR release notes through VVR 11.8.0 (2026-07-27); none announces Iceberg v3. Re-check on later VVR releases."
+      ],
+      "links": [
+        {
+          "label": "Realtime Compute for Apache Flink - Iceberg connector (supports Iceberg v1 and v2 table formats)",
+          "url": "https://help.aliyun.com/zh/flink/realtime-flink/developer-reference/apache-iceberg-connector"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:nanosecond-timestamps:v2": {
+      "level": "none",
+      "notes": "Nanosecond timestamps is a V3 feature, not available in format version 2",
+      "caveats": [],
+      "links": []
+    },
+    "alibaba-realtime-flink:nanosecond-timestamps:v3": {
+      "level": "partial",
+      "notes": "The connector page lists Iceberg v1/v2 only, but in testing the connector created, read and wrote format-version 3 tables. In testing: Read-only. A timestamp_ns column written by another engine was read with full precision (.123456789); a TIMESTAMP(9) column created by Flink is stored as microsecond timestamp, so Flink-written values lose precision. Tested with Realtime Compute for Apache Flink (VVR 11.9, Flink 1.20) and the built-in Iceberg connector against a DLF Iceberg REST catalog (cn-hangzhou, 2026-10-15) on format-version 3 tables; results read back with Spark 3.5 / Iceberg 1.10.",
+      "caveats": [
+        "Flink-created columns fall back to microseconds"
+      ],
+      "links": [
+        {
+          "label": "Realtime Compute for Apache Flink - Iceberg connector (supports Iceberg v1 and v2 table formats)",
+          "url": "https://help.aliyun.com/zh/flink/realtime-flink/developer-reference/apache-iceberg-connector"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:partition-evolution:v2": {
+      "level": "partial",
+      "notes": "Flink cannot initiate partition evolution (no SQL syntax). It honours an evolution performed elsewhere: in testing, a batch read returned rows written under both the old identity(cat) spec and the new days(ts) spec, and a Flink INSERT after the change wrote its data file under the current days(ts) spec. Tested with Realtime Compute for Apache Flink (VVR 11.9, Flink 1.20) and the built-in Iceberg connector against a DLF Iceberg REST catalog (cn-hangzhou, 2026-10-15); the evolved/branched state was created beforehand with open-source Spark 3.5 + Iceberg 1.10.1 via DLF's documented public-network plugin, and results were verified from the table's Iceberg metadata.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Iceberg connector (ZH)",
+          "url": "https://help.aliyun.com/zh/flink/developer-reference/apache-iceberg-connector"
+        },
+        {
+          "label": "Iceberg connector (EN)",
+          "url": "https://www.alibabacloud.com/help/en/flink/developer-reference/apache-iceberg-connector"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:partition-evolution:v3": {
+      "level": "partial",
+      "notes": "The connector page lists Iceberg v1/v2 only, but in testing the connector created, read and wrote format-version 3 tables. In testing: A V3 table whose spec was changed by Spark returned rows from both specs, and Flink writes after the change succeeded; Flink cannot change the spec itself. Tested with Realtime Compute for Apache Flink (VVR 11.9, Flink 1.20) and the built-in Iceberg connector against a DLF Iceberg REST catalog (cn-hangzhou, 2026-10-15) on format-version 3 tables; results read back with Spark 3.5 / Iceberg 1.10.",
+      "caveats": [
+        "Spec changes must be made by another engine"
+      ],
+      "links": [
+        {
+          "label": "Realtime Compute for Apache Flink - Iceberg connector (supports Iceberg v1 and v2 table formats)",
+          "url": "https://help.aliyun.com/zh/flink/realtime-flink/developer-reference/apache-iceberg-connector"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:position-deletes:v2": {
+      "level": "full",
+      "notes": "Not documented for the connector. In testing, upsert writes to a table with a primary key committed position delete files (alongside equality deletes). Tested with Realtime Compute for Apache Flink (VVR 11.9, Flink 1.20) and the built-in Iceberg connector against a DLF Iceberg REST catalog (cn-hangzhou, 2026-10-15); result read from the table's Iceberg metadata and data files.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Iceberg connector (ZH)",
+          "url": "https://help.aliyun.com/zh/flink/developer-reference/apache-iceberg-connector"
+        },
+        {
+          "label": "Iceberg connector (EN)",
+          "url": "https://www.alibabacloud.com/help/en/flink/developer-reference/apache-iceberg-connector"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:position-deletes:v3": {
+      "level": "partial",
+      "notes": "The connector page lists Iceberg v1/v2 only, but in testing the connector created, read and wrote format-version 3 tables. In testing: Read-only. In V3, position deletes take the form of deletion vectors: Flink reads them correctly but its upsert path writes equality deletes only. Tested with Realtime Compute for Apache Flink (VVR 11.9, Flink 1.20) and the built-in Iceberg connector against a DLF Iceberg REST catalog (cn-hangzhou, 2026-10-15) on format-version 3 tables; results read back with Spark 3.5 / Iceberg 1.10.",
+      "caveats": [
+        "Flink does not write deletion vectors"
+      ],
+      "links": [
+        {
+          "label": "Realtime Compute for Apache Flink - Iceberg connector (supports Iceberg v1 and v2 table formats)",
+          "url": "https://help.aliyun.com/zh/flink/realtime-flink/developer-reference/apache-iceberg-connector"
+        },
+        {
+          "label": "Apache Iceberg spec - Deletion Vectors (v3)",
+          "url": "https://iceberg.apache.org/spec/#deletion-vectors"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:read-support:v2": {
+      "level": "full",
+      "notes": "Source table in batch and streaming mode (SQL). Iceberg-catalog tables can be referenced as source, sink and dimension tables without DDL. Streaming reads are limited to append-only tables.",
+      "caveats": [
+        "v2 table format requires VVR 8.0.7 or later",
+        "Streaming read mode supports only append-only Iceberg tables as sources",
+        "Flink reads Iceberg microsecond timestamps at millisecond precision"
+      ],
+      "links": [
+        {
+          "label": "Iceberg connector (ZH)",
+          "url": "https://help.aliyun.com/zh/flink/developer-reference/apache-iceberg-connector"
+        },
+        {
+          "label": "Iceberg connector (EN)",
+          "url": "https://www.alibabacloud.com/help/en/flink/developer-reference/apache-iceberg-connector"
+        },
+        {
+          "label": "Manage Iceberg catalogs",
+          "url": "https://help.aliyun.com/en/flink/realtime-flink/user-guide/manage-apache-iceberg-catalogs"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:read-support:v3": {
+      "level": "full",
+      "notes": "The connector page lists Iceberg v1/v2 only, but in testing the connector created, read and wrote format-version 3 tables. In testing: V3 tables written by Spark (evolved schema, deletion vectors, partitioned) were read correctly in batch mode. Tested with Realtime Compute for Apache Flink (VVR 11.9, Flink 1.20) and the built-in Iceberg connector against a DLF Iceberg REST catalog (cn-hangzhou, 2026-10-15) on format-version 3 tables; results read back with Spark 3.5 / Iceberg 1.10.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Realtime Compute for Apache Flink - Iceberg connector (supports Iceberg v1 and v2 table formats)",
+          "url": "https://help.aliyun.com/zh/flink/realtime-flink/developer-reference/apache-iceberg-connector"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:rest-catalog:v2": {
+      "level": "partial",
+      "notes": "Uses the Iceberg REST catalog protocol (catalog-type=rest) from VVR 11.2.0, but documented only against DLF's Iceberg REST endpoint (http://<region>-vpc.dlf.aliyuncs.com/iceberg) with DLF token provider and DlfFileIO. Arbitrary third-party REST catalogs are not documented.",
+      "caveats": [
+        "Requires VVR 11.2.0 or later",
+        "Iceberg catalogs in Realtime Compute for Apache Flink support DLF only (VVR 11.1+), and the connector must be used with a DLF catalog"
+      ],
+      "links": [
+        {
+          "label": "Manage Iceberg catalogs",
+          "url": "https://help.aliyun.com/en/flink/realtime-flink/user-guide/manage-apache-iceberg-catalogs"
+        },
+        {
+          "label": "DLF: Flink SQL via Iceberg REST",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/access-iceberg-catalogs-in-dlf-from-flink"
+        },
+        {
+          "label": "Iceberg connector (ZH)",
+          "url": "https://help.aliyun.com/zh/flink/developer-reference/apache-iceberg-connector"
+        },
+        {
+          "label": "Iceberg connector (EN)",
+          "url": "https://www.alibabacloud.com/help/en/flink/developer-reference/apache-iceberg-connector"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:rest-catalog:v3": {
+      "level": "partial",
+      "notes": "Uses the Iceberg REST catalog protocol (catalog-type=rest) from VVR 11.2.0, but documented only against DLF's Iceberg REST endpoint (http://<region>-vpc.dlf.aliyuncs.com/iceberg) with DLF token provider and DlfFileIO. Arbitrary third-party REST catalogs are not documented.",
+      "caveats": [
+        "Requires VVR 11.2.0 or later",
+        "Iceberg catalogs in Realtime Compute for Apache Flink support DLF only (VVR 11.1+), and the connector must be used with a DLF catalog",
+        "Contradictory docs: the Flink connector page says only Iceberg v1/v2 table formats are supported, while DLF's Iceberg-table page shows a Flink SQL CREATE TABLE ... WITH ('format-version'='3') example"
+      ],
+      "links": [
+        {
+          "label": "Manage Iceberg catalogs",
+          "url": "https://help.aliyun.com/en/flink/realtime-flink/user-guide/manage-apache-iceberg-catalogs"
+        },
+        {
+          "label": "DLF: Flink SQL via Iceberg REST",
+          "url": "https://help.aliyun.com/zh/dlf/dlf-2-0/user-guide/access-iceberg-catalogs-in-dlf-from-flink"
+        },
+        {
+          "label": "Iceberg connector (ZH)",
+          "url": "https://help.aliyun.com/zh/flink/developer-reference/apache-iceberg-connector"
+        },
+        {
+          "label": "Iceberg connector (EN)",
+          "url": "https://www.alibabacloud.com/help/en/flink/developer-reference/apache-iceberg-connector"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:schema-evolution:v2": {
+      "level": "full",
+      "notes": "Iceberg-catalog tables support ALTER TABLE rename table, ADD columns, RENAME column, DROP columns, MODIFY comment and column order. As a Flink CDC YAML ingestion sink, the connector applies CREATE TABLE, ADD/ALTER TYPE/RENAME/DROP COLUMN, TRUNCATE and DROP TABLE events.",
+      "caveats": [
+        "Catalog DDL requires VVR 11.1+ (REST catalog creation via session cluster VVR 11.2.0+)",
+        "CDC ingestion: ALTER COLUMN TYPE is not supported on primary-key columns"
+      ],
+      "links": [
+        {
+          "label": "Manage Iceberg catalogs",
+          "url": "https://help.aliyun.com/en/flink/realtime-flink/user-guide/manage-apache-iceberg-catalogs"
+        },
+        {
+          "label": "Iceberg connector (ZH)",
+          "url": "https://help.aliyun.com/zh/flink/developer-reference/apache-iceberg-connector"
+        },
+        {
+          "label": "Iceberg connector (EN)",
+          "url": "https://www.alibabacloud.com/help/en/flink/developer-reference/apache-iceberg-connector"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:schema-evolution:v3": {
+      "level": "full",
+      "notes": "The connector page lists Iceberg v1/v2 only, but in testing the connector created, read and wrote format-version 3 tables. In testing: ALTER TABLE ADD column, RENAME column and MODIFY column type succeeded on a V3 table; Spark saw the new schema and rows written afterwards. Tested with Realtime Compute for Apache Flink (VVR 11.9, Flink 1.20) and the built-in Iceberg connector against a DLF Iceberg REST catalog (cn-hangzhou, 2026-10-15) on format-version 3 tables; results read back with Spark 3.5 / Iceberg 1.10.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Realtime Compute for Apache Flink - Iceberg connector (supports Iceberg v1 and v2 table formats)",
+          "url": "https://help.aliyun.com/zh/flink/realtime-flink/developer-reference/apache-iceberg-connector"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:shredded-variant:v2": {
+      "level": "none",
+      "notes": "Shredded variant is a V3 feature, not available in format version 2",
+      "caveats": [],
+      "links": []
+    },
+    "alibaba-realtime-flink:shredded-variant:v3": {
+      "level": "none",
+      "notes": "Not supported in testing: Reading a V3 table with a shredded VARIANT column fails at job start. Tested with Realtime Compute for Apache Flink (VVR 11.9, Flink 1.20) and the built-in Iceberg connector against a DLF Iceberg REST catalog (cn-hangzhou, 2026-10-15) on format-version 3 tables; results read back with Spark 3.5 / Iceberg 1.10.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Realtime Compute for Apache Flink - Iceberg connector (supports Iceberg v1 and v2 table formats)",
+          "url": "https://help.aliyun.com/zh/flink/realtime-flink/developer-reference/apache-iceberg-connector"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:snowflake-horizon-catalog:v2": {
+      "level": "none",
+      "notes": "Not supported as documented: Alibaba states that Iceberg catalogs in Realtime Compute for Apache Flink support only DLF catalogs, so Snowflake Horizon Catalog is not a documented option.",
+      "caveats": [
+        "Iceberg catalogs in Realtime Compute for Apache Flink support DLF only (VVR 11.1+), and the connector must be used with a DLF catalog"
+      ],
+      "links": [
+        {
+          "label": "Manage Iceberg catalogs",
+          "url": "https://help.aliyun.com/en/flink/realtime-flink/user-guide/manage-apache-iceberg-catalogs"
+        },
+        {
+          "label": "Iceberg connector (ZH)",
+          "url": "https://help.aliyun.com/zh/flink/developer-reference/apache-iceberg-connector"
+        },
+        {
+          "label": "Iceberg connector (EN)",
+          "url": "https://www.alibabacloud.com/help/en/flink/developer-reference/apache-iceberg-connector"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:snowflake-horizon-catalog:v3": {
+      "level": "none",
+      "notes": "Not supported as documented: Alibaba states that Iceberg catalogs in Realtime Compute for Apache Flink support only DLF catalogs, so Snowflake Horizon Catalog is not a documented option.",
+      "caveats": [
+        "Iceberg catalogs in Realtime Compute for Apache Flink support DLF only (VVR 11.1+), and the connector must be used with a DLF catalog"
+      ],
+      "links": [
+        {
+          "label": "Manage Iceberg catalogs",
+          "url": "https://help.aliyun.com/en/flink/realtime-flink/user-guide/manage-apache-iceberg-catalogs"
+        },
+        {
+          "label": "Iceberg connector (ZH)",
+          "url": "https://help.aliyun.com/zh/flink/developer-reference/apache-iceberg-connector"
+        },
+        {
+          "label": "Iceberg connector (EN)",
+          "url": "https://www.alibabacloud.com/help/en/flink/developer-reference/apache-iceberg-connector"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:statistics:v2": {
+      "level": "full",
+      "notes": "Not documented for the connector. In testing, Parquet files written by Flink carry column statistics and the manifests record per-column lower/upper bounds, null-value and value counts. Tested with Realtime Compute for Apache Flink (VVR 11.9, Flink 1.20) and the built-in Iceberg connector against a DLF Iceberg REST catalog (cn-hangzhou, 2026-10-15); result read from the table's Iceberg metadata and data files.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Iceberg connector (ZH)",
+          "url": "https://help.aliyun.com/zh/flink/developer-reference/apache-iceberg-connector"
+        },
+        {
+          "label": "Iceberg connector (EN)",
+          "url": "https://www.alibabacloud.com/help/en/flink/developer-reference/apache-iceberg-connector"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:statistics:v3": {
+      "level": "full",
+      "notes": "The connector page lists Iceberg v1/v2 only, but in testing the connector created, read and wrote format-version 3 tables. In testing: Data files written to V3 tables carry column statistics recorded in the manifests (value/null counts, bounds). Tested with Realtime Compute for Apache Flink (VVR 11.9, Flink 1.20) and the built-in Iceberg connector against a DLF Iceberg REST catalog (cn-hangzhou, 2026-10-15) on format-version 3 tables; results read back with Spark 3.5 / Iceberg 1.10.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Realtime Compute for Apache Flink - Iceberg connector (supports Iceberg v1 and v2 table formats)",
+          "url": "https://help.aliyun.com/zh/flink/realtime-flink/developer-reference/apache-iceberg-connector"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:table-creation:v2": {
+      "level": "full",
+      "notes": "CREATE TABLE in a registered Iceberg (DLF) catalog, with PRIMARY KEY and PARTITIONED BY, is documented. CDC ingestion jobs also auto-create tables (CREATE TABLE EVENT) and accept table.properties.*.",
+      "caveats": [
+        "Iceberg catalog DDL requires VVR 11.1+; only DLF catalogs supported"
+      ],
+      "links": [
+        {
+          "label": "Manage Iceberg catalogs",
+          "url": "https://help.aliyun.com/en/flink/realtime-flink/user-guide/manage-apache-iceberg-catalogs"
+        },
+        {
+          "label": "Iceberg connector (ZH)",
+          "url": "https://help.aliyun.com/zh/flink/developer-reference/apache-iceberg-connector"
+        },
+        {
+          "label": "Iceberg connector (EN)",
+          "url": "https://www.alibabacloud.com/help/en/flink/developer-reference/apache-iceberg-connector"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:table-creation:v3": {
+      "level": "full",
+      "notes": "The connector page lists Iceberg v1/v2 only, but in testing the connector created, read and wrote format-version 3 tables. In testing: CREATE TABLE ... WITH ('format-version'='3') produced a table whose metadata has format-version 3. Tested with Realtime Compute for Apache Flink (VVR 11.9, Flink 1.20) and the built-in Iceberg connector against a DLF Iceberg REST catalog (cn-hangzhou, 2026-10-15) on format-version 3 tables; results read back with Spark 3.5 / Iceberg 1.10.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "DLF Iceberg tables (V3)",
+          "url": "https://help.aliyun.com/en/dlf/dlf-2-0/user-guide/manage-iceberg-tables"
+        },
+        {
+          "label": "Iceberg connector (ZH)",
+          "url": "https://help.aliyun.com/zh/flink/developer-reference/apache-iceberg-connector"
+        },
+        {
+          "label": "Iceberg connector (EN)",
+          "url": "https://www.alibabacloud.com/help/en/flink/developer-reference/apache-iceberg-connector"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:table-maintenance:v2": {
+      "level": "none",
+      "notes": "No Flink-side compaction/expiry procedures are documented. In testing, a streaming SQL job with the open-source Iceberg Flink post-commit maintenance options (table.exec.iceberg.use.v2.sink, compaction-enabled, flink-maintenance.rewrite.* / expire-snapshots.*, JDBC lock) ran for 30+ commits without any rewrite or expiry: data files grew from 19 to 57, no snapshot was expired and no lock table was created, so the built-in connector ignores these options. CALL is rejected and OPTIMIZE does not parse. Tested with Realtime Compute for Apache Flink (VVR 11.9, Flink 1.20) against a DLF Iceberg REST catalog (cn-hangzhou, 2026-10-15).",
+      "caveats": [
+        "Maintenance for DLF Iceberg tables is provided by DLF's automatic storage optimization or EMR Serverless Spark procedures"
+      ],
+      "links": [
+        {
+          "label": "Iceberg connector (ZH)",
+          "url": "https://help.aliyun.com/zh/flink/developer-reference/apache-iceberg-connector"
+        },
+        {
+          "label": "Iceberg connector (EN)",
+          "url": "https://www.alibabacloud.com/help/en/flink/developer-reference/apache-iceberg-connector"
+        },
+        {
+          "label": "DLF Iceberg storage optimization",
+          "url": "https://help.aliyun.com/en/dlf/dlf-2-0/user-guide/automatic-storage-optimization-for-iceberg-tables"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:table-maintenance:v3": {
+      "level": "none",
+      "notes": "Not supported in testing: CALL procedures are rejected ('Don't support CALL PROCEDURE statement') and OPTIMIZE does not parse; same as V2. Tested with Realtime Compute for Apache Flink (VVR 11.9, Flink 1.20) and the built-in Iceberg connector against a DLF Iceberg REST catalog (cn-hangzhou, 2026-10-15) on format-version 3 tables; results read back with Spark 3.5 / Iceberg 1.10.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Realtime Compute for Apache Flink - Iceberg connector (supports Iceberg v1 and v2 table formats)",
+          "url": "https://help.aliyun.com/zh/flink/realtime-flink/developer-reference/apache-iceberg-connector"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:time-travel:v2": {
+      "level": "full",
+      "notes": "Not documented for the connector. In testing, reads with the 'snapshot-id' and 'as-of-timestamp' options returned the older snapshot's rows. Tested with Realtime Compute for Apache Flink (VVR 11.9, Flink 1.20) and the built-in Iceberg connector against a DLF Iceberg REST catalog (cn-hangzhou, 2026-10-15); result read from the table's Iceberg metadata and data files.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Iceberg connector (ZH)",
+          "url": "https://help.aliyun.com/zh/flink/developer-reference/apache-iceberg-connector"
+        },
+        {
+          "label": "Iceberg connector (EN)",
+          "url": "https://www.alibabacloud.com/help/en/flink/developer-reference/apache-iceberg-connector"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:time-travel:v3": {
+      "level": "full",
+      "notes": "The connector page lists Iceberg v1/v2 only, but in testing the connector created, read and wrote format-version 3 tables. In testing: Reads with 'snapshot-id' and 'as-of-timestamp' options returned the older snapshot's rows on a V3 table. Tested with Realtime Compute for Apache Flink (VVR 11.9, Flink 1.20) and the built-in Iceberg connector against a DLF Iceberg REST catalog (cn-hangzhou, 2026-10-15) on format-version 3 tables; results read back with Spark 3.5 / Iceberg 1.10.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Realtime Compute for Apache Flink - Iceberg connector (supports Iceberg v1 and v2 table formats)",
+          "url": "https://help.aliyun.com/zh/flink/realtime-flink/developer-reference/apache-iceberg-connector"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:type-promotion:v2": {
+      "level": "partial",
+      "notes": "The CDC YAML ingestion sink applies ALTER COLUMN TYPE EVENT, except on primary-key columns. The catalog DDL docs show MODIFY only for comments and column order, with no documented widening example.",
+      "caveats": [
+        "Not supported for primary-key columns in data ingestion jobs"
+      ],
+      "links": [
+        {
+          "label": "Iceberg connector (ZH)",
+          "url": "https://help.aliyun.com/zh/flink/developer-reference/apache-iceberg-connector"
+        },
+        {
+          "label": "Iceberg connector (EN)",
+          "url": "https://www.alibabacloud.com/help/en/flink/developer-reference/apache-iceberg-connector"
+        },
+        {
+          "label": "Manage Iceberg catalogs",
+          "url": "https://help.aliyun.com/en/flink/realtime-flink/user-guide/manage-apache-iceberg-catalogs"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:type-promotion:v3": {
+      "level": "partial",
+      "notes": "The connector page lists Iceberg v1/v2 only, but in testing the connector created, read and wrote format-version 3 tables. In testing: ALTER TABLE MODIFY int->bigint and float->double succeeded on a V3 table and old rows read back correctly; same limits as V2 (only Flink-expressible promotions). Tested with Realtime Compute for Apache Flink (VVR 11.9, Flink 1.20) and the built-in Iceberg connector against a DLF Iceberg REST catalog (cn-hangzhou, 2026-10-15) on format-version 3 tables; results read back with Spark 3.5 / Iceberg 1.10.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Realtime Compute for Apache Flink - Iceberg connector (supports Iceberg v1 and v2 table formats)",
+          "url": "https://help.aliyun.com/zh/flink/realtime-flink/developer-reference/apache-iceberg-connector"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:unity-catalog:v2": {
+      "level": "none",
+      "notes": "Not supported as documented: Alibaba states that Iceberg catalogs in Realtime Compute for Apache Flink support only DLF catalogs, so Databricks Unity Catalog is not a documented option.",
+      "caveats": [
+        "Iceberg catalogs in Realtime Compute for Apache Flink support DLF only (VVR 11.1+), and the connector must be used with a DLF catalog"
+      ],
+      "links": [
+        {
+          "label": "Manage Iceberg catalogs",
+          "url": "https://help.aliyun.com/en/flink/realtime-flink/user-guide/manage-apache-iceberg-catalogs"
+        },
+        {
+          "label": "Iceberg connector (ZH)",
+          "url": "https://help.aliyun.com/zh/flink/developer-reference/apache-iceberg-connector"
+        },
+        {
+          "label": "Iceberg connector (EN)",
+          "url": "https://www.alibabacloud.com/help/en/flink/developer-reference/apache-iceberg-connector"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:unity-catalog:v3": {
+      "level": "none",
+      "notes": "Not supported as documented: Alibaba states that Iceberg catalogs in Realtime Compute for Apache Flink support only DLF catalogs, so Databricks Unity Catalog is not a documented option.",
+      "caveats": [
+        "Iceberg catalogs in Realtime Compute for Apache Flink support DLF only (VVR 11.1+), and the connector must be used with a DLF catalog"
+      ],
+      "links": [
+        {
+          "label": "Manage Iceberg catalogs",
+          "url": "https://help.aliyun.com/en/flink/realtime-flink/user-guide/manage-apache-iceberg-catalogs"
+        },
+        {
+          "label": "Iceberg connector (ZH)",
+          "url": "https://help.aliyun.com/zh/flink/developer-reference/apache-iceberg-connector"
+        },
+        {
+          "label": "Iceberg connector (EN)",
+          "url": "https://www.alibabacloud.com/help/en/flink/developer-reference/apache-iceberg-connector"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:unknown-type:v2": {
+      "level": "none",
+      "notes": "Unknown type is a V3 feature, not available in format version 2",
+      "caveats": [],
+      "links": []
+    },
+    "alibaba-realtime-flink:unknown-type:v3": {
+      "level": "none",
+      "notes": "Not supported: Alibaba's Iceberg connector documentation states it supports Apache Iceberg v1 and v2 table formats only (v2 from VVR 8.0.7); v3 is not a supported table format for the connector.",
+      "caveats": [
+        "Checked against VVR release notes through VVR 11.8.0 (2026-07-27); none announces Iceberg v3. Re-check on later VVR releases."
+      ],
+      "links": [
+        {
+          "label": "Realtime Compute for Apache Flink - Iceberg connector (supports Iceberg v1 and v2 table formats)",
+          "url": "https://help.aliyun.com/zh/flink/realtime-flink/developer-reference/apache-iceberg-connector"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:variant-type:v2": {
+      "level": "none",
+      "notes": "Variant type is a V3 feature, not available in format version 2",
+      "caveats": [],
+      "links": []
+    },
+    "alibaba-realtime-flink:variant-type:v3": {
+      "level": "none",
+      "notes": "Not supported in testing: Reading a V3 table with a VARIANT column fails at job start, and creating a table with a VARIANT column is rejected. Tested with Realtime Compute for Apache Flink (VVR 11.9, Flink 1.20) and the built-in Iceberg connector against a DLF Iceberg REST catalog (cn-hangzhou, 2026-10-15) on format-version 3 tables; results read back with Spark 3.5 / Iceberg 1.10.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Realtime Compute for Apache Flink - Iceberg connector (supports Iceberg v1 and v2 table formats)",
+          "url": "https://help.aliyun.com/zh/flink/realtime-flink/developer-reference/apache-iceberg-connector"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:write-insert:v2": {
+      "level": "full",
+      "notes": "Sink table in batch and streaming mode, with write.operation insert (append) or bulk_insert. It is also a target for Flink CDC YAML data ingestion jobs.",
+      "caveats": [
+        "v2 table format requires VVR 8.0.7 or later"
+      ],
+      "links": [
+        {
+          "label": "Iceberg connector (ZH)",
+          "url": "https://help.aliyun.com/zh/flink/developer-reference/apache-iceberg-connector"
+        },
+        {
+          "label": "Iceberg connector (EN)",
+          "url": "https://www.alibabacloud.com/help/en/flink/developer-reference/apache-iceberg-connector"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:write-insert:v3": {
+      "level": "full",
+      "notes": "The connector page lists Iceberg v1/v2 only, but in testing the connector created, read and wrote format-version 3 tables. In testing: INSERT into V3 tables committed snapshots that Spark read back correctly. Tested with Realtime Compute for Apache Flink (VVR 11.9, Flink 1.20) and the built-in Iceberg connector against a DLF Iceberg REST catalog (cn-hangzhou, 2026-10-15) on format-version 3 tables; results read back with Spark 3.5 / Iceberg 1.10.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Realtime Compute for Apache Flink - Iceberg connector (supports Iceberg v1 and v2 table formats)",
+          "url": "https://help.aliyun.com/zh/flink/realtime-flink/developer-reference/apache-iceberg-connector"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:write-merge-update-delete:v2": {
+      "level": "partial",
+      "notes": "Row-level changes go only through primary-key upsert writes (default write.operation=upsert). No MERGE INTO / UPDATE / DELETE SQL statements are documented for Iceberg tables.",
+      "caveats": [
+        "v2 table format requires VVR 8.0.7 or later"
+      ],
+      "links": [
+        {
+          "label": "Iceberg connector (ZH)",
+          "url": "https://help.aliyun.com/zh/flink/developer-reference/apache-iceberg-connector"
+        },
+        {
+          "label": "Iceberg connector (EN)",
+          "url": "https://www.alibabacloud.com/help/en/flink/developer-reference/apache-iceberg-connector"
+        },
+        {
+          "label": "Manage Iceberg catalogs",
+          "url": "https://help.aliyun.com/en/flink/realtime-flink/user-guide/manage-apache-iceberg-catalogs"
+        }
+      ]
+    },
+    "alibaba-realtime-flink:write-merge-update-delete:v3": {
+      "level": "partial",
+      "notes": "The connector page lists Iceberg v1/v2 only, but in testing the connector created, read and wrote format-version 3 tables. In testing: Row-level changes only via primary-key upsert on V3 tables; SQL DELETE and UPDATE statements failed, and an upsert batch containing the same key twice failed. Tested with Realtime Compute for Apache Flink (VVR 11.9, Flink 1.20) and the built-in Iceberg connector against a DLF Iceberg REST catalog (cn-hangzhou, 2026-10-15) on format-version 3 tables; results read back with Spark 3.5 / Iceberg 1.10.",
+      "caveats": [
+        "No DELETE / UPDATE / MERGE SQL"
+      ],
+      "links": [
+        {
+          "label": "Realtime Compute for Apache Flink - Iceberg connector (supports Iceberg v1 and v2 table formats)",
+          "url": "https://help.aliyun.com/zh/flink/realtime-flink/developer-reference/apache-iceberg-connector"
+        }
+      ]
+    }
+  }
+}

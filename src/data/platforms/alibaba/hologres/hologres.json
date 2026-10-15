@@ -1,0 +1,747 @@
+{
+  "platforms": [
+    {
+      "id": "alibaba-hologres",
+      "name": "Hologres (V4.2)",
+      "vendor": "Alibaba Cloud",
+      "category": "cloud",
+      "group": "Alibaba Cloud",
+      "docUrl": "https://help.aliyun.com/zh/hologres/user-guide/access-iceberg-data-based-on-dlf-rest-catalog"
+    }
+  ],
+  "support": {
+    "alibaba-hologres:position-deletes:v2": {
+      "level": "none",
+      "notes": "Hologres cannot write to Iceberg tables (INSERT, INSERT OVERWRITE, UPDATE, DELETE unsupported), so it never writes position delete files",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Hologres - 通过 DLF Catalog 访问 Iceberg 数据",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/access-iceberg-data-based-on-dlf-rest-catalog"
+        }
+      ]
+    },
+    "alibaba-hologres:position-deletes:v3": {
+      "level": "none",
+      "notes": "Not applicable to new V3 writes, and Hologres does not write to Iceberg tables",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Hologres - 通过 DLF Catalog 访问 Iceberg 数据",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/access-iceberg-data-based-on-dlf-rest-catalog"
+        }
+      ]
+    },
+    "alibaba-hologres:equality-deletes:v2": {
+      "level": "none",
+      "notes": "Hologres cannot write to Iceberg tables (INSERT, INSERT OVERWRITE, UPDATE, DELETE unsupported), so it never writes equality delete files",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Hologres - 通过 DLF Catalog 访问 Iceberg 数据",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/access-iceberg-data-based-on-dlf-rest-catalog"
+        }
+      ]
+    },
+    "alibaba-hologres:equality-deletes:v3": {
+      "level": "none",
+      "notes": "Hologres cannot write to Iceberg tables (INSERT, INSERT OVERWRITE, UPDATE, DELETE unsupported), so it never writes equality delete files",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Hologres - 通过 DLF Catalog 访问 Iceberg 数据",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/access-iceberg-data-based-on-dlf-rest-catalog"
+        }
+      ]
+    },
+    "alibaba-hologres:merge-on-read:v2": {
+      "level": "none",
+      "notes": "Hologres cannot write to Iceberg tables (INSERT, INSERT OVERWRITE, UPDATE, DELETE unsupported), so it never writes merge-on-read delete files",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Hologres - 通过 DLF Catalog 访问 Iceberg 数据",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/access-iceberg-data-based-on-dlf-rest-catalog"
+        }
+      ]
+    },
+    "alibaba-hologres:merge-on-read:v3": {
+      "level": "none",
+      "notes": "Hologres cannot write to Iceberg tables (INSERT, INSERT OVERWRITE, UPDATE, DELETE unsupported), so it never writes merge-on-read delete files",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Hologres - 通过 DLF Catalog 访问 Iceberg 数据",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/access-iceberg-data-based-on-dlf-rest-catalog"
+        }
+      ]
+    },
+    "alibaba-hologres:copy-on-write:v2": {
+      "level": "none",
+      "notes": "Hologres cannot write to Iceberg tables (no UPDATE/DELETE/INSERT), so no copy-on-write rewrites",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Hologres - 通过 DLF Catalog 访问 Iceberg 数据",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/access-iceberg-data-based-on-dlf-rest-catalog"
+        }
+      ]
+    },
+    "alibaba-hologres:copy-on-write:v3": {
+      "level": "none",
+      "notes": "Hologres cannot write to Iceberg tables (no UPDATE/DELETE/INSERT), so no copy-on-write rewrites",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Hologres - 通过 DLF Catalog 访问 Iceberg 数据",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/access-iceberg-data-based-on-dlf-rest-catalog"
+        }
+      ]
+    },
+    "alibaba-hologres:schema-evolution:v2": {
+      "level": "partial",
+      "notes": "Read-only. Not documented. In testing, tables whose schema was evolved by another engine (column added, renamed, dropped) were read correctly; Hologres itself cannot ALTER an Iceberg table schema (ALTER returns 'not supported'). Tested with Hologres V5.0.4 reading a DLF Iceberg REST catalog via External Database (cn-hangzhou, 2026-10-15); test tables were written by open-source Spark 3.5.6 / Iceberg 1.10.1 as a setup tool.",
+      "caveats": [
+        "Schema changes must be made by another engine (e.g. Spark)"
+      ],
+      "links": [
+        {
+          "label": "Hologres - 通过 DLF Catalog 访问 Iceberg 数据",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/access-iceberg-data-based-on-dlf-rest-catalog"
+        }
+      ]
+    },
+    "alibaba-hologres:schema-evolution:v3": {
+      "level": "partial",
+      "notes": "Read-only. Not documented. In testing, tables whose schema was evolved by another engine (column added, renamed, dropped) were read correctly; Hologres itself cannot ALTER an Iceberg table schema (ALTER returns 'not supported'). Tested with Hologres V5.0.4 reading a DLF Iceberg REST catalog via External Database (cn-hangzhou, 2026-10-15); test tables were written by open-source Spark 3.5.6 / Iceberg 1.10.1 as a setup tool.",
+      "caveats": [
+        "Schema changes must be made by another engine (e.g. Spark)"
+      ],
+      "links": [
+        {
+          "label": "Hologres - 通过 DLF Catalog 访问 Iceberg 数据",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/access-iceberg-data-based-on-dlf-rest-catalog"
+        }
+      ]
+    },
+    "alibaba-hologres:type-promotion:v2": {
+      "level": "partial",
+      "notes": "Read-only. Not documented. In testing, tables promoted by another engine (int->long, float->double) were read correctly with old and new data files; Hologres cannot change column types itself. Tested with Hologres V5.0.4 reading a DLF Iceberg REST catalog via External Database (cn-hangzhou, 2026-10-15); test tables were written by open-source Spark 3.5.6 / Iceberg 1.10.1 as a setup tool.",
+      "caveats": [
+        "Type changes must be made by another engine"
+      ],
+      "links": [
+        {
+          "label": "Hologres - 通过 DLF Catalog 访问 Iceberg 数据",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/access-iceberg-data-based-on-dlf-rest-catalog"
+        }
+      ]
+    },
+    "alibaba-hologres:type-promotion:v3": {
+      "level": "partial",
+      "notes": "Read-only. Not documented. In testing, tables promoted by another engine (int->long, float->double) were read correctly with old and new data files; Hologres cannot change column types itself. Tested with Hologres V5.0.4 reading a DLF Iceberg REST catalog via External Database (cn-hangzhou, 2026-10-15); test tables were written by open-source Spark 3.5.6 / Iceberg 1.10.1 as a setup tool.",
+      "caveats": [
+        "Type changes must be made by another engine"
+      ],
+      "links": [
+        {
+          "label": "Hologres - 通过 DLF Catalog 访问 Iceberg 数据",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/access-iceberg-data-based-on-dlf-rest-catalog"
+        }
+      ]
+    },
+    "alibaba-hologres:column-default-values:v2": {
+      "level": "none",
+      "notes": "Column Default Values is a V3 feature, not available in format version 2",
+      "caveats": [],
+      "links": []
+    },
+    "alibaba-hologres:column-default-values:v3": {
+      "level": "none",
+      "notes": "Not documented. In testing, after a column with initial-default 7 was added by the Iceberg API, Hologres returned NULL instead of 7 for rows in older data files (no error raised). Tested with Hologres V5.0.4 reading a DLF Iceberg REST catalog via External Database (cn-hangzhou, 2026-10-15); test tables were written by open-source Spark 3.5.6 / Iceberg 1.10.1 as a setup tool.",
+      "caveats": [
+        "Wrong results rather than an error: rows from files written before the column was added read as NULL"
+      ],
+      "links": [
+        {
+          "label": "Hologres - 通过 DLF Catalog 访问 Iceberg 数据",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/access-iceberg-data-based-on-dlf-rest-catalog"
+        }
+      ]
+    },
+    "alibaba-hologres:table-creation:v2": {
+      "level": "full",
+      "notes": "CREATE EXTERNAL TABLE in a DLF-REST External Database creates an Iceberg table in the DLF Catalog (cascading), with file_format parquet/orc/avro and format-version 1-4 (default 2). CREATE/DROP EXTERNAL SCHEMA creates or drops DLF namespaces",
+      "caveats": [
+        "Requires Hologres V4.2.10+ with data lake acceleration enabled (general-purpose or compute-group instances; not Serverless)",
+        "Partitioning only via LOGICAL PARTITION BY LIST(col) (identity)",
+        "PRIMARY KEY not allowed",
+        "Hologres cannot write rows into the table it creates"
+      ],
+      "links": [
+        {
+          "label": "Hologres - 通过 DLF Catalog 访问 Iceberg 数据",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/access-iceberg-data-based-on-dlf-rest-catalog"
+        }
+      ]
+    },
+    "alibaba-hologres:table-creation:v3": {
+      "level": "full",
+      "notes": "CREATE EXTERNAL TABLE can create Iceberg tables in DLF with format-version 3 (allowed values 1, 2, 3, 4)",
+      "caveats": [
+        "Requires Hologres V4.2.10+ with data lake acceleration enabled (general-purpose or compute-group instances; not Serverless)",
+        "Partitioning only via LOGICAL PARTITION BY LIST(col) (identity)",
+        "PRIMARY KEY not allowed",
+        "Hologres cannot write rows into the table it creates"
+      ],
+      "links": [
+        {
+          "label": "Hologres - 通过 DLF Catalog 访问 Iceberg 数据",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/access-iceberg-data-based-on-dlf-rest-catalog"
+        }
+      ]
+    },
+    "alibaba-hologres:hidden-partitioning:v2": {
+      "level": "partial",
+      "notes": "Read-only for transforms. In testing, tables partitioned by days(), bucket() and truncate() written by another engine were read correctly and filters on the source column pruned files. Hologres table creation only supports identity LIST(col) partitioning. Tested with Hologres V5.0.4 reading a DLF Iceberg REST catalog via External Database (cn-hangzhou, 2026-10-15); test tables were written by open-source Spark 3.5.6 / Iceberg 1.10.1 as a setup tool.",
+      "caveats": [
+        "Create: only LOGICAL PARTITION BY LIST(col)"
+      ],
+      "links": [
+        {
+          "label": "Hologres - 通过 DLF Catalog 访问 Iceberg 数据",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/access-iceberg-data-based-on-dlf-rest-catalog"
+        }
+      ]
+    },
+    "alibaba-hologres:hidden-partitioning:v3": {
+      "level": "partial",
+      "notes": "Read-only for transforms. In testing, tables partitioned by days(), bucket() and truncate() written by another engine were read correctly and filters on the source column pruned files. Hologres table creation only supports identity LIST(col) partitioning. Tested with Hologres V5.0.4 reading a DLF Iceberg REST catalog via External Database (cn-hangzhou, 2026-10-15); test tables were written by open-source Spark 3.5.6 / Iceberg 1.10.1 as a setup tool.",
+      "caveats": [
+        "Create: only LOGICAL PARTITION BY LIST(col)"
+      ],
+      "links": [
+        {
+          "label": "Hologres - 通过 DLF Catalog 访问 Iceberg 数据",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/access-iceberg-data-based-on-dlf-rest-catalog"
+        }
+      ]
+    },
+    "alibaba-hologres:partition-evolution:v2": {
+      "level": "partial",
+      "notes": "Read-only. Not documented. In testing, a table whose partition spec was changed by another engine returned rows written under both the old and new specs; Hologres has no syntax to change a partition spec. Tested with Hologres V5.0.4 reading a DLF Iceberg REST catalog via External Database (cn-hangzhou, 2026-10-15); test tables were written by open-source Spark 3.5.6 / Iceberg 1.10.1 as a setup tool.",
+      "caveats": [
+        "Partition spec changes must be made by another engine"
+      ],
+      "links": [
+        {
+          "label": "Hologres - 通过 DLF Catalog 访问 Iceberg 数据",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/access-iceberg-data-based-on-dlf-rest-catalog"
+        }
+      ]
+    },
+    "alibaba-hologres:partition-evolution:v3": {
+      "level": "partial",
+      "notes": "Read-only. Not documented. In testing, a table whose partition spec was changed by another engine returned rows written under both the old and new specs; Hologres has no syntax to change a partition spec. Tested with Hologres V5.0.4 reading a DLF Iceberg REST catalog via External Database (cn-hangzhou, 2026-10-15); test tables were written by open-source Spark 3.5.6 / Iceberg 1.10.1 as a setup tool.",
+      "caveats": [
+        "Partition spec changes must be made by another engine"
+      ],
+      "links": [
+        {
+          "label": "Hologres - 通过 DLF Catalog 访问 Iceberg 数据",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/access-iceberg-data-based-on-dlf-rest-catalog"
+        }
+      ]
+    },
+    "alibaba-hologres:multi-arg-transforms:v2": {
+      "level": "none",
+      "notes": "Multi-Argument Transforms is a V3 feature, not available in format version 2",
+      "caveats": [],
+      "links": []
+    },
+    "alibaba-hologres:multi-arg-transforms:v3": {
+      "level": "unknown",
+      "notes": "Not documented",
+      "caveats": [],
+      "links": []
+    },
+    "alibaba-hologres:time-travel:v2": {
+      "level": "none",
+      "notes": "Time travel queries on Iceberg tables are explicitly not supported",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Hologres - 通过 DLF Catalog 访问 Iceberg 数据",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/access-iceberg-data-based-on-dlf-rest-catalog"
+        }
+      ]
+    },
+    "alibaba-hologres:time-travel:v3": {
+      "level": "none",
+      "notes": "Time travel queries on Iceberg tables are explicitly not supported",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Hologres - 通过 DLF Catalog 访问 Iceberg 数据",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/access-iceberg-data-based-on-dlf-rest-catalog"
+        }
+      ]
+    },
+    "alibaba-hologres:table-maintenance:v2": {
+      "level": "none",
+      "notes": "Not documented. In testing, VACUUM skips Iceberg external tables, and CALL procedures and OPTIMIZE are not supported. Maintenance for DLF Iceberg tables is handled by DLF storage optimization or Spark, not Hologres. Tested with Hologres V5.0.4 reading a DLF Iceberg REST catalog via External Database (cn-hangzhou, 2026-10-15); test tables were written by open-source Spark 3.5.6 / Iceberg 1.10.1 as a setup tool.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Hologres - 通过 DLF Catalog 访问 Iceberg 数据",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/access-iceberg-data-based-on-dlf-rest-catalog"
+        }
+      ]
+    },
+    "alibaba-hologres:table-maintenance:v3": {
+      "level": "none",
+      "notes": "Not documented. In testing, VACUUM skips Iceberg external tables, and CALL procedures and OPTIMIZE are not supported. Maintenance for DLF Iceberg tables is handled by DLF storage optimization or Spark, not Hologres. Tested with Hologres V5.0.4 reading a DLF Iceberg REST catalog via External Database (cn-hangzhou, 2026-10-15); test tables were written by open-source Spark 3.5.6 / Iceberg 1.10.1 as a setup tool.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Hologres - 通过 DLF Catalog 访问 Iceberg 数据",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/access-iceberg-data-based-on-dlf-rest-catalog"
+        }
+      ]
+    },
+    "alibaba-hologres:branching-tagging:v2": {
+      "level": "none",
+      "notes": "Not documented. In testing, only the main branch is read: reading a branch by name fails with 'table does not exist' and tag/version syntax is a syntax error. Hologres cannot create branches or tags. Tested with Hologres V5.0.4 reading a DLF Iceberg REST catalog via External Database (cn-hangzhou, 2026-10-15); test tables were written by open-source Spark 3.5.6 / Iceberg 1.10.1 as a setup tool.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Hologres - 通过 DLF Catalog 访问 Iceberg 数据",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/access-iceberg-data-based-on-dlf-rest-catalog"
+        }
+      ]
+    },
+    "alibaba-hologres:branching-tagging:v3": {
+      "level": "none",
+      "notes": "Not documented. In testing, only the main branch is read: reading a branch by name fails with 'table does not exist' and tag/version syntax is a syntax error. Hologres cannot create branches or tags. Tested with Hologres V5.0.4 reading a DLF Iceberg REST catalog via External Database (cn-hangzhou, 2026-10-15); test tables were written by open-source Spark 3.5.6 / Iceberg 1.10.1 as a setup tool.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Hologres - 通过 DLF Catalog 访问 Iceberg 数据",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/access-iceberg-data-based-on-dlf-rest-catalog"
+        }
+      ]
+    },
+    "alibaba-hologres:read-support:v2": {
+      "level": "partial",
+      "notes": "SELECT on Iceberg tables in a DLF REST Catalog through an External Database (V4.2.10+), with formats V1-V4 per DLF. Earlier, from V3.0, Iceberg V1/V2 tables could be read via DLF 1.0 or Hive Metastore. Several Iceberg types are unsupported",
+      "caveats": [
+        "Requires Hologres V4.2.10+ with data lake acceleration enabled (general-purpose or compute-group instances; not Serverless)",
+        "Only same-region DLF",
+        "Iceberg STRUCT, MAP, TIMESTAMPTZ, UUID types not supported; LIST only for primitive element types",
+        "Reading delete files not documented",
+        "Dynamic Table: full refresh only from Iceberg sources",
+        "No time travel",
+        "Legacy path: V3.0+ via DLF1.0/HMS for V1/V2 tables"
+      ],
+      "links": [
+        {
+          "label": "Hologres - 通过 DLF Catalog 访问 Iceberg 数据",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/access-iceberg-data-based-on-dlf-rest-catalog"
+        },
+        {
+          "label": "Hologres - 实时数据湖加速概述",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/data-lake-acceleration-real-time"
+        }
+      ]
+    },
+    "alibaba-hologres:read-support:v3": {
+      "level": "partial",
+      "notes": "The DLF REST Catalog path (V4.2.10+) reads Iceberg V3 tables, per DLF's supported range. Support for V3-specific types and features is not documented",
+      "caveats": [
+        "Requires Hologres V4.2.10+ with data lake acceleration enabled (general-purpose or compute-group instances; not Serverless)",
+        "Only same-region DLF",
+        "Iceberg STRUCT, MAP, TIMESTAMPTZ, UUID types not supported; LIST only for primitive element types",
+        "Reading delete files not documented",
+        "Dynamic Table: full refresh only from Iceberg sources",
+        "No time travel",
+        "V3-specific types (variant, geometry, timestamp_ns) not in the type mapping"
+      ],
+      "links": [
+        {
+          "label": "Hologres - 通过 DLF Catalog 访问 Iceberg 数据",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/access-iceberg-data-based-on-dlf-rest-catalog"
+        }
+      ]
+    },
+    "alibaba-hologres:write-insert:v2": {
+      "level": "none",
+      "notes": "INSERT INTO and INSERT OVERWRITE on Iceberg tables are explicitly unsupported, and Iceberg external tables cannot be a Dynamic Table sink",
+      "caveats": [
+        "The data-lake-acceleration overview says '支持回写Paimon、Iceberg…', which contradicts the dedicated Iceberg page; the dedicated page (updated 2026-09-29) is treated as authoritative"
+      ],
+      "links": [
+        {
+          "label": "Hologres - 通过 DLF Catalog 访问 Iceberg 数据",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/access-iceberg-data-based-on-dlf-rest-catalog"
+        },
+        {
+          "label": "Hologres - 实时数据湖加速概述",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/data-lake-acceleration-real-time"
+        }
+      ]
+    },
+    "alibaba-hologres:write-insert:v3": {
+      "level": "none",
+      "notes": "INSERT INTO and INSERT OVERWRITE on Iceberg tables are explicitly unsupported, and Iceberg external tables cannot be a Dynamic Table sink",
+      "caveats": [
+        "The data-lake-acceleration overview says '支持回写Paimon、Iceberg…', which contradicts the dedicated Iceberg page; the dedicated page (updated 2026-09-29) is treated as authoritative"
+      ],
+      "links": [
+        {
+          "label": "Hologres - 通过 DLF Catalog 访问 Iceberg 数据",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/access-iceberg-data-based-on-dlf-rest-catalog"
+        },
+        {
+          "label": "Hologres - 实时数据湖加速概述",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/data-lake-acceleration-real-time"
+        }
+      ]
+    },
+    "alibaba-hologres:write-merge-update-delete:v2": {
+      "level": "none",
+      "notes": "UPDATE and DELETE on Iceberg tables are explicitly unsupported",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Hologres - 通过 DLF Catalog 访问 Iceberg 数据",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/access-iceberg-data-based-on-dlf-rest-catalog"
+        }
+      ]
+    },
+    "alibaba-hologres:write-merge-update-delete:v3": {
+      "level": "none",
+      "notes": "UPDATE and DELETE on Iceberg tables are explicitly unsupported",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Hologres - 通过 DLF Catalog 访问 Iceberg 数据",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/access-iceberg-data-based-on-dlf-rest-catalog"
+        }
+      ]
+    },
+    "alibaba-hologres:catalog-integration:v2": {
+      "level": "full",
+      "notes": "External Database with catalog_type='iceberg', metastore_type='dlf-rest' maps a DLF Catalog (V4.2.10+). Iceberg V1/V2 tables could also be read via DLF 1.0 and Hive Metastore since V3.0",
+      "caveats": [
+        "Requires Hologres V4.2.10+ with data lake acceleration enabled (general-purpose or compute-group instances; not Serverless)",
+        "Only same-region DLF",
+        "catalog_type/metastore_type/dlf_catalog are immutable after creation"
+      ],
+      "links": [
+        {
+          "label": "Hologres - 通过 DLF Catalog 访问 Iceberg 数据",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/access-iceberg-data-based-on-dlf-rest-catalog"
+        },
+        {
+          "label": "Hologres - 实时数据湖加速概述",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/data-lake-acceleration-real-time"
+        }
+      ]
+    },
+    "alibaba-hologres:catalog-integration:v3": {
+      "level": "partial",
+      "notes": "For V3 tables, only the DLF REST Catalog path (V4.2.10+) is documented",
+      "caveats": [
+        "Requires Hologres V4.2.10+ with data lake acceleration enabled (general-purpose or compute-group instances; not Serverless)",
+        "Only same-region DLF"
+      ],
+      "links": [
+        {
+          "label": "Hologres - 通过 DLF Catalog 访问 Iceberg 数据",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/access-iceberg-data-based-on-dlf-rest-catalog"
+        }
+      ]
+    },
+    "alibaba-hologres:statistics:v2": {
+      "level": "full",
+      "notes": "Not documented. In testing, Iceberg manifest column bounds were used for file pruning: on a 3-file table, a point filter on id scanned 1 file and a filter on an out-of-range value scanned none. ANALYZE also runs on the external table. Tested with Hologres V5.0.4 reading a DLF Iceberg REST catalog via External Database (cn-hangzhou, 2026-10-15); test tables were written by open-source Spark 3.5.6 / Iceberg 1.10.1 as a setup tool.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Hologres - 通过 DLF Catalog 访问 Iceberg 数据",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/access-iceberg-data-based-on-dlf-rest-catalog"
+        }
+      ]
+    },
+    "alibaba-hologres:statistics:v3": {
+      "level": "full",
+      "notes": "Not documented. In testing, Iceberg manifest column bounds were used for file pruning: on a 3-file table, a point filter on id scanned 1 file and a filter on an out-of-range value scanned none. ANALYZE also runs on the external table. Tested with Hologres V5.0.4 reading a DLF Iceberg REST catalog via External Database (cn-hangzhou, 2026-10-15); test tables were written by open-source Spark 3.5.6 / Iceberg 1.10.1 as a setup tool.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Hologres - 通过 DLF Catalog 访问 Iceberg 数据",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/access-iceberg-data-based-on-dlf-rest-catalog"
+        }
+      ]
+    },
+    "alibaba-hologres:bloom-filters:v2": {
+      "level": "none",
+      "notes": "Not documented. In testing, on a table written with Parquet bloom filters enabled for the filtered column, a lookup of an in-range but absent value scanned the same rows (2000) as a lookup of a present value, so bloom filters were not used to skip data. Tested with Hologres V5.0.4 reading a DLF Iceberg REST catalog via External Database (cn-hangzhou, 2026-10-15); test tables were written by open-source Spark 3.5.6 / Iceberg 1.10.1 as a setup tool.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Hologres - 通过 DLF Catalog 访问 Iceberg 数据",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/access-iceberg-data-based-on-dlf-rest-catalog"
+        }
+      ]
+    },
+    "alibaba-hologres:bloom-filters:v3": {
+      "level": "none",
+      "notes": "Not documented. In testing, on a table written with Parquet bloom filters enabled for the filtered column, a lookup of an in-range but absent value scanned the same rows (2000) as a lookup of a present value, so bloom filters were not used to skip data. Tested with Hologres V5.0.4 reading a DLF Iceberg REST catalog via External Database (cn-hangzhou, 2026-10-15); test tables were written by open-source Spark 3.5.6 / Iceberg 1.10.1 as a setup tool.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Hologres - 通过 DLF Catalog 访问 Iceberg 数据",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/access-iceberg-data-based-on-dlf-rest-catalog"
+        }
+      ]
+    },
+    "alibaba-hologres:aws-glue-catalog:v2": {
+      "level": "none",
+      "notes": "Not among Hologres' documented lake metadata sources (DLF 1.0, DLF 2.0, Hive Metastore, MaxCompute, Hologres)",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Hologres - 实时数据湖加速概述",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/data-lake-acceleration-real-time"
+        }
+      ]
+    },
+    "alibaba-hologres:aws-glue-catalog:v3": {
+      "level": "none",
+      "notes": "Not among Hologres' documented lake metadata sources (DLF 1.0, DLF 2.0, Hive Metastore, MaxCompute, Hologres)",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Hologres - 实时数据湖加速概述",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/data-lake-acceleration-real-time"
+        }
+      ]
+    },
+    "alibaba-hologres:rest-catalog:v2": {
+      "level": "partial",
+      "notes": "Hologres consumes Alibaba Cloud DLF through its Iceberg REST API (metastore_type='dlf-rest'). Connecting to arbitrary third-party Iceberg REST catalogs is not documented",
+      "caveats": [
+        "Requires Hologres V4.2.10+ with data lake acceleration enabled (general-purpose or compute-group instances; not Serverless)",
+        "DLF REST only; same-region only"
+      ],
+      "links": [
+        {
+          "label": "Hologres - 通过 DLF Catalog 访问 Iceberg 数据",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/access-iceberg-data-based-on-dlf-rest-catalog"
+        }
+      ]
+    },
+    "alibaba-hologres:rest-catalog:v3": {
+      "level": "partial",
+      "notes": "Hologres consumes Alibaba Cloud DLF through its Iceberg REST API (metastore_type='dlf-rest'). Connecting to arbitrary third-party Iceberg REST catalogs is not documented",
+      "caveats": [
+        "Requires Hologres V4.2.10+ with data lake acceleration enabled (general-purpose or compute-group instances; not Serverless)",
+        "DLF REST only; same-region only"
+      ],
+      "links": [
+        {
+          "label": "Hologres - 通过 DLF Catalog 访问 Iceberg 数据",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/access-iceberg-data-based-on-dlf-rest-catalog"
+        }
+      ]
+    },
+    "alibaba-hologres:unity-catalog:v2": {
+      "level": "none",
+      "notes": "Not among Hologres' documented lake metadata sources (DLF 1.0, DLF 2.0, Hive Metastore, MaxCompute, Hologres)",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Hologres - 实时数据湖加速概述",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/data-lake-acceleration-real-time"
+        }
+      ]
+    },
+    "alibaba-hologres:unity-catalog:v3": {
+      "level": "none",
+      "notes": "Not among Hologres' documented lake metadata sources (DLF 1.0, DLF 2.0, Hive Metastore, MaxCompute, Hologres)",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Hologres - 实时数据湖加速概述",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/data-lake-acceleration-real-time"
+        }
+      ]
+    },
+    "alibaba-hologres:snowflake-horizon-catalog:v2": {
+      "level": "none",
+      "notes": "Not among Hologres' documented lake metadata sources (DLF 1.0, DLF 2.0, Hive Metastore, MaxCompute, Hologres)",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Hologres - 实时数据湖加速概述",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/data-lake-acceleration-real-time"
+        }
+      ]
+    },
+    "alibaba-hologres:snowflake-horizon-catalog:v3": {
+      "level": "none",
+      "notes": "Not among Hologres' documented lake metadata sources (DLF 1.0, DLF 2.0, Hive Metastore, MaxCompute, Hologres)",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Hologres - 实时数据湖加速概述",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/data-lake-acceleration-real-time"
+        }
+      ]
+    },
+    "alibaba-hologres:google-lakehouse:v2": {
+      "level": "none",
+      "notes": "Not among Hologres' documented lake metadata sources (DLF 1.0, DLF 2.0, Hive Metastore, MaxCompute, Hologres)",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Hologres - 实时数据湖加速概述",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/data-lake-acceleration-real-time"
+        }
+      ]
+    },
+    "alibaba-hologres:google-lakehouse:v3": {
+      "level": "none",
+      "notes": "Not among Hologres' documented lake metadata sources (DLF 1.0, DLF 2.0, Hive Metastore, MaxCompute, Hologres)",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Hologres - 实时数据湖加速概述",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/data-lake-acceleration-real-time"
+        }
+      ]
+    },
+    "alibaba-hologres:variant-type:v2": {
+      "level": "none",
+      "notes": "Variant Type is a V3 feature, not available in format version 2",
+      "caveats": [],
+      "links": []
+    },
+    "alibaba-hologres:variant-type:v3": {
+      "level": "partial",
+      "notes": "Read-only. Not in the documented type mapping. In testing, a V3 table with an unshredded VARIANT column written by the Iceberg API was read correctly (object {\"a\":42,\"b\":\"hello\"}). Hologres cannot create Iceberg tables with a variant column. Tested with Hologres V5.0.4 reading a DLF Iceberg REST catalog via External Database (cn-hangzhou, 2026-10-15); test tables were written by open-source Spark 3.5.6 / Iceberg 1.10.1 as a setup tool.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Hologres - 通过 DLF Catalog 访问 Iceberg 数据",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/access-iceberg-data-based-on-dlf-rest-catalog"
+        }
+      ]
+    },
+    "alibaba-hologres:shredded-variant:v2": {
+      "level": "none",
+      "notes": "Shredded Variant is a V3 feature, not available in format version 2",
+      "caveats": [],
+      "links": []
+    },
+    "alibaba-hologres:shredded-variant:v3": {
+      "level": "partial",
+      "notes": "Read-only. Not in the documented type mapping. In testing, a V3 table whose VARIANT column was written shredded (typed_value columns in Parquet) by the Iceberg API was read correctly. Hologres cannot write variant data. Tested with Hologres V5.0.4 reading a DLF Iceberg REST catalog via External Database (cn-hangzhou, 2026-10-15); test tables were written by open-source Spark 3.5.6 / Iceberg 1.10.1 as a setup tool.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Hologres - 通过 DLF Catalog 访问 Iceberg 数据",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/access-iceberg-data-based-on-dlf-rest-catalog"
+        }
+      ]
+    },
+    "alibaba-hologres:geometry-type:v2": {
+      "level": "none",
+      "notes": "Geometry / Geo Types is a V3 feature, not available in format version 2",
+      "caveats": [],
+      "links": []
+    },
+    "alibaba-hologres:geometry-type:v3": {
+      "level": "none",
+      "notes": "Not in the documented type mapping. In testing, selecting a V3 geometry or geography column fails with 'unsupported type in column'. Hologres table creation also rejects geometry types. Tested with Hologres V5.0.4 reading a DLF Iceberg REST catalog via External Database (cn-hangzhou, 2026-10-15); test tables were written by open-source Spark 3.5.6 / Iceberg 1.10.1 as a setup tool.",
+      "caveats": [
+        "Tested on tables with geo columns in metadata only: Iceberg 1.10 cannot yet write geo data to Parquet"
+      ],
+      "links": [
+        {
+          "label": "Hologres - 通过 DLF Catalog 访问 Iceberg 数据",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/access-iceberg-data-based-on-dlf-rest-catalog"
+        }
+      ]
+    },
+    "alibaba-hologres:nanosecond-timestamps:v2": {
+      "level": "none",
+      "notes": "Nanosecond Timestamps is a V3 feature, not available in format version 2",
+      "caveats": [],
+      "links": []
+    },
+    "alibaba-hologres:nanosecond-timestamps:v3": {
+      "level": "none",
+      "notes": "Not in the documented type mapping. In testing, selecting a timestamp_ns column fails with 'unsupported type in column'. Creating a table with nanosecond timestamps from Hologres falls back to microsecond precision. Tested with Hologres V5.0.4 reading a DLF Iceberg REST catalog via External Database (cn-hangzhou, 2026-10-15); test tables were written by open-source Spark 3.5.6 / Iceberg 1.10.1 as a setup tool.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Hologres - 通过 DLF Catalog 访问 Iceberg 数据",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/access-iceberg-data-based-on-dlf-rest-catalog"
+        }
+      ]
+    },
+    "alibaba-hologres:unknown-type:v2": {
+      "level": "none",
+      "notes": "Unknown Type is a V3 feature, not available in format version 2",
+      "caveats": [],
+      "links": []
+    },
+    "alibaba-hologres:unknown-type:v3": {
+      "level": "none",
+      "notes": "Not in the documented type mapping. In testing, the DLF REST catalog rejects creating a table with an unknown-type column ('Unsupported primitive data type: unknown'), so Hologres (which reads Iceberg only through DLF) cannot access such tables. Tested with Hologres V5.0.4 reading a DLF Iceberg REST catalog via External Database (cn-hangzhou, 2026-10-15); test tables were written by open-source Spark 3.5.6 / Iceberg 1.10.1 as a setup tool.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Hologres - 通过 DLF Catalog 访问 Iceberg 数据",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/access-iceberg-data-based-on-dlf-rest-catalog"
+        }
+      ]
+    },
+    "alibaba-hologres:lineage:v2": {
+      "level": "none",
+      "notes": "Lineage Tracking is a V3 feature, not available in format version 2",
+      "caveats": [],
+      "links": []
+    },
+    "alibaba-hologres:lineage:v3": {
+      "level": "none",
+      "notes": "Hologres does not write to Iceberg tables, so it cannot assign or preserve row lineage on write",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Hologres - 通过 DLF Catalog 访问 Iceberg 数据",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/access-iceberg-data-based-on-dlf-rest-catalog"
+        }
+      ]
+    },
+    "alibaba-hologres:deletion-vectors:v2": {
+      "level": "none",
+      "notes": "Deletion Vectors is a V3 feature, not available in format version 2",
+      "caveats": [],
+      "links": []
+    },
+    "alibaba-hologres:deletion-vectors:v3": {
+      "level": "none",
+      "notes": "Hologres does not write to Iceberg tables (no DELETE/UPDATE), so it never writes deletion vectors",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Hologres - 通过 DLF Catalog 访问 Iceberg 数据",
+          "url": "https://help.aliyun.com/zh/hologres/user-guide/access-iceberg-data-based-on-dlf-rest-catalog"
+        }
+      ]
+    }
+  }
+}
