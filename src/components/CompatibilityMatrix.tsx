@@ -362,6 +362,12 @@ export function CompatibilityMatrix({
                         <img
                           src={PLATFORM_LOGOS[p.id]}
                           alt=""
+                          width={16}
+                          height={16}
+                          // ~30 column logos, most of them off-screen in a wide
+                          // matrix: fetch them as they scroll into view.
+                          loading="lazy"
+                          decoding="async"
                           className="w-4 h-4 opacity-60"
                         />
                       )}

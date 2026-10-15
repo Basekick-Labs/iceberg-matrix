@@ -1,4 +1,12 @@
-import type { CompatibilityData, SupportEntry, Platform, Feature, Version } from "../types";
+import type {
+  AwsS3Mode,
+  CompatibilityData,
+  Feature,
+  Platform,
+  SnowflakeStorageMode,
+  SupportEntry,
+  Version,
+} from "../types";
 import featuresJson from "./features.json";
 
 // --- AWS S3 buckets engines (order: athena, emr, glue, managed-flink, redshift-s3) ---
@@ -9,13 +17,6 @@ import bManagedFlink from "./platforms/aws/s3buckets/managed-flink/managed-flink
 import bRedshift from "./platforms/aws/s3buckets/redshift-s3/redshift-s3.json";
 import bAurora from "./platforms/aws/s3buckets/aurora/aurora.json";
 
-// --- AWS S3 tables engines (same order) ---
-import tAthena from "./platforms/aws/s3tables/athena/athena.json";
-import tEmr from "./platforms/aws/s3tables/emr/emr.json";
-import tGlue from "./platforms/aws/s3tables/glue/glue.json";
-import tManagedFlink from "./platforms/aws/s3tables/managed-flink/managed-flink.json";
-import tRedshift from "./platforms/aws/s3tables/redshift-s3/redshift-s3.json";
-import tAurora from "./platforms/aws/s3tables/aurora/aurora.json";
 
 // --- Non-AWS vendors (order: gcp, azure, databricks, snowflake, oss) ---
 import bigquery from "./platforms/gcp/bigquery/bigquery.json";
@@ -28,8 +29,8 @@ import databricks from "./platforms/databricks/databricks/databricks.json";
 // "managed" (Snowflake-provided storage, EXTERNAL_VOLUME = SNOWFLAKE_MANAGED)
 // and "external" (customer cloud storage through an external volume). Both
 // files carry the same platform id ("snowflake") so filters survive the toggle.
+// Only "managed" is imported here; "external" loads on demand.
 import snowflakeManaged from "./platforms/snowflake/managed/snowflake/snowflake.json";
-import snowflakeExternal from "./platforms/snowflake/external/snowflake/snowflake.json";
 import starburst from "./platforms/starburst/starburst/starburst.json";
 import duckdb from "./platforms/oss/duckdb/duckdb.json";
 import clickhouse from "./platforms/oss/clickhouse/clickhouse.json";
@@ -88,7 +89,6 @@ const postSnowflakeEngines: EngineFile[] = [
 ];
 
 const awsBucketsEngines: EngineFile[] = [bAthena, bEmr, bGlue, bManagedFlink, bRedshift, bAurora];
-const awsTablesEngines: EngineFile[] = [tAthena, tEmr, tGlue, tManagedFlink, tRedshift, tAurora];
 
 // Pure merge: concatenate platforms in input order (AWS engines first, then
 // non-AWS with the mode-selected Snowflake file in its fixed slot between
@@ -119,27 +119,63 @@ export function mergeEngines(
   };
 }
 
-// All four AWS-mode x Snowflake-mode combinations are precomputed: the merge is
-// a cheap concat and this keeps every dataset a stable object identity, so
-// React memoization keyed on the dataset keeps working across toggles.
+// The default dataset (S3 buckets, Snowflake managed) is built eagerly: it is
+// what every visitor sees first, so it ships in the first-load bundle and the
+// page renders without a loading step.
 export const data: CompatibilityData = mergeEngines(awsBucketsEngines, snowflakeManaged);
-export const dataS3Tables: CompatibilityData = mergeEngines(awsTablesEngines, snowflakeManaged);
-export const dataSnowflakeExternal: CompatibilityData = mergeEngines(
-  awsBucketsEngines,
-  snowflakeExternal,
-);
-export const dataS3TablesSnowflakeExternal: CompatibilityData = mergeEngines(
-  awsTablesEngines,
-  snowflakeExternal,
-);
 
-/** Select the engines dataset for an (AWS mode, Snowflake mode) pair. */
-export function getEngineData(
-  awsS3Mode: "s3-buckets" | "s3-tables",
-  snowflakeMode: "snowflake" | "external",
-): CompatibilityData {
-  if (awsS3Mode === "s3-tables") {
-    return snowflakeMode === "external" ? dataS3TablesSnowflakeExternal : dataS3Tables;
-  }
-  return snowflakeMode === "external" ? dataSnowflakeExternal : data;
+// The other three (AWS mode x Snowflake mode) combinations need the S3 Tables
+// files and/or the Snowflake external file. Those live in their own modules and
+// are fetched on demand, so a visitor who never flips either toggle never
+// downloads them. Merged datasets are cached, which keeps each one a stable
+// object identity so React memoization keyed on the dataset survives toggles.
+const engineCache = new Map<string, CompatibilityData>([["s3-buckets|snowflake", data]]);
+const keyOf = (aws: AwsS3Mode, snowflake: SnowflakeStorageMode) => `${aws}|${snowflake}`;
+
+let awsTablesLoad: Promise<EngineFile[]> | undefined;
+function loadAwsTables(): Promise<EngineFile[]> {
+  awsTablesLoad ??= import("./engine-variants/aws-s3tables")
+    .then((m) => m.awsTablesEngines)
+    .catch((err) => {
+      awsTablesLoad = undefined; // allow a retry after a failed fetch
+      throw err;
+    });
+  return awsTablesLoad;
+}
+
+let snowflakeExternalLoad: Promise<EngineFile> | undefined;
+function loadSnowflakeExternal(): Promise<EngineFile> {
+  snowflakeExternalLoad ??= import("./engine-variants/snowflake-external")
+    .then((m) => m.snowflakeExternal)
+    .catch((err) => {
+      snowflakeExternalLoad = undefined;
+      throw err;
+    });
+  return snowflakeExternalLoad;
+}
+
+/** The engines dataset for a mode pair if it is already loaded, else undefined. */
+export function peekEngineData(
+  awsS3Mode: AwsS3Mode,
+  snowflakeMode: SnowflakeStorageMode,
+): CompatibilityData | undefined {
+  return engineCache.get(keyOf(awsS3Mode, snowflakeMode));
+}
+
+/** Load (once) and return the engines dataset for an (AWS mode, Snowflake mode) pair. */
+export async function loadEngineData(
+  awsS3Mode: AwsS3Mode,
+  snowflakeMode: SnowflakeStorageMode,
+): Promise<CompatibilityData> {
+  const key = keyOf(awsS3Mode, snowflakeMode);
+  const cached = engineCache.get(key);
+  if (cached) return cached;
+  const [awsEngines, snowflakeEngine] = await Promise.all([
+    awsS3Mode === "s3-tables" ? loadAwsTables() : Promise.resolve(awsBucketsEngines),
+    snowflakeMode === "external" ? loadSnowflakeExternal() : Promise.resolve(snowflakeManaged),
+  ]);
+  // Another caller may have finished the same merge while we awaited.
+  const merged = engineCache.get(key) ?? mergeEngines(awsEngines, snowflakeEngine);
+  engineCache.set(key, merged);
+  return merged;
 }

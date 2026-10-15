@@ -8,6 +8,8 @@ The site has three views, switched with the buttons at the top right:
 - **Ingestion**: tools that *write* Iceberg data from a source (today Apache Iceberg Kafka Connect, Amazon Data Firehose, OLake Go and Pixeltable) but are not built for reading it. It uses a smaller, write-oriented feature set: appends, upserts/deletes, schema and table handling, partitioning, catalogs and V3 types. Read features such as read support and time travel are left out. Ratings are about what the tool can **write**. Pixeltable is a batch exporter for AI-derived tables and query results, rather than a continuous streaming connector.
 - **Catalogs**: Iceberg catalogs scored against an openness rubric.
 
+The search box matches engines as well as features: type an engine, vendor or tool name (`trino`, `aws`, `alibaba`) to jump to its columns, or a feature name (`bloom`, `deletion`) to filter the rows.
+
 **Live site →** deployed via GitHub Pages on every push to `main`.
 
 ## Quick Start
@@ -50,7 +52,7 @@ public/logos/         # SVG logos for platforms and engines
 
 Ingestion tools have their own dataset under `src/data/ingestion/` (`features.json` plus one `<tool-id>/<tool-id>.json` file per tool, merged by `src/data/load-ingestion.ts`), and catalogs under `src/data/catalogs/`.
 
-Engine data lives under `src/data/platforms/` in a nested per-vendor / per-engine structure — each engine has its own file (e.g. `oss/duckdb/duckdb.json`, `gcp/bigquery/bigquery.json`). AWS is split further by S3 mode (`aws/s3buckets/<engine>/` and `aws/s3tables/<engine>/`). `src/data/load-data.ts` imports the engine files and merges them, at import time, into two datasets (`data` for S3-buckets, `dataS3Tables` for S3 Tables). Feature and version definitions live in `src/data/features.json`.
+Engine data lives under `src/data/platforms/` in a nested per-vendor / per-engine structure — each engine has its own file (e.g. `oss/duckdb/duckdb.json`, `gcp/bigquery/bigquery.json`). AWS is split further by S3 mode (`aws/s3buckets/<engine>/` and `aws/s3tables/<engine>/`). `src/data/load-data.ts` imports the engine files and merges them into the default dataset, which ships with the app. To keep the first load small, the other views and variants are separate chunks loaded on demand: Catalogs, Ingestion, the S3 Tables variant (`src/data/engine-variants/aws-s3tables.ts`) and the Snowflake external-volume variant (`snowflake-external.ts`). Feature and version definitions live in `src/data/features.json`.
 
 ## Contributing
 
@@ -60,7 +62,7 @@ Contributions are welcome! Please open a pull request against `main`.
 
 1. Create the engine's folder under its vendor (using the prefix-less engine name, e.g. platform `google-bigquery` → `src/data/platforms/gcp/bigquery/`). For AWS, add it under both `aws/s3buckets/<engine>/` and `aws/s3tables/<engine>/`.
 2. Add the engine JSON file named after the folder (e.g. `bigquery/bigquery.json`) with a single platform object under `"platforms"` and a support entry for **every feature × version** combination under `"support"`. Use `"unknown"` for features the platform hasn't announced yet — don't omit entries.
-3. Wire the engine into `src/data/load-data.ts`: add a static `import` for the JSON file and append it to the correct ordered array (AWS engines, or the non-AWS vendors).
+3. Wire the engine into `src/data/load-data.ts`: add a static `import` for the JSON file and append it to the correct ordered array (AWS S3 buckets engines, or the non-AWS vendors). An AWS S3 Tables file goes in `src/data/engine-variants/aws-s3tables.ts` and a Snowflake external-volume file in `snowflake-external.ts` instead, since those load on demand.
 4. Drop an SVG logo into `public/logos/` and wire it up in the `PLATFORM_LOGOS` map in `CompatibilityMatrix.tsx` and `FilterPanel.tsx`.
 5. Run `npm test && npm run build` to verify nothing breaks.
 
