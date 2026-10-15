@@ -59,6 +59,7 @@ const GROUP_LOGOS: Partial<Record<PlatformGroup, string>> = {
   Azure: "/logos/Microsoft_Azure.svg",
   GCP: "/logos/google.svg",
   Databricks: "/logos/databricks-color.svg",
+  "Alibaba Cloud": "/logos/alibaba-cloud.svg",
 };
 
 const PLATFORM_LOGOS: Record<string, string> = {
@@ -86,6 +87,10 @@ const PLATFORM_LOGOS: Record<string, string> = {
   "google-bigquery": "/logos/bigquery.svg",
   "google-dataproc": "/logos/dataproc.svg",
   "azure-fabric": "/logos/fabric.png",
+  "alibaba-realtime-flink": "/logos/flink.svg",
+  "alibaba-emr-spark": "/logos/spark.svg",
+  "alibaba-maxcompute": "/logos/alibaba-cloud.svg",
+  "alibaba-hologres": "/logos/alibaba-cloud.svg",
 };
 
 interface FilterPanelProps {
