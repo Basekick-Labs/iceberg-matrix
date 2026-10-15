@@ -90,6 +90,10 @@ const PLATFORM_LOGOS: Record<string, string> = {
   "google-bigquery": "/logos/bigquery.svg",
   "google-dataproc": "/logos/dataproc.svg",
   "azure-fabric": "/logos/fabric.png",
+  "alibaba-realtime-flink": "/logos/flink.svg",
+  "alibaba-emr-spark": "/logos/spark.svg",
+  "alibaba-maxcompute": "/logos/alibaba-cloud.svg",
+  "alibaba-hologres": "/logos/alibaba-cloud.svg",
   // Catalogs view. Only vendors with a logo already in /logos are mapped; the
   // rest (Polaris, Gravitino, Lakekeeper, Nessie, Unity OSS) render name-only.
   "snowflake-horizon": "/logos/snowflake.svg",
