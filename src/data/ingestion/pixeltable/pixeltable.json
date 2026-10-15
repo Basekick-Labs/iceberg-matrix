@@ -1,0 +1,503 @@
+{
+  "platforms": [
+    {
+      "id": "pixeltable",
+      "name": "Pixeltable (0.7.16)",
+      "vendor": "Pixeltable",
+      "category": "open-source",
+      "group": "3rd Party",
+      "docUrl": "https://docs.pixeltable.com/howto/cookbooks/data/data-export-analytics"
+    }
+  ],
+  "support": {
+    "pixeltable:write-insert:v2": {
+      "level": "full",
+      "notes": "export_iceberg() streams a Pixeltable table or query as Arrow batches into an Iceberg table. With if_exists='append', all batches are appended in one PyIceberg transaction.",
+      "caveats": [
+        "Batch export invoked by the application; no continuous source connector or CDC capture.",
+        "Appending requires a compatible destination schema and does not deduplicate rows."
+      ],
+      "links": [
+        {
+          "label": "Pixeltable export_iceberg API",
+          "url": "https://docs.pixeltable.com/sdk/latest/io"
+        },
+        {
+          "label": "Pixeltable 0.7.16 export implementation",
+          "url": "https://github.com/pixeltable/pixeltable/blob/v0.7.16/pixeltable/io/iceberg.py"
+        },
+        {
+          "label": "Pixeltable 0.7.16 Iceberg export tests",
+          "url": "https://github.com/pixeltable/pixeltable/blob/v0.7.16/tests/io/test_iceberg.py"
+        }
+      ]
+    },
+    "pixeltable:write-merge-update-delete:v2": {
+      "level": "none",
+      "notes": "The export API appends rows or replaces an entire table; it exposes no key-based upsert, row-level update/delete, or CDC operation.",
+      "caveats": [
+        "if_exists='replace' replaces the table, rather than applying row-level changes."
+      ],
+      "links": [
+        {
+          "label": "Pixeltable 0.7.16 export implementation",
+          "url": "https://github.com/pixeltable/pixeltable/blob/v0.7.16/pixeltable/io/iceberg.py"
+        }
+      ]
+    },
+    "pixeltable:merge-on-read:v2": {
+      "level": "none",
+      "notes": "The export implementation calls PyIceberg append() to write data files. It does not apply row-level mutations or write the delete files needed for merge-on-read.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Pixeltable 0.7.16 export implementation",
+          "url": "https://github.com/pixeltable/pixeltable/blob/v0.7.16/pixeltable/io/iceberg.py"
+        }
+      ]
+    },
+    "pixeltable:equality-deletes:v2": {
+      "level": "none",
+      "notes": "The export API has no delete operation or identifier-field configuration, and the implementation does not write equality delete files.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Pixeltable 0.7.16 export implementation",
+          "url": "https://github.com/pixeltable/pixeltable/blob/v0.7.16/pixeltable/io/iceberg.py"
+        }
+      ]
+    },
+    "pixeltable:position-deletes:v2": {
+      "level": "none",
+      "notes": "The export API has no row-position delete operation, and the implementation does not write position delete files.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Pixeltable 0.7.16 export implementation",
+          "url": "https://github.com/pixeltable/pixeltable/blob/v0.7.16/pixeltable/io/iceberg.py"
+        }
+      ]
+    },
+    "pixeltable:deletion-vectors:v2": {
+      "level": "none",
+      "notes": "V3 feature; not applicable to V2.",
+      "caveats": [],
+      "links": []
+    },
+    "pixeltable:table-creation:v2": {
+      "level": "full",
+      "notes": "Creates the destination namespace if needed and derives the Iceberg schema from the exported Arrow data. A new table is written under a temporary name, then renamed to the requested destination after the write succeeds.",
+      "caveats": [
+        "The catalog must support namespace creation, table creation, and table rename.",
+        "No format-version or partition-spec argument is exposed; new tables use PyIceberg defaults.",
+        "Fixed-shape arrays must be projected to lists; JSON fields with only null values need explicit schema overrides."
+      ],
+      "links": [
+        {
+          "label": "Pixeltable export_iceberg API",
+          "url": "https://docs.pixeltable.com/sdk/latest/io"
+        },
+        {
+          "label": "Pixeltable 0.7.16 export implementation",
+          "url": "https://github.com/pixeltable/pixeltable/blob/v0.7.16/pixeltable/io/iceberg.py"
+        },
+        {
+          "label": "Pixeltable analytics export cookbook",
+          "url": "https://docs.pixeltable.com/howto/cookbooks/data/data-export-analytics"
+        }
+      ]
+    },
+    "pixeltable:schema-evolution:v2": {
+      "level": "none",
+      "notes": "Appending validates the source against the existing destination schema; the exporter does not add columns or invoke Iceberg schema evolution.",
+      "caveats": [
+        "Replacing the whole table can change its schema, but does not evolve the existing table or retain its history."
+      ],
+      "links": [
+        {
+          "label": "Pixeltable 0.7.16 export implementation",
+          "url": "https://github.com/pixeltable/pixeltable/blob/v0.7.16/pixeltable/io/iceberg.py"
+        }
+      ]
+    },
+    "pixeltable:type-promotion:v2": {
+      "level": "none",
+      "notes": "The exporter validates append compatibility but does not update the types in the destination schema when incoming values need wider types.",
+      "caveats": [
+        "schema_overrides chooses Arrow types for the exported data; it does not widen an existing Iceberg column."
+      ],
+      "links": [
+        {
+          "label": "Pixeltable 0.7.16 export implementation",
+          "url": "https://github.com/pixeltable/pixeltable/blob/v0.7.16/pixeltable/io/iceberg.py"
+        }
+      ]
+    },
+    "pixeltable:table-maintenance:v2": {
+      "level": "none",
+      "notes": "The export API does not expose compaction, snapshot expiration, or orphan-file removal, and the implementation invokes none of these operations.",
+      "caveats": [
+        "Perform maintenance separately with an Iceberg engine or catalog tooling."
+      ],
+      "links": [
+        {
+          "label": "Pixeltable 0.7.16 export implementation",
+          "url": "https://github.com/pixeltable/pixeltable/blob/v0.7.16/pixeltable/io/iceberg.py"
+        }
+      ]
+    },
+    "pixeltable:branching-tagging:v2": {
+      "level": "none",
+      "notes": "The export API exposes no branch or tag argument and appends to the default table branch. The implementation does not create or manage snapshot references.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Pixeltable 0.7.16 export implementation",
+          "url": "https://github.com/pixeltable/pixeltable/blob/v0.7.16/pixeltable/io/iceberg.py"
+        }
+      ]
+    },
+    "pixeltable:hidden-partitioning:v2": {
+      "level": "partial",
+      "notes": "With if_exists='append', PyIceberg writes each row into the partition that the existing table's spec assigns, for identity, year, month, day, hour, bucket, and truncate transforms. export_iceberg() exposes no partition-spec setting, so the tables it creates are unpartitioned.",
+      "caveats": [
+        "Create the partitioned destination with another Iceberg API before appending.",
+        "if_exists='replace' recreates the table without its partition spec.",
+        "Every transform except identity needs the optional pyiceberg-core package: pip install 'pyiceberg[pyiceberg-core]'."
+      ],
+      "links": [
+        {
+          "label": "Pixeltable 0.7.16 export implementation",
+          "url": "https://github.com/pixeltable/pixeltable/blob/v0.7.16/pixeltable/io/iceberg.py"
+        },
+        {
+          "label": "PyIceberg 0.12.0 partition transforms",
+          "url": "https://github.com/apache/iceberg-python/blob/pyiceberg-0.12.0/pyiceberg/transforms.py"
+        },
+        {
+          "label": "PyIceberg partitioned table creation",
+          "url": "https://py.iceberg.apache.org/api/#create-a-table"
+        }
+      ]
+    },
+    "pixeltable:catalog-integration:v2": {
+      "level": "full",
+      "notes": "Accepts a caller-supplied PyIceberg Catalog and uses it to load, create, commit, and rename destination tables. The Pixeltable cookbook demonstrates a local SQL catalog and names REST, Glue, and Hive catalogs for production.",
+      "caveats": [
+        "Catalog configuration, credentials, and access to the warehouse are supplied by the caller.",
+        "Creating or replacing a table requires catalog support for table rename; append uses the existing table."
+      ],
+      "links": [
+        {
+          "label": "Pixeltable export_iceberg API",
+          "url": "https://docs.pixeltable.com/sdk/latest/io"
+        },
+        {
+          "label": "Pixeltable 0.7.16 export implementation",
+          "url": "https://github.com/pixeltable/pixeltable/blob/v0.7.16/pixeltable/io/iceberg.py"
+        },
+        {
+          "label": "Pixeltable analytics export cookbook",
+          "url": "https://docs.pixeltable.com/howto/cookbooks/data/data-export-analytics"
+        }
+      ]
+    },
+    "pixeltable:aws-glue-catalog:v2": {
+      "level": "full",
+      "notes": "export_iceberg() accepts any PyIceberg Catalog, and PyIceberg's GlueCatalog implements every catalog operation the exporter uses: create namespaces, and load, create, commit, rename, and drop tables. The Pixeltable cookbook names Glue as a production catalog.",
+      "caveats": [
+        "Requires the relevant PyIceberg catalog dependencies, AWS credentials, and permissions for the catalog and S3 warehouse.",
+        "This is Glue Data Catalog integration; it does not establish support for the separate S3 Tables service.",
+        "Pixeltable's release tests use a local SQL catalog, not Glue."
+      ],
+      "links": [
+        {
+          "label": "Pixeltable analytics export cookbook",
+          "url": "https://docs.pixeltable.com/howto/cookbooks/data/data-export-analytics"
+        },
+        {
+          "label": "Pixeltable export_iceberg API",
+          "url": "https://docs.pixeltable.com/sdk/latest/io"
+        },
+        {
+          "label": "Pixeltable 0.7.16 export implementation",
+          "url": "https://github.com/pixeltable/pixeltable/blob/v0.7.16/pixeltable/io/iceberg.py"
+        }
+      ]
+    },
+    "pixeltable:rest-catalog:v2": {
+      "level": "full",
+      "notes": "export_iceberg() accepts any PyIceberg Catalog, and PyIceberg's RestCatalog implements every catalog operation the exporter uses: create namespaces, and load, create, commit, rename, and drop tables. The Pixeltable cookbook names REST as a production catalog.",
+      "caveats": [
+        "The caller configures the REST endpoint, authentication, and warehouse access.",
+        "Creating or replacing a table requires the catalog to support namespace creation, table creation, and table rename.",
+        "Pixeltable's release tests use a local SQL catalog, not REST."
+      ],
+      "links": [
+        {
+          "label": "Pixeltable analytics export cookbook",
+          "url": "https://docs.pixeltable.com/howto/cookbooks/data/data-export-analytics"
+        },
+        {
+          "label": "Pixeltable export_iceberg API",
+          "url": "https://docs.pixeltable.com/sdk/latest/io"
+        },
+        {
+          "label": "Pixeltable 0.7.16 export implementation",
+          "url": "https://github.com/pixeltable/pixeltable/blob/v0.7.16/pixeltable/io/iceberg.py"
+        }
+      ]
+    },
+    "pixeltable:variant-type:v2": {
+      "level": "none",
+      "notes": "V3 feature; not applicable to V2.",
+      "caveats": [],
+      "links": []
+    },
+    "pixeltable:shredded-variant:v2": {
+      "level": "none",
+      "notes": "V3 feature; not applicable to V2.",
+      "caveats": [],
+      "links": []
+    },
+    "pixeltable:write-insert:v3": {
+      "level": "none",
+      "notes": "export_iceberg() writes through PyIceberg, which cannot write V3 tables. PyIceberg 0.12.0, the latest release, writes manifests for V1 and V2 tables only, so an append to an existing V3 table fails. PyIceberg writes manifests on the client, so this holds for every catalog, REST included.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "PyIceberg issue: Support writing V3 tables",
+          "url": "https://github.com/apache/iceberg-python/issues/1551"
+        },
+        {
+          "label": "PyIceberg 0.12.0 manifest writer (V1 and V2 only)",
+          "url": "https://github.com/apache/iceberg-python/blob/pyiceberg-0.12.0/pyiceberg/manifest.py#L1289-L1302"
+        },
+        {
+          "label": "Pixeltable 0.7.16 export implementation",
+          "url": "https://github.com/pixeltable/pixeltable/blob/v0.7.16/pixeltable/io/iceberg.py"
+        }
+      ]
+    },
+    "pixeltable:write-merge-update-delete:v3": {
+      "level": "none",
+      "notes": "The export API appends rows or replaces an entire table; it exposes no key-based upsert, row-level update/delete, or CDC operation.",
+      "caveats": [
+        "if_exists='replace' replaces the table, rather than applying row-level changes."
+      ],
+      "links": [
+        {
+          "label": "Pixeltable 0.7.16 export implementation",
+          "url": "https://github.com/pixeltable/pixeltable/blob/v0.7.16/pixeltable/io/iceberg.py"
+        }
+      ]
+    },
+    "pixeltable:merge-on-read:v3": {
+      "level": "none",
+      "notes": "The export implementation calls PyIceberg append() to write data files. It does not apply row-level mutations or write the delete files needed for merge-on-read.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Pixeltable 0.7.16 export implementation",
+          "url": "https://github.com/pixeltable/pixeltable/blob/v0.7.16/pixeltable/io/iceberg.py"
+        }
+      ]
+    },
+    "pixeltable:equality-deletes:v3": {
+      "level": "none",
+      "notes": "The export API has no delete operation or identifier-field configuration, and the implementation does not write equality delete files.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Pixeltable 0.7.16 export implementation",
+          "url": "https://github.com/pixeltable/pixeltable/blob/v0.7.16/pixeltable/io/iceberg.py"
+        }
+      ]
+    },
+    "pixeltable:position-deletes:v3": {
+      "level": "none",
+      "notes": "The export API has no row-position delete operation, and the implementation does not write position delete files.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Pixeltable 0.7.16 export implementation",
+          "url": "https://github.com/pixeltable/pixeltable/blob/v0.7.16/pixeltable/io/iceberg.py"
+        }
+      ]
+    },
+    "pixeltable:deletion-vectors:v3": {
+      "level": "none",
+      "notes": "The export implementation only appends data and does not write deletion vectors.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Pixeltable 0.7.16 export implementation",
+          "url": "https://github.com/pixeltable/pixeltable/blob/v0.7.16/pixeltable/io/iceberg.py"
+        }
+      ]
+    },
+    "pixeltable:table-creation:v3": {
+      "level": "none",
+      "notes": "export_iceberg() passes no format version to create_table(), so the tables it creates are V2, PyIceberg's default. PyIceberg 0.12.0 cannot write V3 tables.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Pixeltable 0.7.16 export implementation",
+          "url": "https://github.com/pixeltable/pixeltable/blob/v0.7.16/pixeltable/io/iceberg.py"
+        },
+        {
+          "label": "PyIceberg issue: Support writing V3 tables",
+          "url": "https://github.com/apache/iceberg-python/issues/1551"
+        }
+      ]
+    },
+    "pixeltable:schema-evolution:v3": {
+      "level": "none",
+      "notes": "Appending validates the source against the existing destination schema; the exporter does not add columns or invoke Iceberg schema evolution.",
+      "caveats": [
+        "Replacing the whole table can change its schema, but does not evolve the existing table or retain its history."
+      ],
+      "links": [
+        {
+          "label": "Pixeltable 0.7.16 export implementation",
+          "url": "https://github.com/pixeltable/pixeltable/blob/v0.7.16/pixeltable/io/iceberg.py"
+        }
+      ]
+    },
+    "pixeltable:type-promotion:v3": {
+      "level": "none",
+      "notes": "The exporter validates append compatibility but does not update the types in the destination schema when incoming values need wider types.",
+      "caveats": [
+        "schema_overrides chooses Arrow types for the exported data; it does not widen an existing Iceberg column."
+      ],
+      "links": [
+        {
+          "label": "Pixeltable 0.7.16 export implementation",
+          "url": "https://github.com/pixeltable/pixeltable/blob/v0.7.16/pixeltable/io/iceberg.py"
+        }
+      ]
+    },
+    "pixeltable:table-maintenance:v3": {
+      "level": "none",
+      "notes": "The export API does not expose compaction, snapshot expiration, or orphan-file removal, and the implementation invokes none of these operations.",
+      "caveats": [
+        "Perform maintenance separately with an Iceberg engine or catalog tooling."
+      ],
+      "links": [
+        {
+          "label": "Pixeltable 0.7.16 export implementation",
+          "url": "https://github.com/pixeltable/pixeltable/blob/v0.7.16/pixeltable/io/iceberg.py"
+        }
+      ]
+    },
+    "pixeltable:branching-tagging:v3": {
+      "level": "none",
+      "notes": "The export API exposes no branch or tag argument and appends to the default table branch. The implementation does not create or manage snapshot references.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Pixeltable 0.7.16 export implementation",
+          "url": "https://github.com/pixeltable/pixeltable/blob/v0.7.16/pixeltable/io/iceberg.py"
+        }
+      ]
+    },
+    "pixeltable:hidden-partitioning:v3": {
+      "level": "none",
+      "notes": "export_iceberg() writes through PyIceberg, which cannot write V3 tables. PyIceberg 0.12.0, the latest release, writes manifests for V1 and V2 tables only, so an append to an existing V3 table fails. PyIceberg writes manifests on the client, so this holds for every catalog, REST included.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "PyIceberg issue: Support writing V3 tables",
+          "url": "https://github.com/apache/iceberg-python/issues/1551"
+        },
+        {
+          "label": "PyIceberg 0.12.0 manifest writer (V1 and V2 only)",
+          "url": "https://github.com/apache/iceberg-python/blob/pyiceberg-0.12.0/pyiceberg/manifest.py#L1289-L1302"
+        },
+        {
+          "label": "Pixeltable 0.7.16 export implementation",
+          "url": "https://github.com/pixeltable/pixeltable/blob/v0.7.16/pixeltable/io/iceberg.py"
+        }
+      ]
+    },
+    "pixeltable:catalog-integration:v3": {
+      "level": "none",
+      "notes": "export_iceberg() writes through PyIceberg, which cannot write V3 tables. PyIceberg 0.12.0, the latest release, writes manifests for V1 and V2 tables only, so an append to an existing V3 table fails. PyIceberg writes manifests on the client, so this holds for every catalog, REST included.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "PyIceberg issue: Support writing V3 tables",
+          "url": "https://github.com/apache/iceberg-python/issues/1551"
+        },
+        {
+          "label": "PyIceberg 0.12.0 manifest writer (V1 and V2 only)",
+          "url": "https://github.com/apache/iceberg-python/blob/pyiceberg-0.12.0/pyiceberg/manifest.py#L1289-L1302"
+        },
+        {
+          "label": "Pixeltable 0.7.16 export implementation",
+          "url": "https://github.com/pixeltable/pixeltable/blob/v0.7.16/pixeltable/io/iceberg.py"
+        }
+      ]
+    },
+    "pixeltable:aws-glue-catalog:v3": {
+      "level": "none",
+      "notes": "export_iceberg() writes through PyIceberg, which cannot write V3 tables. PyIceberg 0.12.0, the latest release, writes manifests for V1 and V2 tables only, so an append to an existing V3 table fails. PyIceberg writes manifests on the client, so this holds for every catalog, REST included.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "PyIceberg issue: Support writing V3 tables",
+          "url": "https://github.com/apache/iceberg-python/issues/1551"
+        },
+        {
+          "label": "PyIceberg 0.12.0 manifest writer (V1 and V2 only)",
+          "url": "https://github.com/apache/iceberg-python/blob/pyiceberg-0.12.0/pyiceberg/manifest.py#L1289-L1302"
+        },
+        {
+          "label": "Pixeltable 0.7.16 export implementation",
+          "url": "https://github.com/pixeltable/pixeltable/blob/v0.7.16/pixeltable/io/iceberg.py"
+        }
+      ]
+    },
+    "pixeltable:rest-catalog:v3": {
+      "level": "none",
+      "notes": "export_iceberg() writes through PyIceberg, which cannot write V3 tables. PyIceberg 0.12.0, the latest release, writes manifests for V1 and V2 tables only, so an append to an existing V3 table fails. PyIceberg writes manifests on the client, so this holds for every catalog, REST included.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "PyIceberg issue: Support writing V3 tables",
+          "url": "https://github.com/apache/iceberg-python/issues/1551"
+        },
+        {
+          "label": "PyIceberg 0.12.0 manifest writer (V1 and V2 only)",
+          "url": "https://github.com/apache/iceberg-python/blob/pyiceberg-0.12.0/pyiceberg/manifest.py#L1289-L1302"
+        },
+        {
+          "label": "Pixeltable 0.7.16 export implementation",
+          "url": "https://github.com/pixeltable/pixeltable/blob/v0.7.16/pixeltable/io/iceberg.py"
+        }
+      ]
+    },
+    "pixeltable:variant-type:v3": {
+      "level": "none",
+      "notes": "Pixeltable JSON values are exported as Arrow structs or lists with inferred types, not as the Iceberg V3 VARIANT type.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Pixeltable 0.7.16 export implementation",
+          "url": "https://github.com/pixeltable/pixeltable/blob/v0.7.16/pixeltable/io/iceberg.py"
+        }
+      ]
+    },
+    "pixeltable:shredded-variant:v3": {
+      "level": "none",
+      "notes": "The export path writes JSON as typed structs or lists, with no VARIANT mapping or variant-shredding control.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Pixeltable 0.7.16 export implementation",
+          "url": "https://github.com/pixeltable/pixeltable/blob/v0.7.16/pixeltable/io/iceberg.py"
+        }
+      ]
+    }
+  }
+}

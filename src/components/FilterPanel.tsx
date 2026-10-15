@@ -82,6 +82,7 @@ const PLATFORM_LOGOS: Record<string, string> = {
   "oracle-26ai": "/logos/oracle.svg",
   "kafka-connect": "/logos/kafka-connect.svg",
   "olake-go": "/logos/olake.svg",
+  pixeltable: "/logos/pixeltable.png",
   "google-bigquery": "/logos/bigquery.svg",
   "google-dataproc": "/logos/dataproc.svg",
   "azure-fabric": "/logos/fabric.png",
