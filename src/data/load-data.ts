@@ -43,6 +43,11 @@ import doris from "./platforms/oss/doris/doris.json";
 import databend from "./platforms/oss/databend/databend.json";
 import trino from "./platforms/oss/trino/trino.json";
 import oracle26ai from "./platforms/oracle/oracle-26ai/oracle-26ai.json";
+// --- Alibaba Cloud engines (own group, between Snowflake and OSS/3rd Party) ---
+import aliEmrSpark from "./platforms/alibaba/emr-spark/emr-spark.json";
+import aliMaxCompute from "./platforms/alibaba/maxcompute/maxcompute.json";
+import aliHologres from "./platforms/alibaba/hologres/hologres.json";
+import aliRealtimeFlink from "./platforms/alibaba/realtime-flink/realtime-flink.json";
 
 export interface EngineFile {
   platforms: unknown[];
@@ -57,7 +62,15 @@ const preSnowflakeEngines: EngineFile[] = [
   databricks,
 ];
 
-// Non-AWS engines after the Snowflake slot (oss / 3rd party).
+// Alibaba Cloud engines, rendered as their own group right after Snowflake.
+const alibabaEngines: EngineFile[] = [
+  aliEmrSpark,
+  aliMaxCompute,
+  aliHologres,
+  aliRealtimeFlink,
+];
+
+// Non-AWS engines after the Alibaba Cloud block (oss / 3rd party).
 const postSnowflakeEngines: EngineFile[] = [
   duckdb,
   clickhouse,
@@ -91,6 +104,7 @@ export function mergeEngines(
     ...awsEngines,
     ...preSnowflakeEngines,
     snowflakeEngine,
+    ...alibabaEngines,
     ...postSnowflakeEngines,
   ]) {
     platforms.push(...(engine.platforms as Platform[]));

@@ -241,6 +241,7 @@ export function CompatibilityMatrix({
     Azure: "bg-sky-100 text-sky-900 border-sky-200",
     Databricks: "bg-red-100 text-red-900 border-red-200",
     Snowflake: "bg-cyan-100 text-cyan-900 border-cyan-200",
+    "Alibaba Cloud": "bg-yellow-100 text-yellow-900 border-yellow-200",
     "3rd Party": "bg-gray-100 text-gray-700 border-gray-200",
     // Catalogs view groups.
     Proprietary: "bg-indigo-100 text-indigo-900 border-indigo-200",
