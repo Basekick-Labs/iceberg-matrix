@@ -25,6 +25,7 @@ const EXPECTED_CATALOG_IDS = [
   "databricks-unity",
   "google-lakehouse-runtime-catalog",
   "microsoft-onelake",
+  "fivetran-catalog",
   "apache-polaris",
   "apache-gravitino",
   "lakekeeper",

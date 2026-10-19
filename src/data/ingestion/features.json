@@ -107,7 +107,7 @@
       "name": "REST Catalog",
       "category": "catalog-support",
       "introducedIn": "v2",
-      "description": "Writes to Iceberg tables through the Iceberg REST catalog protocol"
+      "description": "Writes to Iceberg tables through a customer-provided Iceberg REST catalog endpoint configured as the ingestion target"
     },
     {
       "id": "variant-type",

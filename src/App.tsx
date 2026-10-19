@@ -38,7 +38,7 @@ const initialCatalogFilters: FilterState = {
   searchQuery: "",
 };
 
-// Ingestion tools (Kafka Connect, Firehose, OLake Go) have the same v2/v3 spec dimension
+// Ingestion tools (Kafka Connect, Firehose, OLake Go, Fivetran Managed Data Lake) have the same v2/v3 spec dimension
 // as engines, so the version chips and Compare work the same way; only the
 // platform set and the reduced, write-oriented feature list differ.
 const initialIngestionFilters: FilterState = {
@@ -174,7 +174,7 @@ export default function App() {
                     interoperability now lives or dies at the catalog: can
                     non-vendor engines read and write your tables over the Iceberg
                     REST Catalog (IRC) API, with short-lived vended credentials?
-                    This view scores ten catalogs against that openness rubric,
+                    This view scores eleven catalogs against that openness rubric,
                     plus spec-compliance facts: Iceberg REST spec coverage and
                     table-format v2/v3 support.
                   </p>
