@@ -31,6 +31,7 @@ import databricks from "./platforms/databricks/databricks/databricks.json";
 // files carry the same platform id ("snowflake") so filters survive the toggle.
 // Only "managed" is imported here; "external" loads on demand.
 import snowflakeManaged from "./platforms/snowflake/managed/snowflake/snowflake.json";
+import dremio from "./platforms/dremio/dremio/dremio.json";
 import starburst from "./platforms/starburst/starburst/starburst.json";
 import duckdb from "./platforms/oss/duckdb/duckdb.json";
 import clickhouse from "./platforms/oss/clickhouse/clickhouse.json";
@@ -104,6 +105,7 @@ export function mergeEngines(
     ...awsEngines,
     ...preSnowflakeEngines,
     snowflakeEngine,
+    dremio,
     ...alibabaEngines,
     ...postSnowflakeEngines,
   ]) {

@@ -94,9 +94,11 @@ const PLATFORM_LOGOS: Record<string, string> = {
   "alibaba-emr-spark": "/logos/spark.svg",
   "alibaba-maxcompute": "/logos/alibaba-cloud.svg",
   "alibaba-hologres": "/logos/alibaba-cloud.svg",
+  dremio: "/logos/dremio.svg",
   // Catalogs view. Only vendors with a logo already in /logos are mapped; the
   // rest (Polaris, Gravitino, Lakekeeper, Nessie, Unity OSS) render name-only.
   "snowflake-horizon": "/logos/snowflake.svg",
+  "dremio-open-catalog": "/logos/dremio.svg",
   "aws-glue-data-catalog": "/logos/aws-glue.svg",
   "databricks-unity": "/logos/databricks.svg",
   "google-lakehouse-runtime-catalog": "/logos/bigquery.svg",
@@ -246,6 +248,7 @@ export function CompatibilityMatrix({
     Azure: "bg-sky-100 text-sky-900 border-sky-200",
     Databricks: "bg-red-100 text-red-900 border-red-200",
     Snowflake: "bg-cyan-100 text-cyan-900 border-cyan-200",
+    "Dremio / SAP": "bg-teal-100 text-teal-900 border-teal-200",
     "Alibaba Cloud": "bg-yellow-100 text-yellow-900 border-yellow-200",
     "3rd Party": "bg-gray-100 text-gray-700 border-gray-200",
     // Catalogs view groups.

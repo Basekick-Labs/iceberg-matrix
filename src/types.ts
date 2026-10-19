@@ -12,6 +12,7 @@ export type PlatformGroup =
   | "Azure"
   | "Databricks"
   | "Snowflake"
+  | "Dremio / SAP"
   | "Alibaba Cloud"
   | "3rd Party"
   | "Proprietary"
