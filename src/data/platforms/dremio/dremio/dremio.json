@@ -1,0 +1,770 @@
+{
+  "platforms": [
+    {
+      "id": "dremio",
+      "name": "Dremio / SAP (26.x)",
+      "vendor": "Dremio / SAP",
+      "category": "cloud",
+      "group": "Dremio / SAP",
+      "docUrl": "https://docs.dremio.com/current/reference/sql/commands/apache-iceberg-tables/"
+    }
+  ],
+  "support": {
+    "dremio:position-deletes:v2": {
+      "level": "full",
+      "notes": "Dremio reads and writes Iceberg v2 position delete files for DELETE, UPDATE, and MERGE INTO operations when table properties write.delete.mode, write.update.mode, or write.merge.mode are set to 'merge-on-read', and compacts them via OPTIMIZE TABLE.",
+      "caveats": [
+        "Default write mode is copy-on-write; merge-on-read must be enabled via table properties to write position delete files"
+      ],
+      "links": [
+        {
+          "label": "Dremio Iceberg Table Properties",
+          "url": "https://docs.dremio.com/current/reference/sql/commands/apache-iceberg-tables/apache-iceberg-table-properties"
+        }
+      ]
+    },
+    "dremio:position-deletes:v3": {
+      "level": "full",
+      "notes": "In Iceberg v3, position delete files are replaced by Puffin binary deletion vectors, which Dremio writes for merge-on-read DML operations while continuing to read legacy v2 position delete files after upgrading a table to v3.",
+      "caveats": [
+        "V3 replaces position delete files with Puffin deletion vectors on write"
+      ],
+      "links": [
+        {
+          "label": "Dremio Cloud Changelog (Iceberg v3 Deletion Vectors)",
+          "url": "https://docs.dremio.com/dremio-cloud/changelog/"
+        }
+      ]
+    },
+    "dremio:equality-deletes:v2": {
+      "level": "none",
+      "notes": "Not supported as a write operation. Dremio's DML statements (DELETE, UPDATE, MERGE) write copy-on-write data files or position delete files rather than equality delete files. On the read and maintenance paths, Dremio reads both partition-scoped and global equality delete files written by external engines such as Apache Flink (DX-54685, DX-104673) and rewrites/compacts them during OPTIMIZE TABLE (DX-88786).",
+      "caveats": [
+        "Rated on write capability: Dremio does not write equality delete files, though it reads partition-scoped and global equality deletes and compacts them via OPTIMIZE TABLE"
+      ],
+      "links": [
+        {
+          "label": "Dremio 26.x Release Notes (Global Equality Deletes & OPTIMIZE)",
+          "url": "https://docs.dremio.com/current/release-notes/version-260-release/"
+        }
+      ]
+    },
+    "dremio:equality-deletes:v3": {
+      "level": "none",
+      "notes": "Not supported as a write operation. Dremio uses Puffin deletion vectors or copy-on-write for row-level mutations on Iceberg v3 tables rather than writing equality delete files, while reading existing equality deletes written by external engines.",
+      "caveats": [
+        "Rated on write capability: Dremio does not write equality delete files"
+      ],
+      "links": [
+        {
+          "label": "Dremio 26.x Release Notes",
+          "url": "https://docs.dremio.com/current/release-notes/version-260-release/"
+        }
+      ]
+    },
+    "dremio:merge-on-read:v2": {
+      "level": "full",
+      "notes": "Full support for merge-on-read on DELETE, UPDATE, and MERGE INTO via table properties write.delete.mode, write.update.mode, and write.merge.mode = 'merge-on-read', writing position delete files and merging them at read time or during OPTIMIZE TABLE.",
+      "caveats": [
+        "Copy-on-write is the default; merge-on-read is configured per operation via TBLPROPERTIES"
+      ],
+      "links": [
+        {
+          "label": "Dremio Iceberg Table Properties",
+          "url": "https://docs.dremio.com/current/reference/sql/commands/apache-iceberg-tables/apache-iceberg-table-properties"
+        }
+      ]
+    },
+    "dremio:merge-on-read:v3": {
+      "level": "full",
+      "notes": "Full merge-on-read support on Iceberg v3 tables using Puffin-based binary deletion vectors (DX-105396, DX-118097) for DELETE, UPDATE, and MERGE INTO when configured for merge-on-read.",
+      "caveats": [
+        "Copy-on-write is the default; merge-on-read is configured per operation via TBLPROPERTIES"
+      ],
+      "links": [
+        {
+          "label": "Dremio Cloud Changelog (Iceberg v3 Deletion Vectors)",
+          "url": "https://docs.dremio.com/dremio-cloud/changelog/"
+        }
+      ]
+    },
+    "dremio:copy-on-write:v2": {
+      "level": "full",
+      "notes": "Copy-on-write is Dremio's default write mode for DELETE, UPDATE, and MERGE INTO on Iceberg v2 tables (write.delete.mode, write.update.mode, write.merge.mode default to 'copy-on-write').",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio Iceberg Table Properties",
+          "url": "https://docs.dremio.com/current/reference/sql/commands/apache-iceberg-tables/apache-iceberg-table-properties"
+        }
+      ]
+    },
+    "dremio:copy-on-write:v3": {
+      "level": "full",
+      "notes": "Copy-on-write is supported and defaults to enabled for DELETE, UPDATE, and MERGE INTO on Iceberg v3 tables.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio Iceberg Table Properties",
+          "url": "https://docs.dremio.com/current/reference/sql/commands/apache-iceberg-tables/apache-iceberg-table-properties"
+        }
+      ]
+    },
+    "dremio:schema-evolution:v2": {
+      "level": "full",
+      "notes": "Full metadata-only schema evolution via ALTER TABLE ... ADD COLUMNS, DROP COLUMN, and ALTER/CHANGE COLUMN (rename or type change) without rewriting data files.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio ALTER TABLE",
+          "url": "https://docs.dremio.com/current/reference/sql/commands/apache-iceberg-tables/apache-iceberg-alter"
+        }
+      ]
+    },
+    "dremio:schema-evolution:v3": {
+      "level": "full",
+      "notes": "Full schema evolution via ALTER TABLE ... ADD COLUMNS (including DEFAULT values), DROP COLUMN, and CHANGE COLUMN on Iceberg v3 tables.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio ALTER TABLE",
+          "url": "https://docs.dremio.com/current/reference/sql/commands/apache-iceberg-tables/apache-iceberg-alter"
+        }
+      ]
+    },
+    "dremio:type-promotion:v2": {
+      "level": "full",
+      "notes": "Supports all standard Iceberg v2 type widenings via ALTER TABLE ... CHANGE COLUMN: INT to BIGINT, FLOAT to DOUBLE, and DECIMAL(P, S) precision expansion without rewriting data files.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio ALTER TABLE",
+          "url": "https://docs.dremio.com/current/reference/sql/commands/apache-iceberg-tables/apache-iceberg-alter"
+        }
+      ]
+    },
+    "dremio:type-promotion:v3": {
+      "level": "partial",
+      "notes": "Supports standard Iceberg v2 type widenings (INT to BIGINT, FLOAT to DOUBLE, DECIMAL precision increase) on v3 tables, but does not yet support v3-specific type promotions such as int/long to timestamp or string to variant.",
+      "caveats": [
+        "Only V2 numeric/decimal widenings are supported; V3-new type promotions are not yet implemented"
+      ],
+      "links": [
+        {
+          "label": "Dremio ALTER TABLE",
+          "url": "https://docs.dremio.com/current/reference/sql/commands/apache-iceberg-tables/apache-iceberg-alter"
+        }
+      ]
+    },
+    "dremio:column-default-values:v2": {
+      "level": "none",
+      "notes": "Column default values (initial-default and write-default) are an Iceberg v3 specification feature and are not available in v2.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio Cloud Changelog",
+          "url": "https://docs.dremio.com/dremio-cloud/changelog/"
+        }
+      ]
+    },
+    "dremio:column-default-values:v3": {
+      "level": "full",
+      "notes": "Full support for Iceberg v3 column default values (DX-103780), allowing DEFAULT expressions on CREATE TABLE and ALTER TABLE ... ADD COLUMNS and applying write defaults when omitted on INSERT.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio Cloud Changelog (Iceberg v3 Column Default Values)",
+          "url": "https://docs.dremio.com/dremio-cloud/changelog/"
+        }
+      ]
+    },
+    "dremio:table-creation:v2": {
+      "level": "full",
+      "notes": "Full DDL support via CREATE TABLE and CREATE TABLE AS SELECT (CTAS) with PARTITION BY, LOCALSORT BY, LOCATION, and TBLPROPERTIES (default format-version is 2).",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio CREATE TABLE",
+          "url": "https://docs.dremio.com/current/reference/sql/commands/apache-iceberg-tables/apache-iceberg-create"
+        }
+      ]
+    },
+    "dremio:table-creation:v3": {
+      "level": "full",
+      "notes": "Full DDL support via CREATE TABLE and CTAS with TBLPROPERTIES ('format-version' = '3'), including v3 data types, default values, row lineage, and deletion vector properties.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio CREATE TABLE",
+          "url": "https://docs.dremio.com/current/reference/sql/commands/apache-iceberg-tables/apache-iceberg-create"
+        }
+      ]
+    },
+    "dremio:hidden-partitioning:v2": {
+      "level": "full",
+      "notes": "Full support for Iceberg hidden partitioning via PARTITION BY with identity, year(), month(), day(), hour(), bucket(N, col), and truncate(N, col) transforms and automatic partition pruning at query time.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio Partitioning Iceberg Data",
+          "url": "https://docs.dremio.com/current/reference/sql/commands/apache-iceberg-tables/apache-iceberg-create"
+        }
+      ]
+    },
+    "dremio:hidden-partitioning:v3": {
+      "level": "full",
+      "notes": "Full support for Iceberg hidden partitioning transforms (identity, year, month, day, hour, bucket, truncate) on Iceberg v3 tables.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio Partitioning Iceberg Data",
+          "url": "https://docs.dremio.com/current/reference/sql/commands/apache-iceberg-tables/apache-iceberg-create"
+        }
+      ]
+    },
+    "dremio:partition-evolution:v2": {
+      "level": "full",
+      "notes": "Full metadata-only partition spec evolution via ALTER TABLE ... ADD PARTITION FIELD and DROP PARTITION FIELD without rewriting existing data files; queries prune seamlessly across historical and current partition specs.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio ALTER TABLE",
+          "url": "https://docs.dremio.com/current/reference/sql/commands/apache-iceberg-tables/apache-iceberg-alter"
+        }
+      ]
+    },
+    "dremio:partition-evolution:v3": {
+      "level": "full",
+      "notes": "Full partition evolution via ALTER TABLE ... ADD PARTITION FIELD and DROP PARTITION FIELD on Iceberg v3 tables.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio ALTER TABLE",
+          "url": "https://docs.dremio.com/current/reference/sql/commands/apache-iceberg-tables/apache-iceberg-alter"
+        }
+      ]
+    },
+    "dremio:multi-arg-transforms:v2": {
+      "level": "none",
+      "notes": "Multi-argument partition transforms are an Iceberg v3 specification feature and do not apply to v2.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio CREATE TABLE",
+          "url": "https://docs.dremio.com/current/reference/sql/commands/apache-iceberg-tables/apache-iceberg-create"
+        }
+      ]
+    },
+    "dremio:multi-arg-transforms:v3": {
+      "level": "none",
+      "notes": "Dremio's PARTITION BY syntax supports single-column Iceberg transforms (identity, year, month, day, hour, bucket(N, col), truncate(N, col)); multi-argument transforms are not yet supported in DDL.",
+      "caveats": [
+        "Only single-column partition transforms can be declared in Dremio SQL"
+      ],
+      "links": [
+        {
+          "label": "Dremio CREATE TABLE",
+          "url": "https://docs.dremio.com/current/reference/sql/commands/apache-iceberg-tables/apache-iceberg-create"
+        }
+      ]
+    },
+    "dremio:time-travel:v2": {
+      "level": "full",
+      "notes": "Full SQL time-travel and rollback support via SELECT ... AT SNAPSHOT '<id>', AT TIMESTAMP '<ts>', AT BRANCH '<name>', AT TAG '<name>', and ROLLBACK TABLE ... TO SNAPSHOT / TIMESTAMP, plus table_history(), table_snapshot(), and table_manifests() metadata functions.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio ROLLBACK TABLE",
+          "url": "https://docs.dremio.com/current/reference/sql/commands/apache-iceberg-tables/apache-iceberg-rollback"
+        }
+      ]
+    },
+    "dremio:time-travel:v3": {
+      "level": "full",
+      "notes": "Full SQL time-travel (AT SNAPSHOT, AT TIMESTAMP, AT BRANCH, AT TAG) and ROLLBACK TABLE support on Iceberg v3 tables.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio ROLLBACK TABLE",
+          "url": "https://docs.dremio.com/current/reference/sql/commands/apache-iceberg-tables/apache-iceberg-rollback"
+        }
+      ]
+    },
+    "dremio:table-maintenance:v2": {
+      "level": "full",
+      "notes": "Comprehensive SQL maintenance and automated catalog maintenance: OPTIMIZE TABLE ... REWRITE DATA (bin-pack or sort, compacting position and equality deletes) and REWRITE MANIFESTS, VACUUM TABLE ... EXPIRE SNAPSHOTS and REMOVE ORPHAN FILES, plus zero-touch automated background compaction and vacuuming in Dremio Open Catalog.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio OPTIMIZE TABLE",
+          "url": "https://docs.dremio.com/current/reference/sql/commands/apache-iceberg-tables/apache-iceberg-optimize"
+        },
+        {
+          "label": "Dremio VACUUM TABLE",
+          "url": "https://docs.dremio.com/current/reference/sql/commands/apache-iceberg-tables/apache-iceberg-vacuum"
+        }
+      ]
+    },
+    "dremio:table-maintenance:v3": {
+      "level": "full",
+      "notes": "Full OPTIMIZE TABLE (REWRITE DATA and REWRITE MANIFESTS) and VACUUM TABLE (EXPIRE SNAPSHOTS and REMOVE ORPHAN FILES) support on Iceberg v3 tables, preserving row lineage and compacting deletion vectors.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio OPTIMIZE TABLE",
+          "url": "https://docs.dremio.com/current/reference/sql/commands/apache-iceberg-tables/apache-iceberg-optimize"
+        }
+      ]
+    },
+    "dremio:branching-tagging:v2": {
+      "level": "full",
+      "notes": "Supports both table-level Iceberg branches and tags (CREATE/ALTER/DROP BRANCH/TAG, AT BRANCH, AT TAG) and catalog-level Git-like branching, tagging, and merging.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio Iceberg Tables",
+          "url": "https://docs.dremio.com/current/reference/sql/commands/apache-iceberg-tables/"
+        }
+      ]
+    },
+    "dremio:branching-tagging:v3": {
+      "level": "full",
+      "notes": "Supports Iceberg branches and tags on v3 tables as well as catalog-level branching and tagging.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio Iceberg Tables",
+          "url": "https://docs.dremio.com/current/reference/sql/commands/apache-iceberg-tables/"
+        }
+      ]
+    },
+    "dremio:read-support:v2": {
+      "level": "full",
+      "notes": "High-performance vectorized Apache Arrow execution engine with Columnar Cloud Cache (C3), Autonomous Reflections, partition/manifest/row-group pruning, predicate pushdown, and full reading of v2 position and equality deletes (including global equality deletes, DX-54685).",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio Apache Iceberg Tables",
+          "url": "https://docs.dremio.com/current/reference/sql/commands/apache-iceberg-tables/"
+        }
+      ]
+    },
+    "dremio:read-support:v3": {
+      "level": "full",
+      "notes": "Full vectorized read support for Iceberg v3 tables, including Puffin deletion vector resolution, row lineage columns (_row_id, _last_updated_sequence_number), VARIANT (with shredded sub-column pushdown), UUID, TIMESTAMP(9), and column default values.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio Cloud Changelog",
+          "url": "https://docs.dremio.com/dremio-cloud/changelog/"
+        }
+      ]
+    },
+    "dremio:write-insert:v2": {
+      "level": "full",
+      "notes": "Full write support via INSERT INTO, CREATE TABLE AS SELECT (CTAS), and COPY INTO (CSV, JSON, Parquet) with LOCALSORT BY and configurable target file sizes.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio INSERT",
+          "url": "https://docs.dremio.com/current/reference/sql/commands/apache-iceberg-tables/apache-iceberg-insert"
+        },
+        {
+          "label": "Dremio COPY INTO",
+          "url": "https://docs.dremio.com/current/reference/sql/commands/apache-iceberg-tables/apache-iceberg-copy-into"
+        }
+      ]
+    },
+    "dremio:write-insert:v3": {
+      "level": "full",
+      "notes": "Full INSERT INTO, CTAS, and COPY INTO support on Iceberg v3 tables, maintaining v3 row lineage and column default values.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio INSERT",
+          "url": "https://docs.dremio.com/current/reference/sql/commands/apache-iceberg-tables/apache-iceberg-insert"
+        }
+      ]
+    },
+    "dremio:write-merge-update-delete:v2": {
+      "level": "full",
+      "notes": "Full SQL DML support for MERGE INTO, UPDATE, and DELETE on Iceberg v2 tables in both copy-on-write and merge-on-read (position delete) modes.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio MERGE",
+          "url": "https://docs.dremio.com/current/reference/sql/commands/apache-iceberg-tables/apache-iceberg-merge"
+        },
+        {
+          "label": "Dremio UPDATE",
+          "url": "https://docs.dremio.com/current/reference/sql/commands/apache-iceberg-tables/apache-iceberg-update"
+        },
+        {
+          "label": "Dremio DELETE",
+          "url": "https://docs.dremio.com/current/reference/sql/commands/apache-iceberg-tables/apache-iceberg-delete"
+        }
+      ]
+    },
+    "dremio:write-merge-update-delete:v3": {
+      "level": "full",
+      "notes": "Full SQL DML support for MERGE INTO, UPDATE, and DELETE on Iceberg v3 tables in both copy-on-write and merge-on-read (Puffin deletion vector) modes while preserving row lineage.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio Cloud Changelog (Iceberg v3 Deletion Vectors)",
+          "url": "https://docs.dremio.com/dremio-cloud/changelog/"
+        }
+      ]
+    },
+    "dremio:catalog-integration:v2": {
+      "level": "full",
+      "notes": "Extensive native catalog integrations: built-in Dremio Open Catalog (powered by Apache Polaris), generic Iceberg REST Catalog, AWS Glue Data Catalog, Amazon S3 Tables, Snowflake Open/Horizon Catalog, Microsoft OneLake, Google Cloud Lakehouse, Databricks Unity Catalog, Nessie, Hive Metastore, and file/object storage catalogs.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio Data Sources & Catalogs",
+          "url": "https://docs.dremio.com/current/connecting-to-data/"
+        }
+      ]
+    },
+    "dremio:catalog-integration:v3": {
+      "level": "full",
+      "notes": "Catalog integrations support Iceberg v3 tables across Dremio Open Catalog, generic Iceberg REST Catalogs, AWS Glue, Snowflake Open Catalog, Databricks Unity Catalog, Google Cloud Lakehouse, and object storage sources.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio Data Sources & Catalogs",
+          "url": "https://docs.dremio.com/current/connecting-to-data/"
+        }
+      ]
+    },
+    "dremio:statistics:v2": {
+      "level": "full",
+      "notes": "Dremio automatically collects and writes Iceberg column-level metrics in manifest files (write.metadata.metrics.default = truncate(16), write.metadata.metrics.max-inferred-column-defaults = 100), populates missing statistics during OPTIMIZE TABLE (DX-105933), and uses manifest metrics for cost-based scan planning, partition/file pruning, metadata-driven COUNT(*)/MIN/MAX (DX-100737, DX-101826), and ORDER BY ... LIMIT pruning (DX-116991).",
+      "caveats": [
+        "Manual ANALYZE TABLE is not supported on Iceberg tables (DX-88922); statistics are maintained automatically on writes and OPTIMIZE TABLE"
+      ],
+      "links": [
+        {
+          "label": "Dremio Iceberg Table Properties",
+          "url": "https://docs.dremio.com/current/reference/sql/commands/apache-iceberg-tables/apache-iceberg-table-properties"
+        },
+        {
+          "label": "Dremio 26.x Release Notes",
+          "url": "https://docs.dremio.com/current/release-notes/version-260-release/"
+        }
+      ]
+    },
+    "dremio:statistics:v3": {
+      "level": "full",
+      "notes": "Full automatic manifest column metrics collection and query-time pruning on Iceberg v3 tables, including per-subcolumn statistics for shredded VARIANT fields.",
+      "caveats": [
+        "Manual ANALYZE TABLE is not supported on Iceberg tables (DX-88922); statistics are maintained automatically on writes and OPTIMIZE TABLE"
+      ],
+      "links": [
+        {
+          "label": "Dremio 26.x Release Notes",
+          "url": "https://docs.dremio.com/current/release-notes/version-260-release/"
+        }
+      ]
+    },
+    "dremio:bloom-filters:v2": {
+      "level": "full",
+      "notes": "Added in Dremio 26.1.0 (DX-100948): supports configuring and writing Parquet column bloom filters via Iceberg table properties write.parquet.bloom-filter-enabled.column.<col>, write.parquet.bloom-filter-max-bytes (default 1MB), and write.parquet.bloom-filter-fpp.column.<col> (default 0.01), and uses them for data skipping during scans.",
+      "caveats": [
+        "Bloom filters are opt-in per column via write.parquet.bloom-filter-enabled.column.<col>"
+      ],
+      "links": [
+        {
+          "label": "Dremio 26.1.0 Release Notes (DX-100948)",
+          "url": "https://docs.dremio.com/current/release-notes/version-260-release/"
+        }
+      ]
+    },
+    "dremio:bloom-filters:v3": {
+      "level": "full",
+      "notes": "Supports Parquet column bloom filters via write.parquet.bloom-filter-enabled.column.<col>, write.parquet.bloom-filter-max-bytes, and write.parquet.bloom-filter-fpp.column.<col> (DX-100948), and reads/writes Puffin files for v3 deletion vectors (DX-105396, DX-118097).",
+      "caveats": [
+        "Bloom filters are opt-in per column via write.parquet.bloom-filter-enabled.column.<col>"
+      ],
+      "links": [
+        {
+          "label": "Dremio 26.1.0 Release Notes (DX-100948)",
+          "url": "https://docs.dremio.com/current/release-notes/version-260-release/"
+        }
+      ]
+    },
+    "dremio:aws-glue-catalog:v2": {
+      "level": "full",
+      "notes": "First-class native AWS Glue Data Catalog connector and AWS Glue Iceberg REST Catalog support (including IAM assume-role, DX-115580) with full read/write DDL, DML, and table maintenance.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio AWS Glue Data Catalog",
+          "url": "https://docs.dremio.com/current/connecting-to-data/"
+        }
+      ]
+    },
+    "dremio:aws-glue-catalog:v3": {
+      "level": "full",
+      "notes": "Full read and write support for Iceberg v3 tables in AWS Glue Data Catalog and AWS Glue Iceberg REST Catalog.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio AWS Glue Data Catalog",
+          "url": "https://docs.dremio.com/current/connecting-to-data/"
+        }
+      ]
+    },
+    "dremio:rest-catalog:v2": {
+      "level": "full",
+      "notes": "First-class native Iceberg REST Catalog support via the built-in Dremio Open Catalog (powered by Apache Polaris, DX-96982) and the generic Iceberg REST Catalog connector (DX-102149) with OAuth2 authentication, bearer tokens, vended storage credentials, and full read/write DDL and DML.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio Iceberg REST Catalog",
+          "url": "https://docs.dremio.com/current/release-notes/version-260-release/"
+        }
+      ]
+    },
+    "dremio:rest-catalog:v3": {
+      "level": "full",
+      "notes": "Full read and write support for Iceberg v3 tables over the built-in Dremio Open Catalog (Apache Polaris) and generic Iceberg REST Catalog sources.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio Cloud Changelog",
+          "url": "https://docs.dremio.com/dremio-cloud/changelog/"
+        }
+      ]
+    },
+    "dremio:unity-catalog:v2": {
+      "level": "full",
+      "notes": "Dremio supports full Iceberg REST Catalog integration (DX-102149) plus a dedicated Databricks Unity Catalog connector (DX-96951, DX-107914) with Personal Access Token and Microsoft Entra ID authentication and vended storage credentials. Native Iceberg tables in Unity Catalog can be read and written over Unity's Iceberg REST endpoint; read-only restrictions apply only when Unity Catalog itself blocks writes (such as Delta tables exposed via UniForm or the legacy Unity endpoint).",
+      "caveats": [
+        "Read-only applies only to tables where Unity Catalog itself restricts writes (such as Delta Lake tables with UniForm enabled)"
+      ],
+      "links": [
+        {
+          "label": "Dremio 26.x Release Notes (Unity Catalog & Iceberg REST)",
+          "url": "https://docs.dremio.com/current/release-notes/version-260-release/"
+        }
+      ]
+    },
+    "dremio:unity-catalog:v3": {
+      "level": "full",
+      "notes": "Connects to Databricks Unity Catalog for Iceberg v3 tables through the standard Iceberg REST Catalog protocol and Unity Catalog connector with vended credentials; read/write is supported for native Unity Iceberg tables and read-only where Unity restricts writes (e.g., Delta UniForm).",
+      "caveats": [
+        "Read-only applies only to tables where Unity Catalog itself restricts writes (such as Delta Lake tables with UniForm enabled)"
+      ],
+      "links": [
+        {
+          "label": "Dremio 26.x Release Notes (Unity Catalog & Iceberg REST)",
+          "url": "https://docs.dremio.com/current/release-notes/version-260-release/"
+        }
+      ]
+    },
+    "dremio:snowflake-horizon-catalog:v2": {
+      "level": "full",
+      "notes": "Dremio provides a dedicated Snowflake Open Catalog source connector (DX-96947) and generic Iceberg REST Catalog integration supporting OAuth2 authentication, vended storage credentials, and full read/write DDL, DML, OPTIMIZE, and VACUUM on Apache Polaris / Snowflake Horizon Catalog tables.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio 26.x Release Notes (Snowflake Open Catalog)",
+          "url": "https://docs.dremio.com/current/release-notes/version-260-release/"
+        }
+      ]
+    },
+    "dremio:snowflake-horizon-catalog:v3": {
+      "level": "full",
+      "notes": "Supports reading and writing Iceberg v3 tables through the Snowflake Open/Horizon Catalog and Iceberg REST Catalog connectors where permitted by the catalog endpoint.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio 26.x Release Notes (Snowflake Open Catalog)",
+          "url": "https://docs.dremio.com/current/release-notes/version-260-release/"
+        }
+      ]
+    },
+    "dremio:google-lakehouse:v2": {
+      "level": "full",
+      "notes": "Dremio supports connecting to Google Cloud Lakehouse (BigLake metastore) Iceberg catalogs via Dremio's Iceberg REST Catalog connector (DX-113928, March 2026).",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio Cloud Changelog (Google Cloud Lakehouse Support)",
+          "url": "https://docs.dremio.com/dremio-cloud/changelog/"
+        }
+      ]
+    },
+    "dremio:google-lakehouse:v3": {
+      "level": "full",
+      "notes": "Connects to Google Cloud Lakehouse Iceberg catalogs via Dremio's Iceberg REST Catalog connector (DX-113928) for v3 tables.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio Cloud Changelog (Google Cloud Lakehouse Support)",
+          "url": "https://docs.dremio.com/dremio-cloud/changelog/"
+        }
+      ]
+    },
+    "dremio:variant-type:v2": {
+      "level": "none",
+      "notes": "The Iceberg VARIANT data type is a v3 specification feature and is not available in format version 2.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio Cloud Changelog",
+          "url": "https://docs.dremio.com/dremio-cloud/changelog/"
+        }
+      ]
+    },
+    "dremio:variant-type:v3": {
+      "level": "full",
+      "notes": "Full native support for reading and writing the Iceberg v3 binary VARIANT data type (DX-97785), including VARIANT_GET, TYPEOF, TRY_CAST, and type-inspection functions.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio Cloud Changelog (Iceberg v3 Data Types)",
+          "url": "https://docs.dremio.com/dremio-cloud/changelog/"
+        }
+      ]
+    },
+    "dremio:shredded-variant:v2": {
+      "level": "none",
+      "notes": "Shredded Variant is an Iceberg v3 specification feature and is not available in format version 2.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio Cloud Changelog",
+          "url": "https://docs.dremio.com/dremio-cloud/changelog/"
+        }
+      ]
+    },
+    "dremio:shredded-variant:v3": {
+      "level": "full",
+      "notes": "Dremio automatically shreds VARIANT columns into typed Parquet sub-columns at write time on Iceberg v3 tables (with per-table configuration controls) and pushes predicates and projections down to shredded sub-column statistics during scan planning.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio Cloud Changelog (Iceberg v3 Variant)",
+          "url": "https://docs.dremio.com/dremio-cloud/changelog/"
+        }
+      ]
+    },
+    "dremio:geometry-type:v2": {
+      "level": "none",
+      "notes": "Geometry and Geography types are Iceberg v3 specification features and do not apply to format version 2.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio Data Types",
+          "url": "https://docs.dremio.com/current/reference/sql/data-types/"
+        }
+      ]
+    },
+    "dremio:geometry-type:v3": {
+      "level": "none",
+      "notes": "Native Iceberg v3 geometry and geography column types are not yet supported in Dremio DDL (Dremio's v3 type launch in DX-97785 / DX-102694 covers VARIANT, UUID, and TIMESTAMP(9)).",
+      "caveats": [
+        "Geospatial operations in Dremio currently operate on WKT/WKB/GeoJSON representations rather than native Iceberg v3 geometry/geography column types"
+      ],
+      "links": [
+        {
+          "label": "Dremio Data Types",
+          "url": "https://docs.dremio.com/current/reference/sql/data-types/"
+        }
+      ]
+    },
+    "dremio:nanosecond-timestamps:v2": {
+      "level": "none",
+      "notes": "Nanosecond-precision timestamps are an Iceberg v3 specification feature; v2 supports microsecond precision.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio Cloud Changelog",
+          "url": "https://docs.dremio.com/dremio-cloud/changelog/"
+        }
+      ]
+    },
+    "dremio:nanosecond-timestamps:v3": {
+      "level": "full",
+      "notes": "Full support for nanosecond-precision timestamps via TIMESTAMP(9) across Iceberg v3 table scans, relational operators, and SQL functions (DX-102694, June 2026).",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio Cloud Changelog (Full Precision Timestamps)",
+          "url": "https://docs.dremio.com/dremio-cloud/changelog/"
+        }
+      ]
+    },
+    "dremio:unknown-type:v2": {
+      "level": "none",
+      "notes": "The unknown (always-null) type is an Iceberg v3 specification feature and is not available in format version 2.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio Data Types",
+          "url": "https://docs.dremio.com/current/reference/sql/data-types/"
+        }
+      ]
+    },
+    "dremio:unknown-type:v3": {
+      "level": "none",
+      "notes": "Declaring columns with the Iceberg v3 unknown type is not supported in Dremio SQL DDL.",
+      "caveats": [
+        "Cannot declare unknown-type columns in Dremio DDL"
+      ],
+      "links": [
+        {
+          "label": "Dremio Data Types",
+          "url": "https://docs.dremio.com/current/reference/sql/data-types/"
+        }
+      ]
+    },
+    "dremio:lineage:v2": {
+      "level": "none",
+      "notes": "Row lineage (_row_id and _last_updated_sequence_number) is an Iceberg v3 specification feature and is not available in format version 2.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio Cloud Changelog",
+          "url": "https://docs.dremio.com/dremio-cloud/changelog/"
+        }
+      ]
+    },
+    "dremio:lineage:v3": {
+      "level": "full",
+      "notes": "Full support for Iceberg v3 Row Lineage (DX-104939, DX-102731), automatically assigning, preserving, and exposing _row_id and _last_updated_sequence_number across INSERT, UPDATE, DELETE, MERGE, and OPTIMIZE operations.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio Cloud Changelog (Iceberg v3 Row Lineage)",
+          "url": "https://docs.dremio.com/dremio-cloud/changelog/"
+        }
+      ]
+    },
+    "dremio:deletion-vectors:v2": {
+      "level": "none",
+      "notes": "Puffin-based binary deletion vectors are an Iceberg v3 specification feature; v2 uses position and equality delete files.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio Cloud Changelog",
+          "url": "https://docs.dremio.com/dremio-cloud/changelog/"
+        }
+      ]
+    },
+    "dremio:deletion-vectors:v3": {
+      "level": "full",
+      "notes": "Full support for reading and writing Iceberg v3 Puffin binary deletion vectors on merge-on-read tables during DELETE, UPDATE, and MERGE INTO, with high-performance vectorized DV writing (DX-105396, DX-118097).",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio Cloud Changelog (Iceberg v3 Deletion Vectors)",
+          "url": "https://docs.dremio.com/dremio-cloud/changelog/"
+        }
+      ]
+    }
+  }
+}

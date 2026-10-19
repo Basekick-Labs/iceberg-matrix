@@ -9,6 +9,7 @@ import catalogFeaturesJson from "./catalogs/features.json";
 
 // --- Proprietary / managed catalogs ---
 import snowflakeHorizon from "./catalogs/snowflake-horizon/snowflake-horizon.json";
+import dremioOpenCatalog from "./catalogs/dremio-open-catalog/dremio-open-catalog.json";
 import awsGlueDataCatalog from "./catalogs/aws-glue-data-catalog/aws-glue-data-catalog.json";
 import googleLakehouseRuntimeCatalog from "./catalogs/google-lakehouse-runtime-catalog/google-lakehouse-runtime-catalog.json";
 import databricksUnity from "./catalogs/databricks-unity/databricks-unity.json";
@@ -31,6 +32,7 @@ export interface CatalogFile {
 // exists on disk but is missing from this list).
 const catalogFiles: CatalogFile[] = [
   snowflakeHorizon,
+  dremioOpenCatalog,
   awsGlueDataCatalog,
   googleLakehouseRuntimeCatalog,
   databricksUnity,

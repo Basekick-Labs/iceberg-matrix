@@ -21,6 +21,7 @@ import catalogFeaturesJson from "./catalogs/features.json";
 // The one list to update when a catalog is added or removed.
 const EXPECTED_CATALOG_IDS = [
   "snowflake-horizon",
+  "dremio-open-catalog",
   "aws-glue-data-catalog",
   "databricks-unity",
   "google-lakehouse-runtime-catalog",

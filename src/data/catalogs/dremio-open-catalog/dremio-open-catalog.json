@@ -1,0 +1,123 @@
+{
+  "platforms": [
+    {
+      "id": "dremio-open-catalog",
+      "name": "Dremio / SAP Open Catalog",
+      "vendor": "Dremio / SAP",
+      "category": "cloud",
+      "group": "Proprietary",
+      "docUrl": "https://docs.dremio.com/dremio-cloud/admin/catalog/"
+    }
+  ],
+  "support": {
+    "dremio-open-catalog:rest-spec-support:current": {
+      "level": "full",
+      "notes": "Built on Apache Polaris (co-created by Dremio and donated to the ASF), Dremio Open Catalog implements the open Apache Iceberg REST Catalog API (/api/catalog/v1/...) covering namespaces, tables, views, multi-table commits, OAuth2 token exchange, and short-lived storage credential vending.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio Open Catalog docs",
+          "url": "https://docs.dremio.com/dremio-cloud/admin/catalog/"
+        },
+        {
+          "label": "Dremio 26.x Release Notes (Open Catalog)",
+          "url": "https://docs.dremio.com/current/release-notes/version-260-release/"
+        }
+      ]
+    },
+    "dremio-open-catalog:v2-spec-support:current": {
+      "level": "full",
+      "notes": "Format v2 is the default baseline for Iceberg tables managed by Dremio Open Catalog, with full support for position and equality deletes, branching/tagging, and automated background compaction and vacuuming.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Dremio Apache Iceberg Tables",
+          "url": "https://docs.dremio.com/current/reference/sql/commands/apache-iceberg-tables/"
+        }
+      ]
+    },
+    "dremio-open-catalog:v3-spec-support:current": {
+      "level": "full",
+      "notes": "Manages and serves Iceberg format-version 3 tables across Dremio and external IRC engines, supporting v3 Puffin deletion vectors, row lineage (_row_id, _last_updated_sequence_number), VARIANT (with shredded sub-columns), UUID, nanosecond timestamps (TIMESTAMP(9)), and column default values.",
+      "caveats": [
+        "Native v3 geometry/geography and unknown column types are not yet supported in Dremio SQL DDL"
+      ],
+      "links": [
+        {
+          "label": "Dremio Cloud Changelog (Iceberg v3)",
+          "url": "https://docs.dremio.com/dremio-cloud/changelog/"
+        }
+      ]
+    },
+    "dremio-open-catalog:managed-offering:current": {
+      "level": "full",
+      "notes": "Built-in, zero-ops managed Iceberg REST Catalog included natively in Dremio Cloud and Dremio Enterprise, featuring autonomous background table optimization (compaction, manifest rewriting) and snapshot/orphan cleanup.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Source",
+          "url": "https://docs.dremio.com/dremio-cloud/admin/catalog/"
+        }
+      ]
+    },
+    "dremio-open-catalog:serves-own-irc:current": {
+      "level": "full",
+      "notes": "Serves all Open Catalog Iceberg tables and views over the standard Apache Polaris Iceberg REST Catalog endpoint (read and write, v2 and v3) to external engines with short-lived, path-scoped vended storage credentials.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Source",
+          "url": "https://docs.dremio.com/dremio-cloud/admin/catalog/"
+        }
+      ]
+    },
+    "dremio-open-catalog:rw-foreign-irc:current": {
+      "level": "full",
+      "notes": "Paired with the Dremio query engine, reads and writes foreign Iceberg tables governed by external Iceberg REST Catalogs (Snowflake Open/Horizon Catalog, AWS Glue IRC, Amazon S3 Tables, Databricks Unity Catalog, Microsoft OneLake, Google Cloud Lakehouse, and generic IRC servers) using spec-compliant OAuth2 and vended credentials.",
+      "caveats": [
+        "Read-only applies only where the foreign catalog itself restricts IRC writes (such as Delta Lake tables exposed via UniForm in Unity Catalog)"
+      ],
+      "links": [
+        {
+          "label": "Source",
+          "url": "https://docs.dremio.com/current/release-notes/version-260-release/"
+        }
+      ]
+    },
+    "dremio-open-catalog:federation-broker:current": {
+      "level": "partial",
+      "notes": "Dremio federates queries across Open Catalog and external Iceberg catalogs (Glue, S3 Tables, Snowflake Open Catalog, Unity Catalog, OneLake, Google Cloud Lakehouse, Nessie, Hive) within the Dremio platform and inherits Apache Polaris's external catalog federation architecture, though re-brokering foreign catalogs back out over Open Catalog's own IRC endpoint with re-vended credentials to third-party IRC clients is not universally GA across all source types.",
+      "caveats": [
+        "Full cross-catalog federation is executed through the Dremio engine or Polaris federation adapters; re-vending arbitrary foreign catalogs over the outbound IRC endpoint is limited"
+      ],
+      "links": [
+        {
+          "label": "Source",
+          "url": "https://docs.dremio.com/dremio-cloud/admin/catalog/"
+        }
+      ]
+    },
+    "dremio-open-catalog:multi-engine-multi-cloud:current": {
+      "level": "full",
+      "notes": "Interoperates over standard IRC with Dremio, Apache Spark, Apache Flink, Trino, Starburst, DuckDB, PyIceberg, Daft, and Doris across AWS S3 (including cross-region S3), Azure ADLS Gen2, Google Cloud Storage, and S3-compatible object storage.",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Source",
+          "url": "https://docs.dremio.com/dremio-cloud/admin/catalog/"
+        }
+      ]
+    },
+    "dremio-open-catalog:governance-cred-vending:current": {
+      "level": "full",
+      "notes": "Role-based access control (RBAC), Fine-Grained Access Control (FGAC row-level filtering and column-level masking), unified lineage tracking, and spec-compliant credential vending (short-lived AWS STS, Azure SAS, and GCS OAuth2 downscoped tokens).",
+      "caveats": [],
+      "links": [
+        {
+          "label": "Source",
+          "url": "https://docs.dremio.com/dremio-cloud/admin/catalog/"
+        }
+      ]
+    }
+  }
+}

@@ -37,6 +37,7 @@ const GROUP_ORDER: PlatformGroup[] = [
   "Azure",
   "Snowflake",
   "Databricks",
+  "Dremio / SAP",
   "Alibaba Cloud",
   "3rd Party",
 ];
@@ -47,6 +48,7 @@ const GROUP_LABELS: Record<PlatformGroup, string> = {
   Azure: "Azure",
   Snowflake: "Snowflake",
   Databricks: "Databricks",
+  "Dremio / SAP": "Dremio / SAP",
   "Alibaba Cloud": "Alibaba Cloud",
   "3rd Party": "OSS/3rd Party",
   // Catalogs view groups.
@@ -60,6 +62,7 @@ const GROUP_LOGOS: Partial<Record<PlatformGroup, string>> = {
   Azure: "/logos/Microsoft_Azure.svg",
   GCP: "/logos/google.svg",
   Databricks: "/logos/databricks-color.svg",
+  "Dremio / SAP": "/logos/dremio.svg",
   "Alibaba Cloud": "/logos/alibaba-cloud.svg",
 };
 
@@ -70,6 +73,8 @@ const PLATFORM_LOGOS: Record<string, string> = {
   "aws-aurora": "/logos/aurora.svg",
   databricks: "/logos/databricks.svg",
   snowflake: "/logos/snowflake.svg",
+  dremio: "/logos/dremio.svg",
+  "dremio-open-catalog": "/logos/dremio.svg",
   duckdb: "/logos/duckdb.svg",
   clickhouse: "/logos/clickhouse.svg",
   spark: "/logos/spark.svg",
