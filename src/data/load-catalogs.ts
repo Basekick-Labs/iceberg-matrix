@@ -6,6 +6,8 @@ import catalogFeaturesJson from "./catalogs/features.json";
 // *consecutive* columns, so each group's catalogs must stay contiguous.
 //
 // Order within each group is the source scorecard's overall score, descending.
+// Fivetran Catalog is not in that scorecard (independently assessed), so it is
+// placed last in its group.
 
 // --- Proprietary / managed catalogs ---
 import snowflakeHorizon from "./catalogs/snowflake-horizon/snowflake-horizon.json";
@@ -14,6 +16,7 @@ import awsGlueDataCatalog from "./catalogs/aws-glue-data-catalog/aws-glue-data-c
 import googleLakehouseRuntimeCatalog from "./catalogs/google-lakehouse-runtime-catalog/google-lakehouse-runtime-catalog.json";
 import databricksUnity from "./catalogs/databricks-unity/databricks-unity.json";
 import microsoftOnelake from "./catalogs/microsoft-onelake/microsoft-onelake.json";
+import fivetranCatalog from "./catalogs/fivetran-catalog/fivetran-catalog.json";
 
 // --- Open-source catalogs ---
 import apachePolaris from "./catalogs/apache-polaris/apache-polaris.json";
@@ -37,6 +40,7 @@ const catalogFiles: CatalogFile[] = [
   googleLakehouseRuntimeCatalog,
   databricksUnity,
   microsoftOnelake,
+  fivetranCatalog,
   apachePolaris,
   apacheGravitino,
   lakekeeper,

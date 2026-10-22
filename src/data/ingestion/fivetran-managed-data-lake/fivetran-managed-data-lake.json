@@ -1,0 +1,293 @@
+{
+  "platforms": [
+    {
+      "id": "fivetran-managed-data-lake",
+      "name": "Fivetran Managed Data Lake",
+      "vendor": "Fivetran",
+      "category": "cloud",
+      "group": "3rd Party",
+      "docUrl": "https://fivetran.com/docs/managed-data-lake-service"
+    }
+  ],
+  "support": {
+    "fivetran-managed-data-lake:write-insert:v2": {
+      "level": "full",
+      "notes": "Loads source data into Iceberg tables in customer-owned object storage using atomic Iceberg commits.",
+      "caveats": [
+        "A sync can contain multiple commits; the entire sync is not a single atomic transaction"
+      ],
+      "links": [
+        { "label": "Fivetran Managed Data Lake overview", "url": "https://fivetran.com/docs/managed-data-lake-service" }
+      ]
+    },
+    "fivetran-managed-data-lake:write-insert:v3": {
+      "level": "none",
+      "notes": "Writes V2 tables only; V3 tables are not created or written.",
+      "caveats": [],
+      "links": [
+        { "label": "Fivetran Managed Data Lake overview", "url": "https://fivetran.com/docs/managed-data-lake-service" }
+      ]
+    },
+    "fivetran-managed-data-lake:write-merge-update-delete:v2": {
+      "level": "full",
+      "notes": "Applies source updates and deletes to existing rows using the source primary key, including history-mode tables. Changes are applied by rewriting data files.",
+      "caveats": [
+        "Rewrites data files instead of writing delete files, so very large update volumes cost more than merge-on-read"
+      ],
+      "links": [
+        { "label": "Fivetran Managed Data Lake overview", "url": "https://fivetran.com/docs/managed-data-lake-service" },
+        { "label": "Write access guide for external engines", "url": "https://fivetran.com/docs/managed-data-lake-service/metadata-catalogs/write-access-guide" }
+      ]
+    },
+    "fivetran-managed-data-lake:write-merge-update-delete:v3": {
+      "level": "none",
+      "notes": "Writes V2 tables only, so no V3 upsert path exists.",
+      "caveats": [],
+      "links": [
+        { "label": "Fivetran Managed Data Lake overview", "url": "https://fivetran.com/docs/managed-data-lake-service" }
+      ]
+    },
+    "fivetran-managed-data-lake:merge-on-read:v2": {
+      "level": "none",
+      "notes": "Updates and deletes use copy-on-write. Fivetran does not write delete files, and external engines should not write merge-on-read changes to Fivetran-managed tables.",
+      "caveats": [],
+      "links": [
+        { "label": "Write access guide for external engines", "url": "https://fivetran.com/docs/managed-data-lake-service/metadata-catalogs/write-access-guide" }
+      ]
+    },
+    "fivetran-managed-data-lake:merge-on-read:v3": {
+      "level": "none",
+      "notes": "Writes V2 tables only; no V3 merge-on-read.",
+      "caveats": [],
+      "links": [
+        { "label": "Write access guide for external engines", "url": "https://fivetran.com/docs/managed-data-lake-service/metadata-catalogs/write-access-guide" }
+      ]
+    },
+    "fivetran-managed-data-lake:equality-deletes:v2": {
+      "level": "none",
+      "notes": "Fivetran does not write equality delete files; row changes rewrite the affected data files.",
+      "caveats": [],
+      "links": [
+        { "label": "Write access guide for external engines", "url": "https://fivetran.com/docs/managed-data-lake-service/metadata-catalogs/write-access-guide" }
+      ]
+    },
+    "fivetran-managed-data-lake:equality-deletes:v3": {
+      "level": "none",
+      "notes": "Writes V2 tables only; no V3 equality deletes.",
+      "caveats": [],
+      "links": [
+        { "label": "Write access guide for external engines", "url": "https://fivetran.com/docs/managed-data-lake-service/metadata-catalogs/write-access-guide" }
+      ]
+    },
+    "fivetran-managed-data-lake:position-deletes:v2": {
+      "level": "none",
+      "notes": "Fivetran does not write position delete files; row changes rewrite the affected data files.",
+      "caveats": [],
+      "links": [
+        { "label": "Write access guide for external engines", "url": "https://fivetran.com/docs/managed-data-lake-service/metadata-catalogs/write-access-guide" }
+      ]
+    },
+    "fivetran-managed-data-lake:position-deletes:v3": {
+      "level": "none",
+      "notes": "Writes V2 tables only; no V3 position deletes.",
+      "caveats": [],
+      "links": [
+        { "label": "Write access guide for external engines", "url": "https://fivetran.com/docs/managed-data-lake-service/metadata-catalogs/write-access-guide" }
+      ]
+    },
+    "fivetran-managed-data-lake:deletion-vectors:v2": {
+      "level": "none",
+      "notes": "Deletion vectors are a V3 feature and the service writes V2 tables.",
+      "caveats": [],
+      "links": [
+        { "label": "Fivetran Managed Data Lake overview", "url": "https://fivetran.com/docs/managed-data-lake-service" }
+      ]
+    },
+    "fivetran-managed-data-lake:deletion-vectors:v3": {
+      "level": "none",
+      "notes": "The service does not write V3 tables, so it does not write deletion vectors.",
+      "caveats": [],
+      "links": [
+        { "label": "Fivetran Managed Data Lake overview", "url": "https://fivetran.com/docs/managed-data-lake-service" }
+      ]
+    },
+    "fivetran-managed-data-lake:table-creation:v2": {
+      "level": "full",
+      "notes": "Creates the destination schema and tables from the source schema on the first sync.",
+      "caveats": [],
+      "links": [
+        { "label": "Fivetran Managed Data Lake overview", "url": "https://fivetran.com/docs/managed-data-lake-service" }
+      ]
+    },
+    "fivetran-managed-data-lake:table-creation:v3": {
+      "level": "none",
+      "notes": "Tables are always created as V2.",
+      "caveats": [],
+      "links": [
+        { "label": "Fivetran Managed Data Lake overview", "url": "https://fivetran.com/docs/managed-data-lake-service" }
+      ]
+    },
+    "fivetran-managed-data-lake:schema-evolution:v2": {
+      "level": "full",
+      "notes": "New source columns are added to the destination table automatically as the source schema changes.",
+      "caveats": [],
+      "links": [
+        { "label": "Fivetran Managed Data Lake overview", "url": "https://fivetran.com/docs/managed-data-lake-service" }
+      ]
+    },
+    "fivetran-managed-data-lake:schema-evolution:v3": {
+      "level": "none",
+      "notes": "Writes V2 tables only.",
+      "caveats": [],
+      "links": [
+        { "label": "Fivetran Managed Data Lake overview", "url": "https://fivetran.com/docs/managed-data-lake-service" }
+      ]
+    },
+    "fivetran-managed-data-lake:type-promotion:v2": {
+      "level": "full",
+      "notes": "A changed source column type is applied to the destination column, including widening.",
+      "caveats": [
+        "Done by replacing the column and rewriting its data files, not as a metadata-only Iceberg type promotion, so it costs more on large tables"
+      ],
+      "links": [
+        { "label": "Type transformation and mapping", "url": "https://fivetran.com/docs/managed-data-lake-service#typetransformationandmapping" }
+      ]
+    },
+    "fivetran-managed-data-lake:type-promotion:v3": {
+      "level": "none",
+      "notes": "Writes V2 tables only.",
+      "caveats": [],
+      "links": [
+        { "label": "Fivetran Managed Data Lake overview", "url": "https://fivetran.com/docs/managed-data-lake-service" }
+      ]
+    },
+    "fivetran-managed-data-lake:table-maintenance:v2": {
+      "level": "full",
+      "notes": "Fivetran runs table maintenance for you: snapshot expiry, orphan file cleanup and file compaction.",
+      "caveats": [],
+      "links": [
+        { "label": "Table maintenance operations", "url": "https://fivetran.com/docs/managed-data-lake-service#tablemaintenanceoperations" }
+      ]
+    },
+    "fivetran-managed-data-lake:table-maintenance:v3": {
+      "level": "none",
+      "notes": "Writes V2 tables only.",
+      "caveats": [],
+      "links": [
+        { "label": "Table maintenance operations", "url": "https://fivetran.com/docs/managed-data-lake-service#tablemaintenanceoperations" }
+      ]
+    },
+    "fivetran-managed-data-lake:branching-tagging:v2": {
+      "level": "none",
+      "notes": "Commits go to the main branch only; there is no option to write to a named branch.",
+      "caveats": [],
+      "links": [
+        { "label": "Fivetran Managed Data Lake overview", "url": "https://fivetran.com/docs/managed-data-lake-service" }
+      ]
+    },
+    "fivetran-managed-data-lake:branching-tagging:v3": {
+      "level": "none",
+      "notes": "Commits go to the main branch only.",
+      "caveats": [],
+      "links": [
+        { "label": "Fivetran Managed Data Lake overview", "url": "https://fivetran.com/docs/managed-data-lake-service" }
+      ]
+    },
+    "fivetran-managed-data-lake:hidden-partitioning:v2": {
+      "level": "none",
+      "notes": "Fivetran writes unpartitioned tables and does not apply partition transforms.",
+      "caveats": [],
+      "links": [
+        { "label": "Write access guide for external engines", "url": "https://fivetran.com/docs/managed-data-lake-service/metadata-catalogs/write-access-guide" }
+      ]
+    },
+    "fivetran-managed-data-lake:hidden-partitioning:v3": {
+      "level": "none",
+      "notes": "Fivetran writes unpartitioned tables and does not apply partition transforms.",
+      "caveats": [],
+      "links": [
+        { "label": "Write access guide for external engines", "url": "https://fivetran.com/docs/managed-data-lake-service/metadata-catalogs/write-access-guide" }
+      ]
+    },
+    "fivetran-managed-data-lake:catalog-integration:v2": {
+      "level": "full",
+      "notes": "Commits go through Fivetran Catalog, the primary Iceberg catalog. Iceberg metadata can additionally be published to AWS Glue Data Catalog and BigLake metastore.",
+      "caveats": [],
+      "links": [
+        { "label": "Metadata catalogs", "url": "https://fivetran.com/docs/managed-data-lake-service/metadata-catalogs" }
+      ]
+    },
+    "fivetran-managed-data-lake:catalog-integration:v3": {
+      "level": "none",
+      "notes": "Writes V2 tables only.",
+      "caveats": [],
+      "links": [
+        { "label": "Metadata catalogs", "url": "https://fivetran.com/docs/managed-data-lake-service/metadata-catalogs" }
+      ]
+    },
+    "fivetran-managed-data-lake:aws-glue-catalog:v2": {
+      "level": "full",
+      "notes": "Iceberg metadata can additionally be published to the AWS Glue Data Catalog when the destination is on AWS. Fivetran Catalog remains the primary catalog.",
+      "caveats": [],
+      "links": [
+        { "label": "Metadata catalogs", "url": "https://fivetran.com/docs/managed-data-lake-service/metadata-catalogs" }
+      ]
+    },
+    "fivetran-managed-data-lake:aws-glue-catalog:v3": {
+      "level": "none",
+      "notes": "Writes V2 tables only.",
+      "caveats": [],
+      "links": [
+        { "label": "Metadata catalogs", "url": "https://fivetran.com/docs/managed-data-lake-service/metadata-catalogs" }
+      ]
+    },
+    "fivetran-managed-data-lake:rest-catalog:v2": {
+      "level": "none",
+      "notes": "Customer-provided Iceberg REST Catalog endpoints are not supported as ingestion targets. Fivetran Managed Data Lake writes through Fivetran Catalog, which implements the Iceberg REST protocol.",
+      "caveats": [],
+      "links": [
+        { "label": "Fivetran Catalog integration guide", "url": "https://fivetran.com/docs/managed-data-lake-service/metadata-catalogs/integration-guide-fivetran-catalog" }
+      ]
+    },
+    "fivetran-managed-data-lake:rest-catalog:v3": {
+      "level": "none",
+      "notes": "Writes V2 tables only.",
+      "caveats": [],
+      "links": [
+        { "label": "Fivetran Catalog integration guide", "url": "https://fivetran.com/docs/managed-data-lake-service/metadata-catalogs/integration-guide-fivetran-catalog" }
+      ]
+    },
+    "fivetran-managed-data-lake:variant-type:v2": {
+      "level": "none",
+      "notes": "Variant is a V3 type and is not part of the type mapping.",
+      "caveats": [],
+      "links": [
+        { "label": "Type transformation and mapping", "url": "https://fivetran.com/docs/managed-data-lake-service#typetransformationandmapping" }
+      ]
+    },
+    "fivetran-managed-data-lake:variant-type:v3": {
+      "level": "none",
+      "notes": "Variant is not part of the type mapping: semi-structured source data is not written as a variant column.",
+      "caveats": [],
+      "links": [
+        { "label": "Type transformation and mapping", "url": "https://fivetran.com/docs/managed-data-lake-service#typetransformationandmapping" }
+      ]
+    },
+    "fivetran-managed-data-lake:shredded-variant:v2": {
+      "level": "none",
+      "notes": "Shredded variant is a V3 feature and the service writes no variant data.",
+      "caveats": [],
+      "links": [
+        { "label": "Type transformation and mapping", "url": "https://fivetran.com/docs/managed-data-lake-service#typetransformationandmapping" }
+      ]
+    },
+    "fivetran-managed-data-lake:shredded-variant:v3": {
+      "level": "none",
+      "notes": "The service writes no variant data, shredded or otherwise.",
+      "caveats": [],
+      "links": [
+        { "label": "Type transformation and mapping", "url": "https://fivetran.com/docs/managed-data-lake-service#typetransformationandmapping" }
+      ]
+    }
+  }
+}

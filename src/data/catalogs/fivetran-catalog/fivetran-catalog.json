@@ -1,0 +1,97 @@
+{
+  "platforms": [
+    {
+      "id": "fivetran-catalog",
+      "name": "Fivetran Catalog",
+      "vendor": "Fivetran",
+      "category": "cloud",
+      "group": "Proprietary",
+      "docUrl": "https://fivetran.com/docs/managed-data-lake-service/metadata-catalogs/integration-guide-fivetran-catalog"
+    }
+  ],
+  "support": {
+    "fivetran-catalog:rest-spec-support:current": {
+      "level": "full",
+      "notes": "Managed Apache Polaris implementing the Iceberg REST API; engines connect to it with a standard REST catalog configuration.",
+      "caveats": [],
+      "links": [
+        { "label": "Fivetran Catalog integration guide", "url": "https://fivetran.com/docs/managed-data-lake-service/metadata-catalogs/integration-guide-fivetran-catalog" }
+      ]
+    },
+    "fivetran-catalog:v2-spec-support:current": {
+      "level": "full",
+      "notes": "Serves and manages the V2 tables that Fivetran writes, and engines can read them over the REST API.",
+      "caveats": [],
+      "links": [
+        { "label": "Fivetran Catalog integration guide", "url": "https://fivetran.com/docs/managed-data-lake-service/metadata-catalogs/integration-guide-fivetran-catalog" }
+      ]
+    },
+    "fivetran-catalog:v3-spec-support:current": {
+      "level": "unknown",
+      "notes": "Support for customer-created V3 tables has not been verified. This is separate from Fivetran's own pipelines, which write V2 tables only.",
+      "caveats": [
+        "Not documented as supported or unsupported"
+      ],
+      "links": [
+        { "label": "Fivetran Catalog integration guide", "url": "https://fivetran.com/docs/managed-data-lake-service/metadata-catalogs/integration-guide-fivetran-catalog" }
+      ]
+    },
+    "fivetran-catalog:managed-offering:current": {
+      "level": "full",
+      "notes": "Fully managed by Fivetran for Fivetran Managed Data Lake destinations; there is nothing to deploy or operate.",
+      "caveats": [
+        "Available to Fivetran Managed Data Lake destinations, not as a standalone catalog"
+      ],
+      "links": [
+        { "label": "Metadata catalogs", "url": "https://fivetran.com/docs/managed-data-lake-service/metadata-catalogs" }
+      ]
+    },
+    "fivetran-catalog:serves-own-irc:current": {
+      "level": "full",
+      "notes": "Serves a destination's own tables to external engines over the Iceberg REST API, with read-only and write credentials and short-lived, table-scoped storage credentials vended to the client.",
+      "caveats": [
+        "External writes to Fivetran-managed tables are restricted; the write access guide advises against merge-on-read writes"
+      ],
+      "links": [
+        { "label": "Write access guide for external engines", "url": "https://fivetran.com/docs/managed-data-lake-service/metadata-catalogs/write-access-guide" },
+        { "label": "Fivetran Catalog integration guide", "url": "https://fivetran.com/docs/managed-data-lake-service/metadata-catalogs/integration-guide-fivetran-catalog" }
+      ]
+    },
+    "fivetran-catalog:rw-foreign-irc:current": {
+      "level": "none",
+      "notes": "Does not bundle a query engine and does not read or write tables governed by another catalog.",
+      "caveats": [],
+      "links": [
+        { "label": "Metadata catalogs", "url": "https://fivetran.com/docs/managed-data-lake-service/metadata-catalogs" }
+      ]
+    },
+    "fivetran-catalog:federation-broker:current": {
+      "level": "none",
+      "notes": "Serves only the tables of its own destination; it does not catalog or broker credentials for external catalogs.",
+      "caveats": [],
+      "links": [
+        { "label": "Metadata catalogs", "url": "https://fivetran.com/docs/managed-data-lake-service/metadata-catalogs" }
+      ]
+    },
+    "fivetran-catalog:multi-engine-multi-cloud:current": {
+      "level": "full",
+      "notes": "Documented for Spark, Trino, Starburst, Snowflake and DuckDB, over S3, ADLS and GCS storage.",
+      "caveats": [
+        "Spark, Trino and Starburst need Iceberg 1.9.0 or later"
+      ],
+      "links": [
+        { "label": "Fivetran Catalog integration guide", "url": "https://fivetran.com/docs/managed-data-lake-service/metadata-catalogs/integration-guide-fivetran-catalog" }
+      ]
+    },
+    "fivetran-catalog:governance-cred-vending:current": {
+      "level": "partial",
+      "notes": "Credential vending is present: engines receive short-lived, table-scoped storage credentials. Access control is limited to a read-only and a write credential per destination.",
+      "caveats": [
+        "No customer-managed roles, masking or row/column policies are exposed"
+      ],
+      "links": [
+        { "label": "Write access guide for external engines", "url": "https://fivetran.com/docs/managed-data-lake-service/metadata-catalogs/write-access-guide" }
+      ]
+    }
+  }
+}
