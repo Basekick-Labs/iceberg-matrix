@@ -538,7 +538,7 @@ def create_duckdb_fixture(ns: str, name: str, columns_ddl: str, values_sql: str,
 
     Some V3 column types have no Spark producer here: the Iceberg 1.11 Spark
     connector rejects ``GEOMETRY(4326)`` ("Not a supported type") and Spark has
-    no nanosecond timestamp literal. DuckDB 1.5 can write both against a REST
+    no nanosecond timestamp literal. DuckDB 2.0 can write both against a REST
     catalog, so it is the fallback producer when the ``duckdb`` module is
     importable. ``columns_ddl`` / ``values_sql`` are DuckDB SQL fragments;
     ``probe_expr`` is selected back and returned as ``value`` so the caller
@@ -573,7 +573,7 @@ def create_duckdb_fixture(ns: str, name: str, columns_ddl: str, values_sql: str,
         else:
             auth = "AUTHORIZATION_TYPE 'none'"
         con.execute(f"""
-            ATTACH '{REST_WAREHOUSE}' AS ib (TYPE iceberg, ENDPOINT '{REST_URI}', {auth},
+            ATTACH '{REST_WAREHOUSE}' AS ib (TYPE iceberg, URI '{REST_URI}', {auth},
                                             ACCESS_DELEGATION_MODE 'none')""")
         con.execute(f"CREATE TABLE ib.{ns}.{name} ({columns_ddl}) WITH ('format-version'='3')")
         con.execute(f"INSERT INTO ib.{ns}.{name} VALUES {values_sql}")

@@ -35,7 +35,12 @@ Environment variables:
     DUCKDB_VERSION          - Override reported DuckDB version (default: auto-detected)
 
 Requirements:
-    - duckdb == 1.5.5 (pinned in CI; Iceberg V3 read/write via v1.5.x)
+    - duckdb == 2.0.0 (pinned in CI; requires Python >= 3.11). The suite uses 2.0
+      surface that 1.5.x lacks (the ``URI`` ATTACH option, ``iceberg_files``,
+      ``iceberg_refs``, ``iceberg_partition_specs``, ``iceberg_rewrite_data_files``).
+      It selects data files with ``iceberg_metadata().manifest_content = 'DATA'``
+      because the per-file ``content`` column renamed live data files from
+      ``EXISTING`` to ``DATA`` in 2.0.
     - An Iceberg REST catalog backed by S3-compatible storage for write tests.
 """
 
@@ -54,7 +59,7 @@ from pathlib import Path
 try:
     import duckdb
 except ImportError:
-    print("[FATAL] duckdb not installed. Run: uv pip install duckdb==1.5.5")
+    print("[FATAL] duckdb not installed. Run: uv pip install duckdb==2.0.0")
     sys.exit(1)
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -181,19 +186,19 @@ def _version_sql(sql: str) -> str:
     The tests spell their DDL once, without a format version; DuckDB defaults
     that to V2. When the suite is running its V3 pass, the same DDL has to
     produce format-version 3 tables, so ``WITH ('format-version'='3')`` is
-    spliced in: into an existing WITH clause, before PARTITIONED BY, or at the
-    end. Statements that already name a format-version (the V3-only tests) and
-    CREATE TABLE ... AS SELECT are left alone.
+    spliced in: into an existing WITH clause, before AS SELECT (CREATE TABLE ...
+    WITH (...) AS SELECT), or at the very end. DuckDB's grammar puts WITH
+    *after* PARTITIONED BY, so a partitioned table gets it appended after the
+    partition clause; placing it before is a parser error. Statements that
+    already name a format-version (the V3-only tests) are left alone.
     """
     if CURRENT_VERSION == "v2" or not _CREATE_IB_TABLE.match(sql) or "format-version" in sql:
-        return sql
-    if re.search(r"\bAS\s+SELECT\b", sql, re.IGNORECASE):
         return sql
     prop = f"'format-version'='{_fmt()}'"
     m = re.search(r"\bWITH\s*\(", sql, re.IGNORECASE)
     if m:
         return sql[:m.end()] + prop + ", " + sql[m.end():]
-    m = re.search(r"\bPARTITIONED\s+BY\b", sql, re.IGNORECASE)
+    m = re.search(r"\bAS\s+SELECT\b", sql, re.IGNORECASE)
     if m:
         return sql[:m.start()] + f"WITH ({prop}) " + sql[m.start():]
     return sql.rstrip().rstrip(";") + f" WITH ({prop})"
@@ -255,17 +260,19 @@ def _catalog_connection() -> "duckdb.DuckDBPyConnection":
         auth = "SECRET restsec"
     else:
         auth = "AUTHORIZATION_TYPE 'none'"
+    # DuckDB 2.0 renamed the ATTACH option ENDPOINT to URI (ENDPOINT stays as a
+    # deprecated alias).
     con.execute(
         f"""
         ATTACH '{REST_WAREHOUSE}' AS ib (
             TYPE iceberg,
-            ENDPOINT '{REST_URI}',
+            URI '{REST_URI}',
             {auth},
             ACCESS_DELEGATION_MODE 'none'
         )
         """
     )
-    return con
+    return _VersionedConnection(con)
 
 
 def _new_namespace(con: "duckdb.DuckDBPyConnection") -> str:
@@ -397,8 +404,18 @@ def test_write_insert() -> TestResult:
         con.execute(f"INSERT INTO ib.{ns}.t SELECT 3, 'c'")
         n = con.execute(f"SELECT count(*) FROM ib.{ns}.t").fetchone()[0]
         assert n == 3, f"expected 3 rows, got {n}"
+        # DuckDB 1.5.x refused write.target-file-size-bytes on a partitioned
+        # table ("not currently supported for partitioned tables"); 2.0 honors it.
+        con.execute(
+            f"CREATE TABLE ib.{ns}.p (id BIGINT) PARTITIONED BY (bucket(2, id)) "
+            "WITH ('write.target-file-size-bytes'='1048576')"
+        )
+        con.execute(f"INSERT INTO ib.{ns}.p SELECT i FROM range(10) s(i)")
+        pn = con.execute(f"SELECT count(*) FROM ib.{ns}.p").fetchone()[0]
+        assert pn == 10, f"expected 10 rows in the partitioned table, got {pn}"
         r.result = "pass"
-        r.details = "INSERT INTO ... VALUES and INSERT INTO ... SELECT committed 3 rows"
+        r.details = ("INSERT INTO ... VALUES and INSERT INTO ... SELECT committed 3 rows; a "
+                    "partitioned table with write.target-file-size-bytes accepted 10 rows")
 
     return _catalog_test(r, body)
 
@@ -422,8 +439,42 @@ def test_write_merge_update_delete() -> TestResult:
         )
         rows = con.execute(f"SELECT id, name FROM ib.{ns}.t ORDER BY id").fetchall()
         assert rows == [(1, "J"), (3, "Sarah")], f"unexpected rows: {rows}"
+
+        # Partitioned table: UPDATE and DELETE rewrite only their partitions' files.
+        con.execute(
+            f"CREATE TABLE ib.{ns}.p (id BIGINT, c VARCHAR) "
+            "PARTITIONED BY (bucket(4, id), truncate(2, c))"
+        )
+        con.execute(f"INSERT INTO ib.{ns}.p VALUES (1,'US'),(2,'DE'),(3,'NL'),(4,'FR')")
+        con.execute(f"UPDATE ib.{ns}.p SET c='ZZ' WHERE id=1")
+        con.execute(f"DELETE FROM ib.{ns}.p WHERE id=2")
+        prows = con.execute(f"SELECT id, c FROM ib.{ns}.p ORDER BY id").fetchall()
+        assert prows == [(1, "ZZ"), (3, "NL"), (4, "FR")], f"unexpected partitioned rows: {prows}"
+
+        # Sorted table (sort order set by Spark, DuckDB cannot declare one).
+        # DuckDB 1.5.x refused INSERT and UPDATE on a sorted table; 2.0 does not.
+        sorted_note = "sorted-table check skipped (Spark fixture unavailable)"
+        if spark_fixture.available():
+            sns = spark_fixture.new_namespace()
+            spark = spark_fixture.get_spark()
+            try:
+                spark.sql(
+                    f"CREATE TABLE local.{sns}.s (id BIGINT, v STRING) USING iceberg "
+                    f"TBLPROPERTIES ('format-version'='{_fmt()}')"
+                )
+                spark.sql(f"ALTER TABLE local.{sns}.s WRITE ORDERED BY id")
+                spark.sql(f"INSERT INTO local.{sns}.s VALUES (1,'a'),(2,'b'),(3,'c')")
+                con.execute(f"INSERT INTO ib.{sns}.s VALUES (4,'d')")
+                con.execute(f"UPDATE ib.{sns}.s SET v='z' WHERE id=1")
+                con.execute(f"DELETE FROM ib.{sns}.s WHERE id=2")
+                srows = con.execute(f"SELECT id, v FROM ib.{sns}.s ORDER BY id").fetchall()
+                assert srows == [(1, "z"), (3, "c"), (4, "d")], f"unexpected sorted rows: {srows}"
+                sorted_note = "INSERT/UPDATE/DELETE also committed on a sorted table"
+            finally:
+                spark_fixture.drop_fixture(sns, "s")
         r.result = "pass"
-        r.details = "UPDATE, DELETE and MERGE INTO (upsert) all committed correctly"
+        r.details = ("UPDATE, DELETE and MERGE INTO (upsert) all committed correctly; "
+                    f"partitioned-table UPDATE/DELETE too; {sorted_note}")
 
     return _catalog_test(r, body)
 
@@ -659,6 +710,48 @@ def test_type_promotion() -> TestResult:
             else:
                 rejected.append(f"{label}: promoted but pre-promotion row unreadable ({got})")
 
+        if CURRENT_VERSION == "v3":
+            # date -> timestamp is a V3-only promotion. Same standard as above:
+            # the committed type must change and the pre-promotion row must
+            # read back as the widened type.
+            t = _unique("tp")
+            con.execute(f"CREATE TABLE ib.{ns}.{t} (d DATE)")
+            con.execute(f"INSERT INTO ib.{ns}.{t} VALUES (DATE '2026-05-20')")
+            try:
+                con.execute(f"ALTER TABLE ib.{ns}.{t} ALTER COLUMN d TYPE TIMESTAMP")
+                now_t = str(con.execute(f"DESCRIBE ib.{ns}.{t}").fetchall()[0][1]).upper()
+                got = con.execute(f"SELECT d FROM ib.{ns}.{t}").fetchall()
+                if "TIMESTAMP" in now_t and len(got) == 1 and got[0][0] is not None:
+                    accepted.append("date->timestamp (V3)")
+                else:
+                    rejected.append(f"date->timestamp: type now {now_t}, rows {got}")
+            except Exception as e:  # noqa: BLE001 - a rejection is the datum
+                rejected.append(f"date->timestamp: {str(e).splitlines()[0][:90]}")
+
+        # Cross-engine view (information only, the verdict stays "partial"): can
+        # Spark read the int -> bigint file DuckDB promoted? Spark 4.1 / Iceberg
+        # 1.11's vectorized reader is known to choke on it; the row-based reader
+        # does not.
+        spark_note = ""
+        if spark_fixture.available():
+            xt = _unique("tpx")
+            con.execute(f"CREATE TABLE ib.{ns}.{xt} (id INT)")
+            con.execute(f"INSERT INTO ib.{ns}.{xt} VALUES (100)")
+            con.execute(f"ALTER TABLE ib.{ns}.{xt} ALTER COLUMN id TYPE BIGINT")
+            con.execute(f"INSERT INTO ib.{ns}.{xt} VALUES (200)")
+            spark = spark_fixture.get_spark()
+            spark.sql(f"REFRESH TABLE local.{ns}.{xt}")
+            outcomes = []
+            for label, flag in (("vectorized", "true"), ("row-based", "false")):
+                spark.conf.set("spark.sql.iceberg.vectorization.enabled", flag)
+                try:
+                    got = sorted(x[0] for x in spark.sql(f"SELECT id FROM local.{ns}.{xt}").collect())
+                    outcomes.append(f"{label} read ok {got}")
+                except Exception as e:  # noqa: BLE001 - the failure is the datum
+                    outcomes.append(f"{label} read failed ({type(e).__name__})")
+            spark.conf.set("spark.sql.iceberg.vectorization.enabled", "true")
+            spark_note = "; Spark int->bigint file: " + ", ".join(outcomes)
+
         if accepted:
             # NOTE: this is DuckDB reading its OWN promoted data. Cross-engine
             # reads of DuckDB-promoted files can still fail (Spark's vectorized
@@ -670,7 +763,7 @@ def test_type_promotion() -> TestResult:
                         f"{accepted} (pre-promotion rows read correctly with the widened type)"
                         + (f"; rejected: {rejected}" if rejected else "")
                         + ". Verified within DuckDB; cross-engine reads of the promoted "
-                        "files are not guaranteed")
+                        "files are not guaranteed" + spark_note)
         else:
             r.result = "fail"
             r.details = ("DuckDB rejected or no-opped every documented v2 type promotion via "
@@ -704,38 +797,55 @@ def test_time_travel() -> TestResult:
 
 def test_table_maintenance() -> TestResult:
     r = TestResult("table-maintenance", "Table Maintenance")
-    # Maintenance ops are compaction / rewrite_data_files / expire_snapshots /
-    # rewrite_manifests. Spark exposes them as CALL <catalog>.system.<proc>().
-    # Measure DuckDB's own surface rather than asserting: create a table with
-    # several snapshots, then try the documented procedure names. Every one
-    # being rejected is the confirmed evidence for none.
+    # Maintenance ops are compaction (rewrite_data_files), expire_snapshots,
+    # remove_orphan_files and rewrite_manifests. DuckDB 2.0 added exactly one of
+    # them, iceberg_rewrite_data_files (compaction); measure it for real rather
+    # than asserting from docs: write several small files plus a position
+    # delete, compact, and require that (a) the data files were really merged
+    # into fewer files and (b) the surviving rows are exactly the live rows.
+    # The other three maintenance operations are probed too, so the detail
+    # records what is still missing. DuckDB rejecting compaction on this
+    # format version (V3 is refused in 2.0) is the datum for a fail.
     def body(con, ns, r):
         t = _unique("maint")
-        con.execute(f"CREATE TABLE ib.{ns}.{t} (id INT)")
-        con.execute(f"INSERT INTO ib.{ns}.{t} VALUES (1)")
-        con.execute(f"INSERT INTO ib.{ns}.{t} VALUES (2)")
-        con.execute(f"INSERT INTO ib.{ns}.{t} VALUES (3)")
-        attempts = [
-            f"CALL ib.system.rewrite_data_files('{ns}.{t}')",
-            f"CALL ib.system.expire_snapshots('{ns}.{t}')",
-            f"CALL ib.system.rewrite_manifests('{ns}.{t}')",
-            f"OPTIMIZE ib.{ns}.{t}",
-            f"PRAGMA iceberg_compact('ib.{ns}.{t}')",
-        ]
-        rejected, accepted = [], []
-        for sql in attempts:
-            try:
-                con.execute(sql)
-                accepted.append(sql.split("(")[0].split(" system.")[-1])
-            except Exception as e:  # noqa: BLE001 - rejection is the datum
-                rejected.append(str(e).splitlines()[0][:70])
-        if accepted:
-            r.result = "pass"
-            r.details = f"DuckDB accepted maintenance op(s): {accepted}"
-        else:
+        con.execute(f"CREATE TABLE ib.{ns}.{t} (id INT, s VARCHAR)")
+        for i in range(6):
+            con.execute(f"INSERT INTO ib.{ns}.{t} VALUES ({i}, 'v{i}')")
+        con.execute(f"DELETE FROM ib.{ns}.{t} WHERE id = 3")
+        live = [0, 1, 2, 4, 5]
+
+        def data_files():
+            return con.execute(
+                f"SELECT count(*) FROM iceberg_files(ib.{ns}.{t}) WHERE content = 0"
+            ).fetchone()[0]
+
+        before = data_files()
+        try:
+            cur = con.execute(f"CALL iceberg_rewrite_data_files('ib.{ns}.{t}')")
+            cols = [d[0] for d in cur.description]
+            res = dict(zip(cols, cur.fetchone()))
+        except Exception as e:  # noqa: BLE001 - rejection is the datum
             r.result = "fail"
-            r.details = ("DuckDB exposes no Iceberg maintenance ops; every documented "
-                        f"procedure was rejected (e.g. {rejected[0] if rejected else 'n/a'})")
+            r.details = ("DuckDB cannot compact this table: iceberg_rewrite_data_files was "
+                        f"rejected ({str(e).splitlines()[0][:150]}); no other maintenance "
+                        "operation exists either")
+            return
+        after = data_files()
+        rows = [x[0] for x in con.execute(f"SELECT id FROM ib.{ns}.{t} ORDER BY id").fetchall()]
+        assert res.get("added_data_files", 0) >= 1 and res.get("rewritten_data_files", 0) >= 2, \
+            f"compaction did not rewrite anything: {res}"
+        assert after < before, f"data files not merged: {before} -> {after} ({res})"
+        assert rows == live, f"rows changed by compaction: {rows}, expected {live}"
+        missing = []
+        for fn in ("iceberg_expire_snapshots", "iceberg_remove_orphan_files",
+                   "iceberg_rewrite_manifests"):
+            try:
+                con.execute(f"CALL {fn}('ib.{ns}.{t}')")
+            except Exception:  # noqa: BLE001 - absence is the datum
+                missing.append(fn.replace("iceberg_", ""))
+        r.result = "pass"
+        r.details = (f"iceberg_rewrite_data_files compacted {before} data files into {after} "
+                    f"({res}); rows intact {rows}. Not available: {missing}")
 
     return _catalog_test(r, body)
 
@@ -760,13 +870,42 @@ def test_branching_tagging() -> TestResult:
                 accepted.append(sql.split("CREATE ")[-1].split(" ")[0])
             except Exception as e:  # noqa: BLE001 - rejection is the datum
                 rejected.append(str(e).splitlines()[0][:80])
+        # DuckDB 2.0 added iceberg_refs(), which only *lists* refs. Measure how
+        # far that goes: have Spark create a branch and a tag, then see whether
+        # DuckDB lists them and whether it can query them (AT (BRANCH/TAG => ...)).
+        listing = "iceberg_refs not exercised (Spark fixture unavailable)"
+        if spark_fixture.available():
+            sns = spark_fixture.new_namespace()
+            spark = spark_fixture.get_spark()
+            try:
+                spark.sql(f"CREATE TABLE local.{sns}.b (id BIGINT) USING iceberg")
+                spark.sql(f"INSERT INTO local.{sns}.b VALUES (1)")
+                spark.sql(f"ALTER TABLE local.{sns}.b CREATE BRANCH dev")
+                spark.sql(f"ALTER TABLE local.{sns}.b CREATE TAG v1")
+                refs = {tuple(x) for x in con.execute(
+                    f"SELECT name, type FROM iceberg_refs(ib.{sns}.b)").fetchall()}
+                can_list = {("dev", "BRANCH"), ("v1", "TAG")} <= refs
+                can_query = []
+                for kind, ref in (("BRANCH", "dev"), ("TAG", "v1")):
+                    try:
+                        con.execute(f"SELECT * FROM ib.{sns}.b AT ({kind} => '{ref}')")
+                        can_query.append(kind)
+                    except Exception:  # noqa: BLE001 - rejection is the datum
+                        pass
+                listing = (f"iceberg_refs lists Spark-created refs: {can_list}; "
+                           f"AT (BRANCH/TAG => ...) accepted for: {can_query or 'none'}")
+                if can_query:
+                    accepted.append(f"AT ({'/'.join(can_query)} => ...)")
+            finally:
+                spark_fixture.drop_fixture(sns, "b")
         if accepted:
             r.result = "pass"
-            r.details = f"DuckDB accepted branch/tag DDL: {accepted}"
+            r.details = f"DuckDB accepted branch/tag DDL or queries: {accepted}; {listing}"
         else:
             r.result = "fail"
             r.details = ("DuckDB does not support Iceberg branching/tagging; CREATE "
-                        f"BRANCH and CREATE TAG were both rejected (e.g. {rejected[0] if rejected else 'n/a'})")
+                        f"BRANCH and CREATE TAG were both rejected (e.g. {rejected[0] if rejected else 'n/a'}); "
+                        f"{listing}")
 
     return _catalog_test(r, body)
 
@@ -784,8 +923,22 @@ def test_hidden_partitioning() -> TestResult:
         )
         n = con.execute(f"SELECT count(*) FROM ib.{ns}.t").fetchone()[0]
         assert n == 3, f"expected 3 rows, got {n}"
+        # The remaining single-argument transforms the DuckDB docs list: identity
+        # and the date/time component transforms.
+        for spec in ("country", "year(ts)", "month(ts)", "day(ts)", "hour(ts)"):
+            t = _unique("hp")
+            con.execute(
+                f"CREATE TABLE ib.{ns}.{t} (id BIGINT, country VARCHAR, ts TIMESTAMP) "
+                f"PARTITIONED BY ({spec})"
+            )
+            con.execute(
+                f"INSERT INTO ib.{ns}.{t} VALUES (1, 'US', TIMESTAMP '2026-05-20 12:00:00')"
+            )
+            m = con.execute(f"SELECT count(*) FROM ib.{ns}.{t}").fetchone()[0]
+            assert m == 1, f"PARTITIONED BY ({spec}): expected 1 row, got {m}"
         r.result = "pass"
-        r.details = "Created and inserted into a table partitioned by bucket()/truncate() transforms"
+        r.details = ("Created and inserted into tables partitioned by bucket(), truncate(), "
+                    "identity, year(), month(), day() and hour() transforms")
 
     return _catalog_test(r, body)
 
@@ -802,8 +955,19 @@ def test_partition_evolution() -> TestResult:
         con.execute(f"INSERT INTO ib.{ns}.t VALUES (2,'DE')")
         n = con.execute(f"SELECT count(*) FROM ib.{ns}.t").fetchone()[0]
         assert n == 2, f"expected 2 rows, got {n}"
+        detail = "Evolved the partition spec with ALTER TABLE ... SET PARTITIONED BY and kept reading"
+        if spark_fixture.available():
+            # The evolution must be visible to another engine too: two specs in the
+            # metadata, and Spark reads rows written under both of them.
+            spark = spark_fixture.get_spark()
+            spark.sql(f"REFRESH TABLE local.{ns}.t")
+            specs = spark.sql(f"SELECT count(DISTINCT spec_id) FROM local.{ns}.t.files").collect()[0][0]
+            srows = sorted(x[0] for x in spark.sql(f"SELECT id FROM local.{ns}.t").collect())
+            assert specs == 2 and srows == [1, 2], \
+                f"Spark sees {specs} partition specs and rows {srows}, expected 2 specs and [1, 2]"
+            detail += "; Spark sees data files written under both specs and reads all rows"
         r.result = "pass"
-        r.details = "Evolved the partition spec with ALTER TABLE ... SET PARTITIONED BY and kept reading"
+        r.details = detail
 
     return _catalog_test(r, body)
 
@@ -811,32 +975,36 @@ def test_partition_evolution() -> TestResult:
 def test_multi_arg_transforms() -> TestResult:
     r = TestResult("multi-arg-transforms", "Multi-Argument Transforms", "v3")
     # V3 multi-argument transforms (e.g. bucket over multiple source columns).
-    # Measure whether DuckDB's partition DDL accepts one on a V3 table rather
-    # than leaving the cell unmeasured. DuckDB documents single-column bucket()
-    # / truncate() transforms; a multi-column form being rejected is the datum.
+    # Measure whether DuckDB's partition DDL accepts one on a V3 table AND keeps
+    # every source column in the resulting spec. DuckDB documents single-column
+    # transforms only. DuckDB 1.5.5 accepted bucket(8, a, b) but silently created
+    # bucket(8, a), dropping b; 2.0 rejects it. Both count as "not supported",
+    # but a table that was created with fewer source columns must never pass.
+    # DuckDB's grammar puts WITH after PARTITIONED BY.
     def body(con, ns, r):
         t = _unique("mat")
-        attempts = [
-            # Multi-argument bucket over two columns (V3 feature).
-            f"""CREATE TABLE ib.{ns}.{t} (a BIGINT, b BIGINT, v STRING)
-                WITH ('format-version'='3') PARTITIONED BY (bucket(8, a, b))""",
-        ]
-        last_err = None
-        for sql in attempts:
-            try:
-                con.execute(sql)
-                con.execute(f"INSERT INTO ib.{ns}.{t} VALUES (1,2,'x')")
-                n = con.execute(f"SELECT count(*) FROM ib.{ns}.{t}").fetchone()[0]
-                if n == 1:
-                    r.result = "pass"
-                    r.details = ("DuckDB created a V3 table partitioned by a multi-argument "
-                                "transform (bucket(8, a, b)) and round-tripped a row")
-                    return
-            except Exception as e:  # noqa: BLE001 - rejection is the datum
-                last_err = str(e).splitlines()[0][:150]
-        r.result = "fail"
-        r.details = ("DuckDB does not support V3 multi-argument transforms: a "
-                    f"multi-column bucket() partition was rejected: {last_err}")
+        try:
+            con.execute(
+                f"""CREATE TABLE ib.{ns}.{t} (a BIGINT, b BIGINT, v STRING)
+                    PARTITIONED BY (bucket(8, a, b)) WITH ('format-version'='3')"""
+            )
+        except Exception as e:  # noqa: BLE001 - rejection is the datum
+            r.result = "fail"
+            r.details = ("DuckDB does not support V3 multi-argument transforms: a "
+                        f"multi-column bucket() partition was rejected: {str(e).splitlines()[0][:150]}")
+            return
+        specs = con.execute(
+            f"SELECT source_column FROM iceberg_partition_specs(ib.{ns}.{t})"
+        ).fetchall()
+        sources = sorted({str(x[0]) for x in specs})
+        if "a" in sources and "b" in sources:
+            r.result = "pass"
+            r.details = ("DuckDB created a V3 table partitioned by a multi-argument "
+                        f"transform (bucket(8, a, b)); spec source columns: {sources}")
+        else:
+            r.result = "fail"
+            r.details = ("DuckDB accepted bucket(8, a, b) but did not keep both source columns "
+                        f"(spec sources: {sources}): multi-argument transforms are not supported")
 
     return _catalog_test(r, body)
 
@@ -847,13 +1015,27 @@ def test_statistics() -> TestResult:
     def body(con, ns, r):
         con.execute(f"CREATE TABLE ib.{ns}.t (id INT, name VARCHAR)")
         con.execute(f"INSERT INTO ib.{ns}.t VALUES (1,'a'),(2,'b'),(3,'c')")
+        # manifest_content = 'DATA' selects data files on every DuckDB version
+        # (the per-file `content` column spelled live data "EXISTING" before 2.0
+        # and "DATA" since).
         counts = con.execute(
-            f"SELECT record_count FROM iceberg_metadata(ib.{ns}.t) WHERE content='EXISTING'"
+            f"SELECT record_count FROM iceberg_metadata(ib.{ns}.t) WHERE manifest_content='DATA'"
         ).fetchall()
         total = sum(c[0] for c in counts)
         assert total == 3, f"expected record_count sum 3, got {total} ({counts})"
+        # The statistics themselves: min/max (lower/upper bound), value and null
+        # counts per column, as DuckDB wrote them into the manifest.
+        stats = {
+            row[0]: row[1:] for row in con.execute(
+                f"SELECT column_name, lower_bound, upper_bound, value_count, null_value_count "
+                f"FROM iceberg_column_stats(ib.{ns}.t)"
+            ).fetchall()
+        }
+        assert stats.get("id") == ("1", "3", 3, 0), f"unexpected id statistics: {stats}"
+        assert stats.get("name") == ("a", "c", 3, 0), f"unexpected name statistics: {stats}"
         r.result = "pass"
-        r.details = "iceberg_metadata exposes per-file record_count statistics written by DuckDB"
+        r.details = ("iceberg_metadata exposes per-file record_count and iceberg_column_stats "
+                    f"exposes the min/max, value and null counts DuckDB wrote: {stats}")
 
     return _catalog_test(r, body)
 
@@ -882,8 +1064,10 @@ def test_bloom_filters() -> TestResult:
             con.execute(f"CREATE TABLE ib.{ns}.{t} (id BIGINT, v STRING){props}")
             con.execute(f"INSERT INTO ib.{ns}.{t} SELECT i, 'x' FROM range(1000) s(i)")
             files = [f[0] for f in con.execute(
-                f"SELECT file_path FROM iceberg_metadata(ib.{ns}.{t}) WHERE content='EXISTING'"
+                f"SELECT file_path FROM iceberg_metadata(ib.{ns}.{t}) WHERE manifest_content='DATA'"
             ).fetchall()]
+            # Nothing to inspect is a harness problem, not "no bloom filter".
+            assert files, "iceberg_metadata returned no data files for the bloom-filter table"
             on_id = False
             for fp in files:
                 try:
@@ -1005,8 +1189,11 @@ def test_shredded_variant() -> TestResult:
             f"SELECT i, {{'kind':'click','x':i}}::VARIANT FROM range(200) t(i)"
         )
         files = con.execute(
-            f"SELECT file_path FROM iceberg_metadata(ib.{ns}.{t}) WHERE content='EXISTING'"
+            f"SELECT file_path FROM iceberg_metadata(ib.{ns}.{t}) WHERE manifest_content='DATA'"
         ).fetchall()
+        # No data file means the harness found nothing to inspect, which says
+        # nothing about shredding -- report it as an error, never as "unshredded".
+        assert files, "iceberg_metadata returned no data files for the variant table"
         shredded = False
         cols_seen = []
         for (fp,) in files:
@@ -1057,8 +1244,38 @@ def test_geometry_type() -> TestResult:
             )
         except Exception as e:  # noqa: BLE001 - the rejection is the datum
             geography = f"rejected ({str(e).splitlines()[0][:80]})"
+        # DuckDB has no GEOGRAPHY SQL type, so the DDL rejection above would
+        # happen whatever the extension did. The real question is whether it can
+        # use a table that already has a GEOGRAPHY column: no SQL engine in the
+        # suite can declare one (Spark 4.1's Iceberg connector refuses the type),
+        # so build the table with the Iceberg Java API through the Spark JVM.
+        if spark_fixture.available():
+            try:
+                jvm = spark_fixture.get_spark()._jvm
+                icat = (spark_fixture.get_spark()._jsparkSession.sessionState()
+                        .catalogManager().catalog("local").icebergCatalog())
+                types = jvm.org.apache.iceberg.types.Types
+                schema = jvm.org.apache.iceberg.Schema([
+                    types.NestedField.required(1, "id", types.LongType.get()),
+                    types.NestedField.optional(2, "geo", types.GeographyType.crs84()),
+                ])
+                props = jvm.java.util.HashMap()
+                props.put("format-version", "3")
+                gns = spark_fixture.new_namespace()
+                icat.createTable(
+                    jvm.org.apache.iceberg.catalog.TableIdentifier.parse(f"{gns}.geog"),
+                    schema, jvm.org.apache.iceberg.PartitionSpec.unpartitioned(), props)
+                try:
+                    con.execute(f"SELECT * FROM ib.{gns}.geog")
+                    geography = "readable from a Java-API-created table"
+                except Exception as e:  # noqa: BLE001 - the rejection is the datum
+                    geography = ("rejected on a Java-API-created GEOGRAPHY table "
+                                f"({str(e).splitlines()[0][:80]})")
+            except Exception as e:  # noqa: BLE001 - harness problem, keep DDL result
+                geography += f"; Java-API GEOGRAPHY table not built ({str(e).splitlines()[0][:60]})"
+        crs = con.execute(f"DESCRIBE ib.{ns}.t").fetchall()[1][1]
         r.result = "pass"
-        r.details = (f"V3 GEOMETRY column created and a point round-tripped ({row[1]}); "
+        r.details = (f"V3 GEOMETRY column ({crs}) created and a point round-tripped ({row[1]}); "
                     f"GEOGRAPHY {geography}")
 
     return _catalog_test(r, body)
@@ -1084,43 +1301,116 @@ def test_nanosecond_timestamps() -> TestResult:
 
 def test_unknown_type() -> TestResult:
     r = TestResult("unknown-type", "Unknown Type", "v3")
+    # The Iceberg V3 unknown type is a null-only placeholder column. DuckDB has
+    # no SQL spelling for it (UNKNOWN is not a DuckDB type), so the column can
+    # only come from another engine: Spark declares it as VOID. Measure what
+    # DuckDB does with such a table -- DuckDB 1.5.x could not even open it
+    # ("Unrecognized primitive type: unknown"); 2.0 reads it, writes rows to it,
+    # and promotes the column to a concrete type. A read-only table, or one
+    # DuckDB cannot open, is the datum for fail.
+    if not spark_fixture.available():
+        r.result = "skip"
+        r.details = ("Needs Spark to create a V3 table with a VOID (unknown) column: "
+                     + spark_fixture.NOT_AVAILABLE_DETAIL)
+        return r
 
     def body(con, ns, r):
-        # DuckDB lists GEOGRAPHY and Unknown together as still unsupported
-        # (planned for v2.0.0), so a rejection is the expected measurement. It has
-        # to be caught here: _catalog_test turns a raised exception into an error,
-        # which would make a known gap look like a broken harness.
+        spark = spark_fixture.get_spark()
+        sns = spark_fixture.new_namespace()
         try:
-            con.execute(
-                f"CREATE TABLE ib.{ns}.t (id INT, u UNKNOWN) WITH ('format-version'='3')"
+            spark.sql(
+                f"CREATE TABLE local.{sns}.u (id BIGINT, c VOID) USING iceberg "
+                "TBLPROPERTIES ('format-version'='3')"
             )
-        except Exception as e:  # noqa: BLE001 - the rejection is the datum
-            r.result = "fail"
-            r.details = f"Unknown type rejected: {str(e).splitlines()[0][:180]}"
-            return
-        cols = [c[1] for c in con.execute(f"DESCRIBE ib.{ns}.t").fetchall()]
-        r.result = "pass"
-        r.details = f"V3 unknown-type column created (columns: {cols})"
+            spark.sql(f"INSERT INTO local.{sns}.u VALUES (1, NULL), (2, NULL)")
+            try:
+                rows = con.execute(f"SELECT id, c FROM ib.{sns}.u ORDER BY id").fetchall()
+                assert rows == [(1, None), (2, None)], f"unexpected rows: {rows}"
+                con.execute(f"INSERT INTO ib.{sns}.u VALUES (3, NULL)")
+            except Exception as e:  # noqa: BLE001 - the refusal is the datum
+                r.result = "fail"
+                r.details = ("DuckDB cannot use a V3 table with an unknown-type column: "
+                            f"{str(e).splitlines()[0][:160]}")
+                return
+            spark.sql(f"REFRESH TABLE local.{sns}.u")
+            back = [tuple(x) for x in spark.sql(
+                f"SELECT id, c FROM local.{sns}.u ORDER BY id").collect()]
+            assert back == [(1, None), (2, None), (3, None)], f"Spark read back {back}"
+            con.execute(f"ALTER TABLE ib.{sns}.u ALTER COLUMN c TYPE INTEGER")
+            promoted = [c[1] for c in con.execute(f"DESCRIBE ib.{sns}.u").fetchall()]
+            assert promoted == ["BIGINT", "INTEGER"], f"unexpected types after promotion: {promoted}"
+            r.result = "pass"
+            r.details = ("Read a Spark-created V3 table with an unknown (VOID) column, inserted a "
+                        "row that Spark read back, and promoted the column to INTEGER; DuckDB "
+                        "has no DDL spelling to declare the type itself")
+        finally:
+            spark_fixture.drop_fixture(sns, "u")
 
     return _catalog_test(r, body)
 
 
 def test_lineage() -> TestResult:
     r = TestResult("lineage", "Lineage Tracking", "v3")
-
+    # The matrix rates lineage "full when the engine maintains correct lineage at
+    # write time". Check that directly instead of inferring it from a Puffin file:
+    #  1. DuckDB-only: the table metadata DuckDB committed carries next-row-id,
+    #     and every snapshot has first-row-id/added-rows (the V3 row-id ranges).
+    #  2. With Spark (reads the _row_id / _last_updated_sequence_number metadata
+    #     columns): every row has a unique non-null _row_id, and a DuckDB UPDATE
+    #     keeps the updated row's _row_id while raising its
+    #     _last_updated_sequence_number, leaving untouched rows unchanged.
     def body(con, ns, r):
-        # Row lineage is written automatically for V3 tables; exercise the write path
-        # that maintains it (insert + row-level update encoded as a deletion vector).
         con.execute(f"CREATE TABLE ib.{ns}.t (id INT, name VARCHAR) WITH ('format-version'='3')")
         con.execute(f"INSERT INTO ib.{ns}.t VALUES (1,'a'),(2,'b')")
+        con.execute(f"INSERT INTO ib.{ns}.t VALUES (3,'c')")
+
+        spark = spark_fixture.get_spark() if spark_fixture.available() else None
+
+        def lineage_rows():
+            spark.sql(f"REFRESH TABLE local.{ns}.t")
+            return {
+                row[0]: (row[1], row[2]) for row in spark.sql(
+                    f"SELECT id, _row_id, _last_updated_sequence_number "
+                    f"FROM local.{ns}.t ORDER BY id").collect()
+            }
+
+        before = lineage_rows() if spark else None
         con.execute(f"UPDATE ib.{ns}.t SET name='z' WHERE id=1")
         meta = con.execute(
             f"SELECT content, file_format FROM iceberg_metadata(ib.{ns}.t)"
         ).fetchall()
         # V3 row-level changes are encoded as binary deletion vectors (Puffin).
         assert any(fmt == "puffin" for _, fmt in meta), f"expected puffin deletion vector: {meta}"
+
+        md = json.loads(con.execute(
+            f"SELECT to_json(metadata) FROM iceberg_load_table_response('ib.{ns}.t')"
+        ).fetchone()[0])
+        next_row_id = md.get("next-row-id")
+        snaps = md.get("snapshots", [])
+        assert isinstance(next_row_id, int) and next_row_id >= 4, \
+            f"next-row-id missing or too small for 4 written rows: {next_row_id}"
+        assert snaps and all(s.get("first-row-id") is not None for s in snaps), \
+            f"snapshots without first-row-id: {[s.get('first-row-id') for s in snaps]}"
+        detail = f"next-row-id={next_row_id}, {len(snaps)} snapshots carry first-row-id"
+
+        if spark:
+            after = lineage_rows()
+            ids = [v[0] for v in after.values()]
+            assert all(i is not None for i in ids) and len(set(ids)) == len(ids), \
+                f"_row_id not unique/non-null: {after}"
+            assert after[1][0] == before[1][0], \
+                f"UPDATE changed the updated row's _row_id: {before[1]} -> {after[1]}"
+            assert after[1][1] > before[1][1], \
+                f"UPDATE did not raise _last_updated_sequence_number: {before[1]} -> {after[1]}"
+            assert after[2] == before[2] and after[3] == before[3], \
+                f"untouched rows' lineage changed: {before} -> {after}"
+            detail += (f"; Spark sees unique _row_ids and the UPDATE kept id=1's _row_id "
+                       f"{after[1][0]} while moving its sequence number {before[1][1]} -> {after[1][1]}")
+        else:
+            detail += "; Spark row-level lineage check skipped (Spark fixture unavailable)"
         r.result = "pass"
-        r.details = "V3 write path with row lineage; row-level UPDATE encoded as a binary deletion vector (Puffin)"
+        r.details = ("V3 write path maintains row lineage and encodes the row-level UPDATE as a "
+                    "binary deletion vector (Puffin): " + detail)
 
     return _catalog_test(r, body)
 
@@ -1143,6 +1433,19 @@ def test_deletion_vectors() -> TestResult:
         write = (f"DELETE on a V3 table wrote a Puffin deletion vector (file formats {formats}; "
                  f"live ids {ids})" if wrote_dv else
                  f"DELETE on a V3 table wrote no deletion vector (file formats {formats})")
+        # The write is only worth rating if another engine honours it: have Spark
+        # (Iceberg 1.11, a DV-aware reader) read the table DuckDB just deleted from.
+        spark_back = None
+        if wrote_dv and spark_fixture.available():
+            spark = spark_fixture.get_spark()
+            spark.sql(f"REFRESH TABLE local.{ns}.t")
+            spark_ids = sorted(x[0] for x in spark.sql(f"SELECT id FROM local.{ns}.t").collect())
+            spark_fmts = sorted({str(x[0]).lower() for x in spark.sql(
+                f"SELECT file_format FROM local.{ns}.t.delete_files").collect()})
+            spark_back = spark_ids == [1, 3] and spark_fmts == ["puffin"]
+            write += (f"; Spark reads that deletion vector correctly (ids {spark_ids}, delete "
+                      f"file formats {spark_fmts})" if spark_back else
+                      f"; Spark MIS-READS it (ids {spark_ids}, delete file formats {spark_fmts})")
         # Read half: a deletion vector written by another engine (Spark 4.1 +
         # Iceberg 1.11 emit DVs for merge-on-read deletes on V3) must be applied.
         read, reads = "read half not exercised (Spark fixture unavailable)", None
@@ -1163,7 +1466,8 @@ def test_deletion_vectors() -> TestResult:
                 read = f"cannot read a Spark-written deletion vector ({str(e).splitlines()[0][:140]})"
             finally:
                 spark_fixture.drop_fixture(sns, "t")
-        r.result = "pass" if (wrote_dv and reads is not False and ids == [1, 3]) else "fail"
+        r.result = "pass" if (wrote_dv and reads is not False and spark_back is not False
+                              and ids == [1, 3]) else "fail"
         r.details = f"DuckDB {write}; {read}"
 
     return _catalog_test(r, body)
