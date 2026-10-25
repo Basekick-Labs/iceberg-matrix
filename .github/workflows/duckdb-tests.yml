@@ -44,7 +44,7 @@ jobs:
           enable-cache: true
 
       - name: Install DuckDB + PySpark
-        run: uv pip install --system duckdb==1.5.5 pyspark==4.1.2
+        run: uv pip install --system duckdb==2.0.0 pyspark==4.1.2
 
       - name: Download Iceberg Spark runtime + AWS bundle JARs
         run: |

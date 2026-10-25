@@ -51,7 +51,7 @@ jobs:
       # Iceberg connector nor PyIceberg can write one) -- see
       # spark_fixture.create_geometry_fixture.
       - name: Install Daft + PyIceberg + PySpark + DuckDB
-        run: uv pip install --system getdaft 'pyiceberg[sql-sqlite,pyarrow]==0.11.1' pyspark==4.1.2 duckdb==1.5.5
+        run: uv pip install --system getdaft 'pyiceberg[sql-sqlite,pyarrow]==0.11.1' pyspark==4.1.2 duckdb==2.0.0
 
       - name: Download Iceberg Spark runtime + AWS bundle JARs
         run: |

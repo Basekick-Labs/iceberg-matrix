@@ -2,7 +2,7 @@
   "platforms": [
     {
       "id": "duckdb",
-      "name": "DuckDB (1.5.5)",
+      "name": "DuckDB (2.0.0)",
       "vendor": "DuckDB Foundation",
       "category": "open-source",
       "group": "3rd Party",
@@ -27,14 +27,16 @@
     },
     "duckdb:position-deletes:v3": {
       "level": "full",
-      "notes": "Since v1.5.3 DuckDB's own UPDATE/DELETE/MERGE on a V3 table write their position deletes as Puffin deletion vectors, the V3 encoding of a position delete, rather than Parquet position-delete files. Verified by the suite: a DELETE on a V3 table commits a Puffin file and the deleted row disappears from reads. It also applies deletion vectors written by other engines.",
-      "caveats": [
-        "V3 reads supported only with V2-compatible data types"
-      ],
+      "notes": "Since v1.5.3 DuckDB's own UPDATE/DELETE/MERGE on a V3 table write their position deletes as Puffin deletion vectors, the V3 encoding of a position delete, rather than Parquet position-delete files. Verified by the suite on DuckDB 2.0.0: a DELETE on a V3 table commits a Puffin file, the deleted row disappears from reads, and Spark (Iceberg 1.11) reads that deletion vector correctly. DuckDB also applies deletion vectors written by other engines.",
+      "caveats": [],
       "links": [
         {
           "label": "Iceberg Extension Overview",
           "url": "https://duckdb.org/docs/stable/core_extensions/iceberg/overview"
+        },
+        {
+          "label": "Writing to Iceberg (DuckDB 2.0 docs)",
+          "url": "https://duckdb.org/docs/2.0/core_extensions/iceberg/writing_to_iceberg"
         },
         {
           "label": "New DuckDB-Iceberg Features in v1.5.3 (V3 deletion vectors)",
@@ -44,12 +46,16 @@
     },
     "duckdb:equality-deletes:v2": {
       "level": "none",
-      "notes": "Not supported as a write operation. DuckDB reads equality delete files but never writes them -- producing one requires another engine (e.g. a Flink upsert sink), so this is not exercised by DuckDB's own probe, which reports skip regardless of this level.",
+      "notes": "Not supported as a write operation. DuckDB reads equality delete files but never writes them -- producing one requires another engine (e.g. a Flink upsert sink). Measured on DuckDB 2.0.0: it filters a row deleted by a Java-API equality delete file correctly, while its own UPDATE/DELETE write position deletes. DuckDB 2.0 adds the iceberg_equality_delete_fast_filter setting (on by default) to apply equality deletes faster; that is a read-side change and was not benchmarked here.",
       "caveats": [],
       "links": [
         {
           "label": "Iceberg Extension Overview",
           "url": "https://duckdb.org/docs/stable/core_extensions/iceberg/overview"
+        },
+        {
+          "label": "Iceberg Options (DuckDB 2.0 docs)",
+          "url": "https://duckdb.org/docs/2.0/core_extensions/iceberg/iceberg_options"
         },
         {
           "label": "Equality Delete Support PR",
@@ -59,25 +65,33 @@
     },
     "duckdb:equality-deletes:v3": {
       "level": "none",
-      "notes": "DuckDB Iceberg extension does not yet support V3",
+      "notes": "Not supported as a write operation, same as V2: DuckDB's own UPDATE/DELETE on a V3 table write deletion vectors, never equality deletes. Measured on DuckDB 2.0.0 that it reads a V3 table carrying a Java-API equality delete file correctly (the deleted row is filtered).",
       "caveats": [
-        "V3 support not yet available"
+        "Reads equality deletes on V3 tables but cannot write them"
       ],
       "links": [
         {
           "label": "Iceberg Extension Overview",
           "url": "https://duckdb.org/docs/stable/core_extensions/iceberg/overview"
+        },
+        {
+          "label": "Iceberg Options (DuckDB 2.0 docs)",
+          "url": "https://duckdb.org/docs/2.0/core_extensions/iceberg/iceberg_options"
         }
       ]
     },
     "duckdb:merge-on-read:v2": {
       "level": "full",
-      "notes": "DuckDB supports merge-on-read semantics for both reads and writes; UPDATE/DELETE use positional deletes",
+      "notes": "DuckDB supports merge-on-read semantics for both reads and writes; UPDATE/DELETE/MERGE use positional deletes, on partitioned and unpartitioned tables. Measured on DuckDB 2.0.0: UPDATE, DELETE and INSERT also work on a Spark-created sorted table. DuckDB 1.5.5 rejected INSERT and UPDATE on sorted tables (\"not supported yet\"), and the 1.5 docs' limitation that these operations only work on unsorted tables is gone from the 2.0 docs.",
       "caveats": [
         "Only merge-on-read semantics for writes (copy-on-write not supported for UPDATE/DELETE)",
-        "UPDATE/DELETE limited to non-partitioned and non-sorted tables"
+        "A table whose write.update.mode or write.delete.mode is not merge-on-read is rejected"
       ],
       "links": [
+        {
+          "label": "Writing to Iceberg (DuckDB 2.0 docs)",
+          "url": "https://duckdb.org/docs/2.0/core_extensions/iceberg/writing_to_iceberg"
+        },
         {
           "label": "Writes in DuckDB-Iceberg (blog)",
           "url": "https://duckdb.org/2025/11/28/iceberg-writes-in-duckdb"
@@ -101,12 +115,16 @@
     },
     "duckdb:copy-on-write:v2": {
       "level": "none",
-      "notes": "Not supported as a row-level write operation. DuckDB's UPDATE/DELETE always use merge-on-read, never copy-on-write. INSERT does write whole new data files, but INSERT is not a row-level operation (no existing rows are being deleted or updated). DuckDB can read copy-on-write Iceberg tables, but that is a read capability, not this operation.",
+      "notes": "Not supported as a row-level write operation. DuckDB's UPDATE/DELETE always use merge-on-read, never copy-on-write: a table created with write.delete.mode=copy-on-write is rejected outright (measured on DuckDB 2.0.0), and the 2.0 docs list copy-on-write for UPDATE, DELETE and MERGE INTO as unsupported. INSERT does write whole new data files, but INSERT is not a row-level operation (no existing rows are being deleted or updated). DuckDB can read copy-on-write Iceberg tables, but that is a read capability, not this operation.",
       "caveats": [
         "Read capability: can read copy-on-write Iceberg tables",
         "INSERT writes new files but is not a row-level operation"
       ],
       "links": [
+        {
+          "label": "Writing to Iceberg (DuckDB 2.0 docs)",
+          "url": "https://duckdb.org/docs/2.0/core_extensions/iceberg/writing_to_iceberg"
+        },
         {
           "label": "Writes in DuckDB-Iceberg (blog)",
           "url": "https://duckdb.org/2025/11/28/iceberg-writes-in-duckdb"
@@ -118,15 +136,15 @@
       ]
     },
     "duckdb:copy-on-write:v3": {
-      "level": "unknown",
-      "notes": "Copy-on-write behavior on V3 tables not yet documented",
+      "level": "none",
+      "notes": "Same as V2. Measured on DuckDB 2.0.0: UPDATE/DELETE against a V3 table created with write.delete.mode=copy-on-write is rejected outright (\"DuckDB-Iceberg only supports merge-on-read for deletes, updates and merges\"), and the 2.0 docs list copy-on-write for UPDATE, DELETE and MERGE INTO as unsupported. DuckDB can read copy-on-write tables, but that is a read capability, not this write operation.",
       "caveats": [
-        "V3 copy-on-write support not yet documented"
+        "Read capability: can read copy-on-write Iceberg tables"
       ],
       "links": [
         {
-          "label": "Iceberg Extension Overview",
-          "url": "https://duckdb.org/docs/stable/core_extensions/iceberg/overview"
+          "label": "Writing to Iceberg (DuckDB 2.0 docs)",
+          "url": "https://duckdb.org/docs/2.0/core_extensions/iceberg/writing_to_iceberg"
         }
       ]
     },
@@ -200,9 +218,13 @@
     },
     "duckdb:hidden-partitioning:v2": {
       "level": "full",
-      "notes": "DuckDB reads hidden-partitioned Iceberg tables; truncate and bucket partition transforms for writes added in v1.5.2",
+      "notes": "DuckDB reads hidden-partitioned Iceberg tables and writes them with PARTITIONED BY. Measured on DuckDB 2.0.0: identity, year(), month(), day(), hour(), bucket() and truncate() each create a table and accept inserts (the bucket and truncate transforms were added in v1.5.2). UPDATE and DELETE work on partitioned tables, and write.target-file-size-bytes is honored on them (DuckDB 1.5.x raised an error).",
       "caveats": [],
       "links": [
+        {
+          "label": "Writing to Iceberg (DuckDB 2.0 docs)",
+          "url": "https://duckdb.org/docs/2.0/core_extensions/iceberg/writing_to_iceberg"
+        },
         {
           "label": "Announcing DuckDB v1.5.2 (truncate and bucket partitions)",
           "url": "https://duckdb.org/2026/04/13/announcing-duckdb-152"
@@ -215,9 +237,13 @@
     },
     "duckdb:hidden-partitioning:v3": {
       "level": "full",
-      "notes": "Reads and writes of hidden-partitioned V3 tables are supported, including the bucket and truncate transforms added in v1.5.2/v1.5.3",
+      "notes": "Reads and writes of hidden-partitioned V3 tables are supported. Measured on DuckDB 2.0.0 against a real V3 table: identity, year(), month(), day(), hour(), bucket() and truncate() each create a table and accept inserts; UPDATE and DELETE work on partitioned V3 tables.",
       "caveats": [],
       "links": [
+        {
+          "label": "Writing to Iceberg (DuckDB 2.0 docs)",
+          "url": "https://duckdb.org/docs/2.0/core_extensions/iceberg/writing_to_iceberg"
+        },
         {
           "label": "New DuckDB-Iceberg Features in v1.5.3 (partition transforms + V3)",
           "url": "https://duckdb.org/2026/05/29/new-iceberg-features"
@@ -226,9 +252,13 @@
     },
     "duckdb:partition-evolution:v2": {
       "level": "full",
-      "notes": "DuckDB supports reading partition-evolved Iceberg tables",
+      "notes": "DuckDB reads partition-evolved Iceberg tables and evolves the spec itself with ALTER TABLE ... SET PARTITIONED BY. Measured on DuckDB 2.0.0: after evolving bucket(4, id) to bucket(8, id), Spark sees data files written under both specs and reads every row.",
       "caveats": [],
       "links": [
+        {
+          "label": "Writing to Iceberg (DuckDB 2.0 docs)",
+          "url": "https://duckdb.org/docs/2.0/core_extensions/iceberg/writing_to_iceberg"
+        },
         {
           "label": "Iceberg Extension Overview",
           "url": "https://duckdb.org/docs/stable/core_extensions/iceberg/overview"
@@ -236,12 +266,14 @@
       ]
     },
     "duckdb:partition-evolution:v3": {
-      "level": "partial",
-      "notes": "Partition evolution on V3 tables readable if V2-compatible data types are used",
-      "caveats": [
-        "V3 reads supported only with V2-compatible data types"
-      ],
+      "level": "full",
+      "notes": "Measured on DuckDB 2.0.0 against a real V3 table: ALTER TABLE ... SET PARTITIONED BY evolves the spec, DuckDB keeps reading, and Spark sees data files written under both specs and reads every row.",
+      "caveats": [],
       "links": [
+        {
+          "label": "Writing to Iceberg (DuckDB 2.0 docs)",
+          "url": "https://duckdb.org/docs/2.0/core_extensions/iceberg/writing_to_iceberg"
+        },
         {
           "label": "Iceberg Extension Overview",
           "url": "https://duckdb.org/docs/stable/core_extensions/iceberg/overview"
@@ -256,14 +288,14 @@
     },
     "duckdb:multi-arg-transforms:v3": {
       "level": "none",
-      "notes": "Measured on DuckDB 1.5.5: CREATE TABLE ... WITH ('format-version'='3') PARTITIONED BY (bucket(8, a, b)) is rejected with a parser error. DuckDB's partition DDL only accepts the single-column bucket()/truncate()/identity transforms.",
+      "notes": "Measured on DuckDB 2.0.0: CREATE TABLE ... PARTITIONED BY (bucket(8, a, b)) WITH ('format-version'='3') is rejected with \"Multi-argument transforms are not supported yet!\". DuckDB's partition DDL only accepts the single-column identity, year, month, day, hour, bucket and truncate transforms. DuckDB 1.5.5 accepted the same statement and silently created bucket(8, a), dropping the second column.",
       "caveats": [
         "Only single-argument partition transforms are accepted"
       ],
       "links": [
         {
-          "label": "Iceberg Extension Overview",
-          "url": "https://duckdb.org/docs/stable/core_extensions/iceberg/overview"
+          "label": "Writing to Iceberg (DuckDB 2.0 docs)",
+          "url": "https://duckdb.org/docs/2.0/core_extensions/iceberg/writing_to_iceberg"
         }
       ]
     },
@@ -294,32 +326,53 @@
       ]
     },
     "duckdb:table-maintenance:v2": {
-      "level": "none",
-      "notes": "DuckDB does not provide Iceberg table maintenance operations (compaction, expire snapshots, etc.)",
-      "caveats": [],
+      "level": "partial",
+      "notes": "Measured on DuckDB 2.0.0: CALL iceberg_rewrite_data_files('catalog.schema.table') compacts small data files. A V2 table with six one-row data files and a position delete was rewritten into one data file (rewritten_data_files 6, added_data_files 1) in a 'replace' snapshot; the deleted row stayed gone and Spark reads the compacted table correctly. It takes options for target, minimum and maximum file size, minimum input files (default 5), a file cap, rewrite-all and an output partition spec. DuckDB 1.5.5 had no maintenance operation. iceberg_rollback_to_snapshot is also new in 2.0 (a snapshot rollback, measured working).",
+      "caveats": [
+        "Data-file compaction only: there is no snapshot expiry, orphan-file removal or manifest rewrite (the functions do not exist in 2.0.0)",
+        "Format-version 2 only: V3 tables are rejected",
+        "Measured: the position-delete file that referenced the rewritten data files stays in the table metadata afterwards",
+        "Works on tables in an attached Iceberg REST catalog"
+      ],
       "links": [
         {
-          "label": "Iceberg Extension Overview",
-          "url": "https://duckdb.org/docs/stable/core_extensions/iceberg/overview"
+          "label": "Iceberg Functions (DuckDB 2.0 docs)",
+          "url": "https://duckdb.org/docs/2.0/core_extensions/iceberg/iceberg_functions"
+        },
+        {
+          "label": "Iceberg Options (DuckDB 2.0 docs)",
+          "url": "https://duckdb.org/docs/2.0/core_extensions/iceberg/iceberg_options"
+        },
+        {
+          "label": "DuckDB v2.0.0 release notes",
+          "url": "https://github.com/duckdb/duckdb/releases/tag/v2.0.0"
         }
       ]
     },
     "duckdb:table-maintenance:v3": {
       "level": "none",
-      "notes": "DuckDB does not provide Iceberg table maintenance operations",
-      "caveats": [],
+      "notes": "Measured on DuckDB 2.0.0: iceberg_rewrite_data_files is rejected on a V3 table (\"does not yet support V3 tables\"), and DuckDB has no snapshot-expiry, orphan-file or manifest-rewrite operation. iceberg_rollback_to_snapshot works on V3 but is a snapshot rollback, not storage maintenance.",
+      "caveats": [
+        "Compaction (iceberg_rewrite_data_files) is V2-only in DuckDB 2.0.0"
+      ],
       "links": [
         {
-          "label": "Iceberg Extension Overview",
-          "url": "https://duckdb.org/docs/stable/core_extensions/iceberg/overview"
+          "label": "Iceberg Functions (DuckDB 2.0 docs)",
+          "url": "https://duckdb.org/docs/2.0/core_extensions/iceberg/iceberg_functions"
         }
       ]
     },
     "duckdb:branching-tagging:v2": {
       "level": "none",
-      "notes": "DuckDB does not support Iceberg branching and tagging",
-      "caveats": [],
+      "notes": "DuckDB cannot create Iceberg branches or tags (ALTER TABLE ... CREATE BRANCH/TAG is a parser error) or query them (AT (BRANCH => ...) and AT (TAG => ...) are parser errors). DuckDB 2.0 adds iceberg_refs(), which lists a table's branches and tags; measured against a Spark-created branch and tag, it is read-only metadata.",
+      "caveats": [
+        "iceberg_refs() (new in 2.0) lists branches and tags but they cannot be created or queried"
+      ],
       "links": [
+        {
+          "label": "Iceberg Functions (DuckDB 2.0 docs)",
+          "url": "https://duckdb.org/docs/2.0/core_extensions/iceberg/iceberg_functions"
+        },
         {
           "label": "Iceberg Extension Overview",
           "url": "https://duckdb.org/docs/stable/core_extensions/iceberg/overview"
@@ -328,9 +381,15 @@
     },
     "duckdb:branching-tagging:v3": {
       "level": "none",
-      "notes": "DuckDB does not support Iceberg branching and tagging",
-      "caveats": [],
+      "notes": "DuckDB cannot create Iceberg branches or tags (ALTER TABLE ... CREATE BRANCH/TAG is a parser error) or query them (AT (BRANCH => ...) and AT (TAG => ...) are parser errors). DuckDB 2.0 adds iceberg_refs(), which lists a table's branches and tags; measured against a Spark-created branch and tag, it is read-only metadata.",
+      "caveats": [
+        "iceberg_refs() (new in 2.0) lists branches and tags but they cannot be created or queried"
+      ],
       "links": [
+        {
+          "label": "Iceberg Functions (DuckDB 2.0 docs)",
+          "url": "https://duckdb.org/docs/2.0/core_extensions/iceberg/iceberg_functions"
+        },
         {
           "label": "Iceberg Extension Overview",
           "url": "https://duckdb.org/docs/stable/core_extensions/iceberg/overview"
@@ -356,11 +415,15 @@
     },
     "duckdb:read-support:v3": {
       "level": "full",
-      "notes": "Since v1.5.3 DuckDB fully reads V3 tables, including VARIANT, TIMESTAMP_NS, column default values, binary deletion vectors, and row lineage",
+      "notes": "Since v1.5.3 DuckDB fully reads V3 tables, including VARIANT, TIMESTAMP_NS, column default values, binary deletion vectors, and row lineage. DuckDB 2.0.0 also reads tables with the unknown type (measured); 1.5.5 could not open them.",
       "caveats": [
-        "Geography type and Unknown type are not yet supported (planned for DuckDB v2.0.0)"
+        "Geography type is still not supported in DuckDB 2.0.0: a table that has a GEOGRAPHY column cannot be opened"
       ],
       "links": [
+        {
+          "label": "Writing to Iceberg (DuckDB 2.0 docs)",
+          "url": "https://duckdb.org/docs/2.0/core_extensions/iceberg/writing_to_iceberg"
+        },
         {
           "label": "New DuckDB-Iceberg Features in v1.5.3 (V3 support)",
           "url": "https://duckdb.org/2026/05/29/new-iceberg-features"
@@ -407,12 +470,16 @@
     },
     "duckdb:write-merge-update-delete:v2": {
       "level": "full",
-      "notes": "MERGE INTO, UPDATE, and DELETE are all supported. UPDATE/DELETE landed in v1.4.2, partitioned UPDATE/DELETE and ALTER TABLE in v1.5.2, and MERGE INTO in v1.5.3.",
+      "notes": "MERGE INTO, UPDATE, and DELETE are all supported. UPDATE/DELETE landed in v1.4.2, partitioned UPDATE/DELETE and ALTER TABLE in v1.5.2, and MERGE INTO in v1.5.3. Measured on DuckDB 2.0.0: UPDATE and DELETE also work on partitioned tables, and UPDATE, DELETE and INSERT work on a sorted table (DuckDB 1.5.5 rejected INSERT and UPDATE on sorted tables).",
       "caveats": [
         "Uses merge-on-read semantics only (writes positional deletes); copy-on-write for deletes is not supported",
         "Requires attachment to an Iceberg REST catalog"
       ],
       "links": [
+        {
+          "label": "Writing to Iceberg (DuckDB 2.0 docs)",
+          "url": "https://duckdb.org/docs/2.0/core_extensions/iceberg/writing_to_iceberg"
+        },
         {
           "label": "New DuckDB-Iceberg Features in v1.5.3 (MERGE INTO)",
           "url": "https://duckdb.org/2026/05/29/new-iceberg-features"
@@ -425,12 +492,16 @@
     },
     "duckdb:write-merge-update-delete:v3": {
       "level": "full",
-      "notes": "Since v1.5.3 MERGE INTO, UPDATE, and DELETE are supported on V3 tables; row-level changes are written as binary deletion vectors (Puffin) under merge-on-read semantics",
+      "notes": "Since v1.5.3 MERGE INTO, UPDATE, and DELETE are supported on V3 tables; row-level changes are written as binary deletion vectors (Puffin) under merge-on-read semantics Measured on DuckDB 2.0.0: UPDATE and DELETE also work on partitioned tables, and UPDATE, DELETE and INSERT work on a sorted table (DuckDB 1.5.5 rejected INSERT and UPDATE on sorted tables).",
       "caveats": [
         "Uses merge-on-read semantics (deletion vectors); copy-on-write for deletes is not supported",
         "Requires attachment to an Iceberg REST catalog"
       ],
       "links": [
+        {
+          "label": "Writing to Iceberg (DuckDB 2.0 docs)",
+          "url": "https://duckdb.org/docs/2.0/core_extensions/iceberg/writing_to_iceberg"
+        },
         {
           "label": "New DuckDB-Iceberg Features in v1.5.3 (MERGE INTO + V3)",
           "url": "https://duckdb.org/2026/05/29/new-iceberg-features"
@@ -439,11 +510,15 @@
     },
     "duckdb:catalog-integration:v2": {
       "level": "full",
-      "notes": "DuckDB supports attaching to Iceberg REST Catalogs, AWS Glue, and S3 Tables",
+      "notes": "DuckDB supports attaching to Iceberg REST Catalogs, AWS Glue, and S3 Tables The 2.0 docs give attach recipes for Amazon S3 Tables, AWS Glue, Cloudflare R2, Apache Polaris, Lakekeeper, SeaweedFS and Google BigLake, list S3, S3 Tables, GCS and ADLS as supported storage, and add ATTACH options for catalogs with a limited REST spec. Only Apache Polaris was exercised here (the whole suite runs against it); the other recipes are documented, not measured.",
       "caveats": [
         "Only REST-based catalogs supported (no Hive Metastore, Hadoop, or JDBC)"
       ],
       "links": [
+        {
+          "label": "Iceberg Catalogs (DuckDB 2.0 docs)",
+          "url": "https://duckdb.org/docs/2.0/core_extensions/iceberg/catalogs"
+        },
         {
           "label": "Iceberg REST Catalogs",
           "url": "https://duckdb.org/docs/stable/core_extensions/iceberg/iceberg_rest_catalogs"
@@ -460,11 +535,15 @@
     },
     "duckdb:catalog-integration:v3": {
       "level": "full",
-      "notes": "Since v1.5.3 REST catalog integration fully supports V3 tables for reads and writes",
+      "notes": "Since v1.5.3 REST catalog integration fully supports V3 tables for reads and writes The 2.0 docs give attach recipes for Amazon S3 Tables, AWS Glue, Cloudflare R2, Apache Polaris, Lakekeeper, SeaweedFS and Google BigLake, list S3, S3 Tables, GCS and ADLS as supported storage, and add ATTACH options for catalogs with a limited REST spec. Only Apache Polaris was exercised here (the whole suite runs against it); the other recipes are documented, not measured.",
       "caveats": [
         "Only REST-based catalogs supported (no Hive Metastore, Hadoop, or JDBC)"
       ],
       "links": [
+        {
+          "label": "Iceberg Catalogs (DuckDB 2.0 docs)",
+          "url": "https://duckdb.org/docs/2.0/core_extensions/iceberg/catalogs"
+        },
         {
           "label": "New DuckDB-Iceberg Features in v1.5.3 (V3 support)",
           "url": "https://duckdb.org/2026/05/29/new-iceberg-features"
@@ -479,9 +558,14 @@
       "level": "full",
       "notes": "DuckDB supports AWS Glue via dedicated ENDPOINT_TYPE 'glue' or SigV4 authorization",
       "caveats": [
-        "Experimental; uses SageMaker Lakehouse (AWS Glue) Iceberg REST endpoint"
+        "Experimental; uses SageMaker Lakehouse (AWS Glue) Iceberg REST endpoint",
+        "Documented for 2.0, not measured here: Glue assigns no table location server-side, so CREATE TABLE needs an explicit 'location' property or the new DEFAULT_TABLE_LOCATION_FROM_NAMESPACE option"
       ],
       "links": [
+        {
+          "label": "Iceberg Catalogs (DuckDB 2.0 docs)",
+          "url": "https://duckdb.org/docs/2.0/core_extensions/iceberg/catalogs"
+        },
         {
           "label": "Amazon SageMaker Lakehouse (AWS Glue)",
           "url": "https://duckdb.org/docs/stable/core_extensions/iceberg/amazon_sagemaker_lakehouse"
@@ -496,9 +580,14 @@
       "level": "full",
       "notes": "AWS Glue (SageMaker Lakehouse) integration supports V3 tables since full V3 support in v1.5.3",
       "caveats": [
-        "Experimental"
+        "Experimental",
+        "Documented for 2.0, not measured here: Glue assigns no table location server-side, so CREATE TABLE needs an explicit 'location' property or the new DEFAULT_TABLE_LOCATION_FROM_NAMESPACE option"
       ],
       "links": [
+        {
+          "label": "Iceberg Catalogs (DuckDB 2.0 docs)",
+          "url": "https://duckdb.org/docs/2.0/core_extensions/iceberg/catalogs"
+        },
         {
           "label": "New DuckDB-Iceberg Features in v1.5.3 (V3 support)",
           "url": "https://duckdb.org/2026/05/29/new-iceberg-features"
@@ -620,7 +709,7 @@
     },
     "duckdb:shredded-variant:v3": {
       "level": "full",
-      "notes": "Measured on DuckDB 1.5.5: writing a VARIANT column with a consistent object shape ({kind, x}) to a V3 table produces Parquet data files whose schema carries per-field shredded sub-columns (payload.typed_value.kind.{value,typed_value}, payload.typed_value.x.{value,typed_value}) alongside payload.metadata/payload.value, matching the Parquet variant-shredding layout. A scalar-only VARIANT gets a single payload.typed_value slot, so the shredding is content-driven rather than a fixed placeholder.",
+      "notes": "Measured on DuckDB 2.0.0: writing a VARIANT column with a consistent object shape ({kind, x}) to a V3 table produces Parquet data files whose schema carries per-field shredded sub-columns (payload.typed_value.kind.{value,typed_value}, payload.typed_value.x.{value,typed_value}) alongside payload.metadata/payload.value, matching the Parquet variant-shredding layout. A scalar-only VARIANT gets a single payload.typed_value slot, so the shredding is content-driven rather than a fixed placeholder.",
       "caveats": [
         "Shredding is decided by the writer automatically; there is no user-facing control over which fields are shredded"
       ],
@@ -643,11 +732,15 @@
     },
     "duckdb:geometry-type:v3": {
       "level": "partial",
-      "notes": "The GEOMETRY type is supported by the DuckDB Iceberg extension (added in v1.5.2). The Iceberg V3 GEOGRAPHY type is not yet supported (planned for DuckDB v2.0.0).",
+      "notes": "The GEOMETRY type is supported by the DuckDB Iceberg extension (added in v1.5.2); measured on DuckDB 2.0.0 that a V3 GEOMETRY column round-trips a point and is typed with its CRS (GEOMETRY('OGC:CRS84')). The Iceberg V3 GEOGRAPHY type is still not supported in 2.0.0, although it had been planned for this release: a table that has a GEOGRAPHY column fails with \"Not implemented Error: Geography support\", and the 2.0 docs list GEOGRAPHY as unsupported.",
       "caveats": [
-        "GEOGRAPHY type not yet supported (planned for DuckDB v2.0.0)"
+        "GEOGRAPHY type not supported in DuckDB 2.0.0; a table that has a GEOGRAPHY column cannot be opened"
       ],
       "links": [
+        {
+          "label": "Writing to Iceberg (DuckDB 2.0 docs)",
+          "url": "https://duckdb.org/docs/2.0/core_extensions/iceberg/writing_to_iceberg"
+        },
         {
           "label": "New DuckDB-Iceberg Features in v1.5.3 (Geography/Unknown not yet supported)",
           "url": "https://duckdb.org/2026/05/29/new-iceberg-features"
@@ -666,9 +759,13 @@
     },
     "duckdb:lineage:v3": {
       "level": "full",
-      "notes": "Row lineage tracking is written for V3 tables by the DuckDB-Iceberg extension since v1.5.3",
+      "notes": "Row lineage is written for V3 tables by the DuckDB-Iceberg extension since v1.5.3. Measured on DuckDB 2.0.0: the committed table metadata carries next-row-id and a first-row-id on every snapshot, Spark reads unique _row_id values, and a DuckDB UPDATE keeps the updated row's _row_id while raising its _last_updated_sequence_number; untouched rows keep theirs.",
       "caveats": [],
       "links": [
+        {
+          "label": "Writing to Iceberg (DuckDB 2.0 docs)",
+          "url": "https://duckdb.org/docs/2.0/core_extensions/iceberg/writing_to_iceberg"
+        },
         {
           "label": "New DuckDB-Iceberg Features in v1.5.3 (V3 support)",
           "url": "https://duckdb.org/2026/05/29/new-iceberg-features"
@@ -681,11 +778,15 @@
     },
     "duckdb:statistics:v2": {
       "level": "full",
-      "notes": "DuckDB reads column statistics from Iceberg manifest files for scan planning and file pruning. When writing to Iceberg tables (v1.4.0+), DuckDB writes column statistics to manifest files via the standard Iceberg write path.",
+      "notes": "DuckDB reads column statistics from Iceberg manifest files for scan planning and file pruning. When writing to Iceberg tables (v1.4.0+), DuckDB writes column statistics to manifest files via the standard Iceberg write path. Verified on DuckDB 2.0.0: iceberg_column_stats reports the lower/upper bounds, value counts and null counts DuckDB wrote, and Spark sees the bounds in the files table.",
       "caveats": [
         "Requires the iceberg extension"
       ],
       "links": [
+        {
+          "label": "Iceberg Functions (DuckDB 2.0 docs)",
+          "url": "https://duckdb.org/docs/2.0/core_extensions/iceberg/iceberg_functions"
+        },
         {
           "label": "Iceberg Extension Overview",
           "url": "https://duckdb.org/docs/stable/core_extensions/iceberg/overview"
@@ -709,7 +810,7 @@
     },
     "duckdb:bloom-filters:v2": {
       "level": "none",
-      "notes": "DuckDB does not support reading or writing Iceberg Parquet-level bloom filters or Puffin-based bloom filter statistics.",
+      "notes": "DuckDB does not support reading or writing Iceberg Parquet-level bloom filters or Puffin-based bloom filter statistics. Re-measured on DuckDB 2.0.0: setting write.parquet.bloom-filter-enabled.column.id does not produce a bloom filter on that column.",
       "caveats": [],
       "links": [
         {
@@ -731,12 +832,16 @@
     },
     "duckdb:type-promotion:v2": {
       "level": "partial",
-      "notes": "Measured on DuckDB 1.5.5: ALTER TABLE ... ALTER COLUMN ... TYPE performs the documented v2 promotions (int -> bigint, float -> double, decimal(9,2) -> decimal(18,2)) against a REST catalog. The new schema is committed to Iceberg metadata (other engines see the widened types) and DuckDB reads its own pre-promotion rows back correctly as the wider type. Rated partial because the promoted data files are not proven interoperable: Spark 4.1 / Iceberg 1.11's vectorized reader fails on the DuckDB-promoted int -> bigint file (BigIntVector cannot be cast to IntVector).",
+      "notes": "Measured on DuckDB 2.0.0 (same result as 1.5.5): ALTER TABLE ... ALTER COLUMN ... TYPE performs the documented v2 promotions (int -> bigint, float -> double, decimal(9,2) -> decimal(18,2)) against a REST catalog. The new schema is committed to Iceberg metadata (other engines see the widened types) and DuckDB reads its own pre-promotion rows back correctly as the wider type. Rated partial because the promoted data files are not proven interoperable: Spark 4.1 / Iceberg 1.11's vectorized reader fails on the DuckDB-promoted int -> bigint file (BigIntVector cannot be cast to IntVector), although Spark's row-based reader reads it.",
       "caveats": [
         "Cross-engine reads of DuckDB-promoted files are not guaranteed (Spark vectorized reader failed on int -> bigint)",
         "date -> timestamp promotion is V3-only and not part of the v2 set"
       ],
       "links": [
+        {
+          "label": "Writing to Iceberg (DuckDB 2.0 docs)",
+          "url": "https://duckdb.org/docs/2.0/core_extensions/iceberg/writing_to_iceberg"
+        },
         {
           "label": "DuckDB Iceberg extension",
           "url": "https://duckdb.org/docs/stable/core_extensions/iceberg/overview"
@@ -749,12 +854,16 @@
     },
     "duckdb:type-promotion:v3": {
       "level": "partial",
-      "notes": "Same ALTER COLUMN TYPE path as v2: int -> bigint, float -> double and decimal widening are performed and read back within DuckDB 1.5.5. The V3-only date -> timestamp / timestamp_ns promotions and cross-engine readability of promoted files are not proven.",
+      "notes": "Same ALTER COLUMN TYPE path as v2, measured on a real V3 table on DuckDB 2.0.0: int -> bigint, float -> double and decimal widening are performed and read back within DuckDB, and so is the V3-only date -> timestamp promotion. The timestamp_ns promotion and cross-engine readability of promoted files are not proven (Spark's vectorized reader fails on the int -> bigint file).",
       "caveats": [
-        "V3-only date -> timestamp(_ns) promotion not measured",
-        "Cross-engine reads of DuckDB-promoted files are not guaranteed"
+        "V3-only date -> timestamp promotion verified in DuckDB only; timestamp_ns promotion not measured",
+        "Cross-engine reads of DuckDB-promoted files are not guaranteed (Spark's vectorized reader failed on int -> bigint)"
       ],
       "links": [
+        {
+          "label": "Writing to Iceberg (DuckDB 2.0 docs)",
+          "url": "https://duckdb.org/docs/2.0/core_extensions/iceberg/writing_to_iceberg"
+        },
         {
           "label": "Announcing DuckDB v1.5.2 (Iceberg ALTER TABLE)",
           "url": "https://duckdb.org/2026/04/13/announcing-duckdb-152"
@@ -788,9 +897,13 @@
     },
     "duckdb:deletion-vectors:v3": {
       "level": "full",
-      "notes": "Since v1.5.3 DuckDB reads and writes binary deletion vectors (Puffin) on V3 tables. UPDATE/DELETE/MERGE against a V3 table automatically encode changes as deletion vectors rather than positional-delete Parquet files.",
+      "notes": "Since v1.5.3 DuckDB reads and writes binary deletion vectors (Puffin) on V3 tables. UPDATE/DELETE/MERGE against a V3 table automatically encode changes as deletion vectors rather than positional-delete Parquet files. Verified on DuckDB 2.0.0: Spark (Iceberg 1.11) reads the deletion vector DuckDB wrote and applies it.",
       "caveats": [],
       "links": [
+        {
+          "label": "Writing to Iceberg (DuckDB 2.0 docs)",
+          "url": "https://duckdb.org/docs/2.0/core_extensions/iceberg/writing_to_iceberg"
+        },
         {
           "label": "New DuckDB-Iceberg Features in v1.5.3 (V3 deletion vectors)",
           "url": "https://duckdb.org/2026/05/29/new-iceberg-features"
@@ -803,9 +916,21 @@
       "caveats": []
     },
     "duckdb:unknown-type:v3": {
-      "level": "none",
-      "notes": "DuckDB's Iceberg support lists the unknown type alongside GEOGRAPHY as still unimplemented, targeted at a later release, so it is documented as absent rather than merely unmeasured.",
-      "caveats": []
+      "level": "full",
+      "notes": "Measured on DuckDB 2.0.0 against a Spark-created V3 table with a VOID column (Iceberg's unknown type): DuckDB opens the table (the column shows as type NULL), reads it with the column null, inserts rows that Spark reads back, and promotes the column with ALTER COLUMN ... TYPE INTEGER. DuckDB 1.5.5 could not open such a table at all (\"Unrecognized primitive type: unknown\").",
+      "caveats": [
+        "DuckDB has no SQL spelling for the unknown type, so it cannot declare such a column itself; the column has to come from another engine"
+      ],
+      "links": [
+        {
+          "label": "Writing to Iceberg (DuckDB 2.0 docs)",
+          "url": "https://duckdb.org/docs/2.0/core_extensions/iceberg/writing_to_iceberg"
+        },
+        {
+          "label": "DuckDB v2.0.0 release notes",
+          "url": "https://github.com/duckdb/duckdb/releases/tag/v2.0.0"
+        }
+      ]
     },
     "duckdb:google-lakehouse:v2": {
       "level": "partial",
